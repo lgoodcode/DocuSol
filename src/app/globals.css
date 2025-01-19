@@ -1,0 +1,205 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer base {
+  :root {
+    /* Main background/foreground */
+    --background: 265 25% 8%; /* Deep purple-black */
+    --foreground: 270 100% 98%; /* Almost white with slight purple tint */
+
+    /* Component colors */
+    --card: 267 28% 12%; /* Slightly lighter than background */
+    --card-foreground: 270 100% 98%;
+
+    --popover: 267 28% 12%;
+    --popover-foreground: 270 100% 98%;
+
+    --primary: 265 89% 60%; /* Vibrant purple */
+    --primary-foreground: 270 100% 98%;
+
+    --secondary: 270 50% 15%; /* Deep muted purple */
+    --secondary-foreground: 270 100% 98%;
+
+    --muted: 270 30% 25%; /* Subtle purple */
+    --muted-foreground: 215.4 16.3% 60%;
+
+    --accent: 280 70% 30%; /* Rich purple accent */
+    --accent-foreground: 270 100% 98%;
+
+    --destructive: 0 84% 60%; /* Keeping red for clear error states */
+    --destructive-foreground: 270 100% 98%;
+
+    --success: 120 80% 40%;
+    --success-foreground: 0 0% 100%;
+
+    --border: 270 30% 20%; /* Subtle purple border */
+    --input: 270 30% 20%;
+    --ring: 265 89% 60%; /* Matches primary */
+
+    --radius: 0rem;
+
+    /* Crypto-themed chart colors */
+    --chart-1: 265 89% 60%; /* Main purple */
+    --chart-2: 290 85% 55%; /* Electric violet */
+    --chart-3: 250 80% 65%; /* Bright purple-blue */
+    --chart-4: 230 75% 60%; /* Crypto blue */
+    --chart-5: 310 70% 55%; /* Neon magenta */
+  }
+
+  /* Using a medium-light purple for placeholder text */
+  ::placeholder {
+    color: hsl(270 20% 50%) !important;
+  }
+
+  ::-webkit-input-placeholder {
+    color: hsl(270 20% 50%) !important;
+  }
+
+  :-ms-input-placeholder {
+    color: hsl(270 20% 50%) !important;
+  }
+
+  ::-ms-input-placeholder {
+    color: hsl(270 20% 50%) !important;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 0.75em;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted));
+    border-radius: var(--radius);
+    border: 2px solid hsl(var(--background));
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--accent));
+  }
+
+  /* Change Autofill styles in Chrome*/
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: hsl(var(--foreground));
+    transition: background-color 5000s ease-in-out 0s;
+    box-shadow: inset 0 0 20px 20px hsl(var(--primary) / 0.5);
+  }
+
+  /* Firefox specific autofill styling */
+  input:autofill,
+  input:autofill:hover,
+  input:autofill:focus,
+  input:autofill:active {
+    -webkit-text-fill-color: hsl(var(--foreground));
+    -webkit-box-shadow: 0 0 0px 1000px hsl(var(--primary) / 0.5) inset;
+    box-shadow: 0 0 0px 1000px hsl(var(--primary) / 0.5) inset;
+    background-color: hsl(var(--primary) / 0.5);
+    color: hsl(var(--foreground));
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  .link {
+    @apply text-primary hover:underline underline-offset-4 text-sky-500 hover:text-sky-600;
+  }
+
+  .bd-frost {
+    backdrop-filter: saturate(200%) blur(30px);
+  }
+
+  .bd-frost form input,
+  .bd-frost form textarea {
+    background-color: #fff;
+    color: #000;
+  }
+
+  .animate-blur-fade-in {
+    animation: blur-fade-in 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+}
+
+.loading-spinner {
+  pointer-events: none;
+  display: inline-block;
+  aspect-ratio: 1/1;
+  background-color: currentColor;
+  -webkit-mask-size: 100%;
+  mask-size: 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  mask-image: url("/svg/loading-spinner.svg");
+  -webkit-mask-image: url("/svg/loading-spinner.svg");
+}
+
+/* Hide input controls for number type inputs */
+/*  */
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+@keyframes blur-fade-in {
+  0% {
+    opacity: 0;
+    filter: blur(20px);
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: scale(1);
+  }
+}
+
+@keyframes slide-up {
+  0% {
+    opacity: 0;
+    transform: translateY(2rem);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

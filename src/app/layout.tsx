@@ -1,0 +1,44 @@
+import localFont from "next/font/local";
+import NextTopLoader from "nextjs-toploader";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/react";
+
+import { ToastProvider } from "@/components/ui/toast";
+import { Toaster } from "@/components/ui/toaster";
+import { cn } from "@/lib/utils/cn";
+import "./globals.css";
+
+const satoshiFont = localFont({
+  src: "./font/Satoshi-Variable.ttf",
+  variable: "--font-satoshi",
+  display: "swap",
+});
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={cn(
+          "min-h-screen bg-background font-sans antialiased",
+          satoshiFont.variable
+        )}
+      >
+        <SpeedInsights />
+        <Analytics />
+        <NextTopLoader
+          color="#8a3ef4"
+          showSpinner={false}
+          easing="cubic-bezier(0.4, 0, 0.2, 1)"
+        />
+        <ToastProvider duration={2000} swipeDirection="right">
+          {children}
+          <Toaster />
+        </ToastProvider>
+      </body>
+    </html>
+  );
+}
