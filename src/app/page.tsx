@@ -20,8 +20,8 @@ export default function Home() {
   return (
     <div className="flex relative">
       {/* Background Gradient */}
-      <div className="fixed inset-0 bg-gradient-to-br from-black via-black to-[#3B1111] pointer-events-none" />
-      <div className="fixed inset-0 bg-gradient-to-br from-transparent via-purple-900/20 to-purple-800/30 pointer-events-none" />
+      {/* <div className="fixed inset-0 bg-gradient-to-br from-black via-black to-[#3B1111] pointer-events-none" />
+      <div className="fixed inset-0 bg-gradient-to-br from-transparent via-purple-900/20 to-purple-800/30 pointer-events-none" /> */}
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto relative">
@@ -37,7 +37,7 @@ export default function Home() {
               </div>
 
               <div className="space-y-8">
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-br from-purple-900 to-purple-500 bg-clip-text text-transparent dark:from-purple-500 dark:to-purple-100">
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-br from-purple-600 to-purple-400 dark:from-purple-500 dark:to-purple-200 bg-clip-text text-transparent">
                   DocuSol
                   <br />
                   Share on the blockhain
@@ -45,7 +45,7 @@ export default function Home() {
                   Share securely encryption
                 </h1>
 
-                <p className="text-gray-400 text-lg">
+                <p className="text-muted-foreground text-lg">
                   Welcome your new WorkOS, here to fill your skill gaps and
                   amplifying your skill-set.
                 </p>
@@ -89,25 +89,25 @@ export default function Home() {
             </div>
 
             {/* Right Column */}
-            <div className="relative border-t md:border-t-0 md:border-l border-stone-800 bg-black/40">
+            <div className="relative border-t md:border-t-0 md:border-l border-border bg-background/40">
               <div className="p-8 md:p-16 relative z-10">
                 <Tabs defaultValue="agent" className="w-full">
-                  <TabsList className="w-full justify-start bg-black/50 rounded-full p-1 mb-8">
+                  <TabsList className="w-full justify-start bg-background/50 rounded-full p-1 mb-8">
                     <TabsTrigger
                       value="agent"
-                      className="rounded-full data-[state=active]:bg-stone-800/50"
+                      className="rounded-full data-[state=active]:bg-muted"
                     >
                       Agent
                     </TabsTrigger>
                     <TabsTrigger
                       value="document"
-                      className="rounded-full data-[state=active]:bg-stone-800/50"
+                      className="rounded-full data-[state=active]:bg-muted"
                     >
                       Document
                     </TabsTrigger>
                     <TabsTrigger
                       value="chat"
-                      className="rounded-full data-[state=active]:bg-stone-800/50"
+                      className="rounded-full data-[state=active]:bg-muted"
                     >
                       Chat
                     </TabsTrigger>
@@ -128,7 +128,7 @@ export default function Home() {
                             key={template}
                             variant="outline"
                             size="sm"
-                            className="rounded-full bg-transparent border-stone-800/50 hover:bg-stone-800/50"
+                            className="rounded-full bg-transparent border-border hover:bg-muted"
                           >
                             {template}
                           </Button>
@@ -136,7 +136,7 @@ export default function Home() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="rounded-full bg-transparent border-stone-800/50 hover:bg-stone-800/50"
+                          className="rounded-full bg-transparent border-border hover:bg-muted"
                         >
                           See More
                         </Button>
@@ -150,7 +150,7 @@ export default function Home() {
                         </label>
                         <Input
                           placeholder="ResearchAI (max 255 chars)"
-                          className="bg-black/50 border-stone-800/50 rounded-xl focus-visible:ring-stone-700 h-12"
+                          className="bg-background/50 border-border rounded-xl focus-visible:ring-ring h-12"
                         />
                       </div>
 
@@ -159,23 +159,20 @@ export default function Home() {
                           Language Model
                         </label>
                         <Select>
-                          <SelectTrigger className="w-full h-12 bg-black/50 border-stone-800/50 rounded-xl">
+                          <SelectTrigger className="w-full h-12 bg-background/50 border-border rounded-xl">
                             <SelectValue placeholder="GPT-3.5 — Fast" />
                           </SelectTrigger>
-                          <SelectContent className="bg-black border-stone-800">
+                          <SelectContent className="bg-background border-border">
                             <SelectItem
                               value="gpt3.5"
-                              className="focus:bg-stone-800"
+                              className="focus:bg-muted"
                             >
                               <div className="flex items-center gap-2">
                                 <Check className="h-4 w-4 text-green-500" />
                                 <span>GPT-3.5 — Fast</span>
                               </div>
                             </SelectItem>
-                            <SelectItem
-                              value="gpt4"
-                              className="focus:bg-stone-800"
-                            >
+                            <SelectItem value="gpt4" className="focus:bg-muted">
                               GPT-4 — Smart
                             </SelectItem>
                           </SelectContent>
@@ -195,7 +192,7 @@ export default function Home() {
                         </div>
                         <Textarea
                           placeholder="Develop a social media strategy for my business"
-                          className="min-h-[100px] bg-black/50 border-stone-800/50 rounded-xl focus-visible:ring-stone-700"
+                          className="min-h-[100px] bg-background/50 border-border rounded-xl focus-visible:ring-ring"
                         />
                       </div>
 
@@ -220,12 +217,12 @@ export default function Home() {
           </section>
 
           {/* What is AIAgent.app? */}
-          <section className="border-t border-stone-800">
-            <h2 className="text-center p-4 text-lg font-semibold border-b border-stone-800">
+          <section className="border-t border-border">
+            <h2 className="text-center p-4 text-lg font-semibold border-b border-border">
               What is AIAgent.app?
             </h2>
             <div className="max-w-2xl mx-auto my-32 text-center px-8">
-              <p className="text-gray-400 mb-4">AIAgent.app is</p>
+              <p className="text-muted-foreground mb-4">AIAgent.app is</p>
               <h3 className="text-2xl font-semibold">
                 A web app that makes choices and performs tasks on its own,
                 based on the goals set by you.
@@ -234,8 +231,8 @@ export default function Home() {
           </section>
 
           {/* How Does it Work? */}
-          <section className="border-t border-stone-800">
-            <h2 className="text-center p-4 text-lg font-semibold border-b border-stone-800">
+          <section className="border-t border-border">
+            <h2 className="text-center p-4 text-lg font-semibold border-b border-border">
               How Does it Work?
             </h2>
             <div className="grid md:grid-cols-2 gap-8 p-8 md:p-16">
@@ -340,8 +337,8 @@ export default function Home() {
           </section>
 
           {/* Benefits */}
-          <section className="border-t border-stone-800">
-            <h2 className="text-center p-4 text-lg font-semibold border-b border-stone-800">
+          <section className="border-t border-border">
+            <h2 className="text-center p-4 text-lg font-semibold border-b border-border">
               Benefits
             </h2>
             <div className="grid md:grid-cols-2 gap-4 p-4">
@@ -415,7 +412,7 @@ export default function Home() {
                 <div className="space-y-4">
                   <Badge
                     variant="secondary"
-                    className="bg-black/20 text-gray-400"
+                    className="bg-background/20 text-gray-400"
                   >
                     COMING SOON
                   </Badge>
@@ -468,7 +465,7 @@ export default function Home() {
                 <div className="relative z-10">
                   <Badge
                     variant="secondary"
-                    className="bg-black/20 text-gray-400"
+                    className="bg-background/20 text-gray-400"
                   >
                     ALPHA
                   </Badge>
@@ -487,7 +484,7 @@ export default function Home() {
 
               <div className="md:col-span-1 bg-[#1A1A1A] p-8 md:p-16 rounded-xl relative overflow-hidden">
                 <div className="relative z-10">
-                  <span className="inline-block px-3 py-1 text-sm bg-black/20 rounded-full text-gray-400 mb-4">
+                  <span className="inline-block px-3 py-1 text-sm bg-background/20 rounded-full text-gray-400 mb-4">
                     COMING SOON
                   </span>
                   <h3 className="text-2xl font-semibold text-white mb-4">
@@ -507,8 +504,8 @@ export default function Home() {
           </section>
 
           {/* FAQ */}
-          <section className="border-t border-stone-800">
-            <h2 className="text-center p-4 text-lg font-semibold border-b border-stone-800">
+          <section className="border-t border-border">
+            <h2 className="text-center p-4 text-lg font-semibold border-b border-border">
               Frequently Asked Questions
             </h2>
             <div className="max-w-4xl mx-auto p-8">
@@ -522,7 +519,7 @@ export default function Home() {
                 ].map((question) => (
                   <button
                     key={question}
-                    className="w-full text-left p-4 rounded-full border border-stone-800 hover:bg-stone-900"
+                    className="w-full text-left p-4 rounded-full border border-border hover:bg-muted"
                   >
                     <p className="font-semibold">{question}</p>
                   </button>
@@ -532,8 +529,8 @@ export default function Home() {
           </section>
 
           {/* Call To Action */}
-          <section className="border-t border-stone-800">
-            <h2 className="text-center p-4 text-lg font-semibold border-b border-stone-800">
+          <section className="border-t border-border">
+            <h2 className="text-center p-4 text-lg font-semibold border-b border-border">
               Your Call To Action
             </h2>
             <div className="h-screen flex items-center justify-center">

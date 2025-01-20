@@ -30,22 +30,14 @@ export function Nav() {
   return (
     <aside className="w-[60px] flex flex-col border-r border-stone-800 sticky top-0 h-screen z-50">
       <div className="flex flex-col flex-1">
-        <NavTooltip content="Home">
-          <Link href="/">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="p-3 w-full h-12 text-primary/60 hover:text-primary-foreground bg-primary-foreground/10 hover:bg-primary"
-            >
-              <Image
-                src="/img/docusol_icon.png"
-                alt="DocuSol"
-                width={318}
-                height={85}
-              />
-            </Button>
-          </Link>
-        </NavTooltip>
+        <Link href="/" className="p-3 w-full h-12 mb-3">
+          <Image
+            src="/img/docusol_icon.png"
+            alt="DocuSol"
+            width={318}
+            height={85}
+          />
+        </Link>
 
         <nav className="grid gap-0">
           <NavButton href="/docs/new" icon={Plus} label="New Document" />
