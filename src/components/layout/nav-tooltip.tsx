@@ -21,7 +21,7 @@ export function NavTooltip({ children, content }: NavTooltipProps) {
           className="text-sm font-medium"
           side="right"
           align="start"
-          alignOffset={4}
+          alignOffset={6}
         >
           <p>{content}</p>
         </TooltipContent>
