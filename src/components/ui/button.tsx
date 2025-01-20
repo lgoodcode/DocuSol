@@ -6,23 +6,22 @@ import { cn } from "@/lib/utils/cn";
 import { Spinner } from "@/components/ui/spinner";
 
 const buttonVariants = cva(
-  "inline-flex items-center gap-2 justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center gap-2 justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 backdrop-blur-sm",
   {
     variants: {
       variant: {
         default:
-          "bg-primary/30 text-primary-foreground shadow-sm border border-primary/20 hover:bg-primary/20",
+          "bg-primary text-primary-foreground shadow-sm border border-primary/50 hover:bg-primary/80",
         destructive:
-          "bg-red-950/50 text-red-400 shadow-sm border border-red-800/40 hover:bg-red-950/70 hover:text-red-300",
+          "bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 shadow-sm border border-red-200/40 dark:border-red-700/40 hover:bg-red-200 dark:hover:bg-red-900/70 hover:text-red-800 dark:hover:text-red-200",
         outline:
-          "border border-input/30 bg-background/50 shadow-sm hover:bg-accent/50 hover:text-accent-foreground",
+          "border border-slate-700/50 bg-slate-900/30 shadow-sm hover:bg-slate-800/50 hover:text-slate-200",
         secondary:
-          "bg-secondary/80 text-secondary-foreground/90 shadow-sm border border-secondary/40 hover:bg-secondary/40",
-        ghost:
-          "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground",
-        link: "text-primary/80 underline-offset-4 hover:text-primary hover:underline",
+          "bg-slate-800/70 text-slate-200 shadow-sm border border-slate-600/40 hover:bg-slate-700/80",
+        ghost: "text-slate-300 hover:bg-slate-800/50 hover:text-slate-100",
+        link: "text-slate-300 underline-offset-4 hover:text-slate-100 hover:underline",
         accent:
-          "bg-accent/80 text-accent-foreground shadow-sm border border-accent/40 hover:bg-accent/60",
+          "bg-indigo-900/70 text-indigo-100 shadow-sm border border-indigo-700/40 hover:bg-indigo-800/80",
       },
       size: {
         default: "h-9 px-4 py-2",
