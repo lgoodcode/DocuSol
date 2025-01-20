@@ -6,40 +6,42 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Primary color
+#8c4bcb */
+
 @layer base {
   :root {
-    /* Main background/foreground */
-    --background: 265 25% 8%; /* Deep purple-black */
-    --foreground: 270 100% 98%; /* Almost white with slight purple tint */
+    /* Light theme */
+    --background: 60 33% 98%; /* faf9f6 */
+    --foreground: 265 25% 8%;
 
-    /* Component colors */
-    --card: 267 28% 12%; /* Slightly lighter than background */
-    --card-foreground: 270 100% 98%;
+    --card: 60 33% 96%;
+    --card-foreground: 265 25% 8%;
 
-    --popover: 267 28% 12%;
-    --popover-foreground: 270 100% 98%;
+    --popover: 60 33% 96%;
+    --popover-foreground: 265 25% 8%;
 
-    --primary: 265 89% 60%; /* Vibrant purple */
-    --primary-foreground: 270 100% 98%;
+    --primary: 265 89% 60%;
+    --primary-foreground: 60 33% 98%;
 
-    --secondary: 270 50% 15%; /* Deep muted purple */
-    --secondary-foreground: 270 100% 98%;
+    --secondary: 270 50% 85%;
+    --secondary-foreground: 265 25% 8%;
 
-    --muted: 270 30% 25%; /* Subtle purple */
-    --muted-foreground: 215.4 16.3% 60%;
+    --muted: 270 30% 85%;
+    --muted-foreground: 215.4 16.3% 40%;
 
-    --accent: 280 70% 30%; /* Rich purple accent */
-    --accent-foreground: 270 100% 98%;
+    --accent: 280 70% 70%;
+    --accent-foreground: 265 25% 8%;
 
-    --destructive: 0 84% 60%; /* Keeping red for clear error states */
-    --destructive-foreground: 270 100% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 60 33% 98%;
 
     --success: 120 80% 40%;
     --success-foreground: 0 0% 100%;
 
-    --border: 270 30% 20%; /* Subtle purple border */
-    --input: 270 30% 20%;
-    --ring: 265 89% 60%; /* Matches primary */
+    --border: 270 30% 80%;
+    --input: 270 30% 80%;
+    --ring: 265 89% 60%;
 
     --radius: 0rem;
 
@@ -49,6 +51,39 @@ body {
     --chart-3: 250 80% 65%; /* Bright purple-blue */
     --chart-4: 230 75% 60%; /* Crypto blue */
     --chart-5: 310 70% 55%; /* Neon magenta */
+  }
+
+  .dark {
+    --background: 265 25% 8%;
+    --foreground: 270 100% 98%;
+
+    --card: 267 28% 12%;
+    --card-foreground: 270 100% 98%;
+
+    --popover: 267 28% 12%;
+    --popover-foreground: 270 100% 98%;
+
+    --primary: 265 89% 60%;
+    --primary-foreground: 270 100% 98%;
+
+    --secondary: 270 50% 15%;
+    --secondary-foreground: 270 100% 98%;
+
+    --muted: 270 30% 25%;
+    --muted-foreground: 215.4 16.3% 60%;
+
+    --accent: 280 70% 30%;
+    --accent-foreground: 270 100% 98%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 270 100% 98%;
+
+    --success: 120 80% 40%;
+    --success-foreground: 0 0% 100%;
+
+    --border: 270 30% 20%;
+    --input: 270 30% 20%;
+    --ring: 265 89% 60%;
   }
 
   /* Using a medium-light purple for placeholder text */

@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { NavTooltip } from "@/components/layout/tooltip";
+import { NavTooltip } from "@/components/layout/nav-tooltip";
 import Link from "next/link";
 import { LucideIcon } from "lucide-react";
 
