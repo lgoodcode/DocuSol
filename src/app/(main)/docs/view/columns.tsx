@@ -1,6 +1,15 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
+import {
+  MoreHorizontal,
+  Download,
+  Eye,
+  Trash,
+  Lock,
+  Globe,
+} from "lucide-react";
+
 import type { Document } from "@/types/document";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,29 +21,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  MoreHorizontal,
-  Download,
-  Eye,
-  Trash,
-  Lock,
-  Globe,
-} from "lucide-react";
 
 export const columns: ColumnDef<Document>[] = [
   {
     accessorKey: "name",
     header: "Name",
+    enableHiding: false,
     cell: ({ row }) => {
       const doc = row.original;
       return (
         <div className="flex items-center gap-2">
           <span className="font-medium">{doc.name}</span>
           <div className="flex gap-1">
-            {doc.isPasswordProtected && (
+            {doc.password ? (
               <Lock className="h-4 w-4 text-muted-foreground" />
-            )}
-            {doc.isPublic && (
+            ) : (
               <Globe className="h-4 w-4 text-muted-foreground" />
             )}
           </div>
@@ -79,9 +80,9 @@ export const columns: ColumnDef<Document>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => {
-      const document = row.original;
-
+    enableHiding: false,
+    cell: () => {
+      // const document = row.original;
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

@@ -35,7 +35,7 @@ export function DashboardContent() {
             Chat
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="agent" className="space-y-8">
+        <TabsContent value="agent" className="space-y-8 mt-8">
           <div className="grid gap-4">
             <h3 className="text-lg font-medium">Templates</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -55,26 +55,27 @@ export function DashboardContent() {
               ))}
             </div>
           </div>
-          <Card>
+          <Card className="max-w-2xl mx-auto">
             <CardHeader>
-              <CardTitle>Create Agent</CardTitle>
+              <CardTitle>Create Document</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  Agent Conversation Name
-                </label>
-                <Input placeholder="ResearchAI (max 255 chars)" />
+                <label className="text-sm font-medium">Document Name</label>
+                <Input placeholder="ResearchAI - Competitor Analysis" />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Language Model</label>
-                <Select defaultValue="gpt-3.5">
+                <Select defaultValue="gpt-4o">
                   <SelectTrigger>
                     <SelectValue placeholder="Select model" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="gpt-3.5">GPT-3.5 — Fast</SelectItem>
-                    <SelectItem value="gpt-4">GPT-4 — Powerful</SelectItem>
+                    <SelectItem value="gpt-4o">GPT-4o</SelectItem>
+                    <SelectItem value="gpt-4o-mini">GPT-4o Mini</SelectItem>
+                    <SelectItem value="sonnet-3.5-pro">
+                      Sonnet 3.5 Pro
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -85,11 +86,19 @@ export function DashboardContent() {
                   className="min-h-[100px]"
                 />
               </div>
-              <Button className="w-full bg-primary hover:bg-primary/90">
-                Create Agent
-              </Button>
+              <Button className="w-full">Create Document</Button>
             </CardContent>
           </Card>
+        </TabsContent>
+        <TabsContent value="document" className="space-y-8 mt-8">
+          <div className="min-h-[300px] flex flex-col items-center justify-center">
+            <h3 className="text-2xl font-medium">Coming Soon</h3>
+          </div>
+        </TabsContent>
+        <TabsContent value="chat" className="space-y-8 mt-8">
+          <div className="min-h-[300px] flex flex-col items-center justify-center">
+            <h3 className="text-2xl font-medium">Coming Soon</h3>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

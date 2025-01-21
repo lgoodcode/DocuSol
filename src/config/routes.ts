@@ -1,4 +1,17 @@
-import { List, type LucideIcon, Plus } from "lucide-react";
+import {
+  LayoutDashboard,
+  Folder,
+  PenTool,
+  Book,
+  CopyPlus,
+  Send,
+  Snowflake,
+  TrendingUp,
+  Zap,
+  User,
+  Plus,
+  type LucideIcon,
+} from "lucide-react";
 
 export type Route = {
   name: string;
@@ -8,17 +21,72 @@ export type Route = {
   disabled?: boolean;
 };
 
-export const routes: Route[] = [
+export const navRoutes: Route[] = [
   {
-    name: "Digital Humans",
-    path: "/agents",
-    Icon: List,
-    description: "View your digital humans to chat with and manage.",
+    name: "New Document",
+    path: "/docs/new",
+    Icon: Plus,
+    description: "Create a new document.",
   },
   {
-    name: "New Digital Human",
-    path: "/agents/new",
-    Icon: Plus,
-    description: "Create a new digital human.",
+    name: "Dashboard",
+    path: "/dashboard",
+    Icon: LayoutDashboard,
+    description: "View your documents and templates.",
+  },
+  {
+    name: "Documents",
+    path: "/docs/view",
+    Icon: Folder,
+    description: "View your documents.",
+  },
+  {
+    name: "Writer",
+    path: "/writer",
+    Icon: PenTool,
+    description: "Write documents with AI.",
+  },
+  {
+    name: "Blog",
+    path: "/blog",
+    Icon: Book,
+    description: "Read our blog.",
+  },
+  {
+    name: "Templates",
+    path: "/templates",
+    Icon: CopyPlus,
+    description: "Create and manage templates.",
+  },
+  {
+    name: "Send",
+    path: "/send",
+    Icon: Send,
+    description: "Send documents to others.",
+  },
+  {
+    name: "Free Tools",
+    path: "/free-tools",
+    Icon: Snowflake,
+    description: "Use our free tools.",
+  },
+  {
+    name: "Changelog",
+    path: "/changelog",
+    Icon: TrendingUp,
+    description: "View our changelog.",
+  },
+  {
+    name: "Pricing",
+    path: "/pricing",
+    Icon: Zap,
+    description: "View our pricing.",
   },
 ];
+
+export const accountRoute: Route = {
+  name: "Account",
+  path: "/account",
+  Icon: User,
+  description: "View your account.",
+};

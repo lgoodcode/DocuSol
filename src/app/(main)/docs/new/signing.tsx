@@ -218,7 +218,7 @@ export function DocumentSigning() {
 
       {/* Signature Card */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col sm:flex-row items-start gap-4 sm:gap-0 sm:items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Pencil className="h-5 w-5" />
             Sign Document
@@ -238,6 +238,7 @@ export function DocumentSigning() {
                 type="button"
                 variant="destructive"
                 size="icon"
+                disabled={!hasDrawn}
                 onClick={clearCanvas}
               >
                 <Trash2 className="h-5 w-5" />
@@ -248,7 +249,7 @@ export function DocumentSigning() {
         </CardHeader>
         <CardContent>
           {signatureType === "draw" ? (
-            <div className="relative aspect-[3/1] w-full border rounded-lg overflow-hidden bg-background">
+            <div className="relative aspect-[3/1] w-full border rounded-lg overflow-hidden bg-background dark:bg-background/60">
               <canvas
                 ref={canvasRef}
                 width={900}

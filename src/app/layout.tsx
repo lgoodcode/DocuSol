@@ -8,7 +8,6 @@ import {
   metadata as siteMetadata,
   viewport as siteViewport,
 } from "@/config/site";
-import { Nav } from "@/components/layout/nav";
 import { ToastProvider } from "@/components/ui/toast";
 import { Toaster } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils/cn";
@@ -49,11 +48,8 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <ToastProvider swipeDirection="right">
-            <div className="flex">
-              <Nav />
-              <main className="flex-1 bg-background px-6">{children}</main>
-            </div>
             <Toaster />
+            {children}
           </ToastProvider>
         </NextThemesProvider>
       </body>

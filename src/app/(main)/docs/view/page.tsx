@@ -17,8 +17,7 @@ const documents: Document[] = [
     createdAt: "2024-01-15T09:24:00Z",
     expiresAt: "2024-02-15T09:24:00Z",
     status: "pending",
-    isPublic: false,
-    isPasswordProtected: true,
+    password: "123456",
     size: 1240000,
   },
   {
@@ -27,8 +26,7 @@ const documents: Document[] = [
     createdAt: "2024-01-14T15:30:00Z",
     expiresAt: null,
     status: "signed",
-    isPublic: true,
-    isPasswordProtected: false,
+    password: null,
     size: 890000,
   },
   {
@@ -37,15 +35,14 @@ const documents: Document[] = [
     createdAt: "2023-12-20T11:00:00Z",
     expiresAt: "2024-01-20T11:00:00Z",
     status: "expired",
-    isPublic: false,
-    isPasswordProtected: true,
+    password: "123456",
     size: 450000,
   },
 ] as const;
 
 export default function DocumentsPage() {
   return (
-    <div className="flex flex-col gap-8 p-8 max-w-7xl mx-auto">
+    <div className="flex flex-col gap-8 py-8 max-w-7xl mx-auto">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Documents</h1>
         <p className="text-muted-foreground">

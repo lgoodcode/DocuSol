@@ -4,7 +4,6 @@ export interface Document {
   createdAt: string;
   expiresAt: string | null;
   status: "pending" | "signed" | "expired";
-  isPublic: boolean;
-  isPasswordProtected: boolean;
+  password: string | null;
   size: number;
 }

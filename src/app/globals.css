@@ -23,8 +23,8 @@ body {
     --secondary-foreground: 240 5.9% 10%;
     --muted: 240 4.8% 95.9%;
     --muted-foreground: 240 3.8% 46.1%;
-    --accent: 271 62% 55%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 240 9.8% 93.9%;
+    --accent-foreground: 240 5.9% 10%;
     --destructive: 0 164.2% 50.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 240 5.9% 90%;
@@ -51,7 +51,7 @@ body {
     --secondary-foreground: 0 0% 98%;
     --muted: 240 5% 12%;
     --muted-foreground: 240 5% 64.9%;
-    --accent: 271 62% 55%;
+    --accent: 240 5% 12%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 82.8% 60.6%;
     --destructive-foreground: 0 0% 98%;
@@ -68,18 +68,22 @@ body {
   /* Using a medium-light purple for placeholder text */
   ::placeholder {
     color: var(--accent) !important;
+    opacity: 0.5 !important;
   }
 
   ::-webkit-input-placeholder {
     color: var(--accent) !important;
+    opacity: 0.5 !important;
   }
 
   :-ms-input-placeholder {
     color: var(--accent) !important;
+    opacity: 0.5 !important;
   }
 
   ::-ms-input-placeholder {
     color: var(--accent) !important;
+    opacity: 0.5 !important;
   }
 
   /* Scrollbar styling */
@@ -153,6 +157,11 @@ body {
   .bd-frost form textarea {
     background-color: #fff;
     color: #000;
+  }
+
+  .bg-grid-primary {
+    background-image: linear-gradient(var(--primary) 1px, transparent 1px),
+      linear-gradient(90deg, var(--primary) 1px, transparent 1px);
   }
 
   .animate-blur-fade-in {
