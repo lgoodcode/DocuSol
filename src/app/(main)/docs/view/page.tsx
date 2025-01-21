@@ -9,7 +9,6 @@ export const metadata: Metadata = {
   description: "Manage your documents",
 };
 
-// This would normally come from your database
 const documents: Document[] = [
   {
     id: "1",
@@ -38,7 +37,7 @@ const documents: Document[] = [
     password: "123456",
     size: 450000,
   },
-] as const;
+];
 
 export default function DocumentsPage() {
   return (
