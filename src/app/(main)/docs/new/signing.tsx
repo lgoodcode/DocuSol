@@ -68,15 +68,17 @@ export function DocumentSigning() {
     )
       return;
 
+    const result = passwordSchema.safeParse({ password, confirmPassword });
+    if (!result.success) {
+      setPasswordError(result.error.message);
+      return;
+    }
+
+    // Get the signature as a data URL if drawn
+    const signatureDataUrl =
+      signatureType === "draw" ? canvasRef.current?.toDataURL() : null;
+
     try {
-      if (password) {
-        passwordSchema.parse({ password, confirmPassword });
-      }
-
-      // Get the signature as a data URL if drawn
-      const signatureDataUrl =
-        signatureType === "draw" ? canvasRef.current?.toDataURL() : null;
-
       // Here you would typically send the data to your server
       console.log("Submitting:", {
         file,
@@ -86,17 +88,13 @@ export function DocumentSigning() {
         signatureType,
       });
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        setPasswordError(error.errors[0].message);
-      } else {
-        console.error(error);
-        captureException(error);
-        toast({
-          title: "Error",
-          description: "An error occurred while signing the document",
-          variant: "destructive",
-        });
-      }
+      console.error(error);
+      captureException(error);
+      toast({
+        title: "Error",
+        description: "An error occurred while signing the document",
+        variant: "destructive",
+      });
     }
   };
 
