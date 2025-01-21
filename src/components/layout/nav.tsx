@@ -14,7 +14,7 @@ export function Nav() {
   const { theme, setTheme } = useTheme();
 
   return (
-    <aside className="w-[60px] flex flex-col border-r border-stone-800 sticky top-0 h-screen z-50">
+    <aside className="w-[60px] flex flex-col border-r border-stone-500 dark:border-stone-800 sticky top-0 h-screen z-50">
       <div className="flex flex-col flex-1">
         <Link href="/" className="p-3 w-full h-12 mb-3">
           <Image
@@ -38,7 +38,7 @@ export function Nav() {
       </div>
 
       <div className="mt-auto">
-        <div className="border-t border-stone-800">
+        <div className="border-t border-stone-500 dark:border-stone-800">
           <NavTooltip content={theme === "dark" ? "Light" : "Dark"}>
             <Button
               variant="ghost"
