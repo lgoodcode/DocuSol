@@ -66,7 +66,7 @@ export function Nav() {
             <Button
               variant="ghost"
               size="icon"
-              className="w-full h-12 text-primary/60 hover:text-primary-foreground bg-primary-foreground/10 hover:bg-primary"
+              className="w-full h-12 text-primary/60 hover:text-primary-foreground bg-primary-foreground/10 hover:bg-primary dark:hover:bg-white dark:hover:text-black"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             >
               {theme === "dark" ? (
@@ -80,7 +80,7 @@ export function Nav() {
             <Button
               variant="ghost"
               size="icon"
-              className="w-full h-12 text-primary/60 hover:text-primary-foreground bg-primary-foreground/10 hover:bg-primary"
+              className="w-full h-12 text-primary/60 hover:text-primary-foreground bg-primary-foreground/10 hover:bg-primary dark:hover:bg-white dark:hover:text-black"
             >
               <User className="h-4 w-4" />
             </Button>

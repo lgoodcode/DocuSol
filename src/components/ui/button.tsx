@@ -11,17 +11,20 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow-sm border border-primary/50 hover:bg-primary/80",
+          "bg-slate-100 dark:bg-slate-900/50 text-slate-700 dark:text-slate-300 shadow-sm border border-slate-200/40 dark:border-slate-700/40 hover:bg-slate-200 dark:hover:bg-slate-900/70 hover:text-slate-800 dark:hover:text-slate-200",
+        secondary:
+          "bg-zinc-200 dark:bg-zinc-900/50 text-zinc-800 dark:text-zinc-300 shadow-sm border border-zinc-300/40 dark:border-zinc-700/40 hover:bg-zinc-300 dark:hover:bg-zinc-900/70 hover:text-zinc-900 dark:hover:text-zinc-200",
         destructive:
           "bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 shadow-sm border border-red-200/40 dark:border-red-700/40 hover:bg-red-200 dark:hover:bg-red-900/70 hover:text-red-800 dark:hover:text-red-200",
+        success:
+          "bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 shadow-sm border border-green-200/40 dark:border-green-700/40 hover:bg-green-200 dark:hover:bg-green-900/70 hover:text-green-800 dark:hover:text-green-200",
         outline:
-          "border border-slate-700/50 bg-slate-900/30 shadow-sm hover:bg-slate-800/50 hover:text-slate-200",
-        secondary:
-          "bg-slate-800/70 text-slate-200 shadow-sm border border-slate-600/40 hover:bg-slate-700/80",
-        ghost: "text-slate-300 hover:bg-slate-800/50 hover:text-slate-100",
-        link: "text-slate-300 underline-offset-4 hover:text-slate-100 hover:underline",
+          "border border-slate-400 dark:border-slate-700/40 bg-slate-100/30 dark:bg-slate-800/30 shadow-sm hover:bg-slate-200/80 dark:hover:bg-slate-700/50 text-slate-700 dark:text-slate-300",
+        ghost:
+          "text-slate-700 dark:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 hover:text-slate-800 dark:hover:text-slate-200",
+        link: "text-slate-700 dark:text-slate-300 underline-offset-4 hover:text-slate-900 dark:hover:text-slate-100 hover:underline",
         accent:
-          "bg-indigo-900/70 text-indigo-100 shadow-sm border border-indigo-700/40 hover:bg-indigo-800/80",
+          "bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 shadow-sm border border-indigo-200/40 dark:border-indigo-700/40 hover:bg-indigo-200 dark:hover:bg-indigo-900/70 hover:text-indigo-800 dark:hover:text-indigo-200",
       },
       size: {
         default: "h-9 px-4 py-2",

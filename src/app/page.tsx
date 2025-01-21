@@ -20,8 +20,8 @@ export default function Home() {
   return (
     <div className="flex relative">
       {/* Background Gradient */}
-      {/* <div className="fixed inset-0 bg-gradient-to-br from-black via-black to-[#3B1111] pointer-events-none" />
-      <div className="fixed inset-0 bg-gradient-to-br from-transparent via-purple-900/20 to-purple-800/30 pointer-events-none" /> */}
+      <div className="fixed inset-0 bg-gradient-to-br from-black via-black to-[#3B111111] pointer-events-none" />
+      <div className="fixed inset-0 bg-gradient-to-br from-transparent via-purple-900/10 to-purple-800/20 pointer-events-none" />
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto relative">

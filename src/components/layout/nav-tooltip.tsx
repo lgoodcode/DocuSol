@@ -20,6 +20,7 @@ export function NavTooltip({ children, content }: NavTooltipProps) {
         <TooltipContent
           className="text-sm font-medium"
           side="right"
+          sideOffset={12}
           align="start"
           alignOffset={6}
         >
