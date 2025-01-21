@@ -50,10 +50,9 @@ export function DocumentSigning() {
   const { canvasRef, startDrawing, draw, hasDrawn, stopDrawing, clearCanvas } =
     useDrawing();
 
-  // New state for additional options
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [expiryDays, setExpiryDays] = useState("7");
+  // const [expiryDays, setExpiryDays] = useState("7");
   const [signatureType, setSignatureType] = useState("draw"); // "draw" or "type"
   const [typedSignature, setTypedSignature] = useState("");
   const [passwordError, setPasswordError] = useState<string | null>(null);
@@ -83,7 +82,7 @@ export function DocumentSigning() {
         file,
         signature: signatureType === "draw" ? signatureDataUrl : typedSignature,
         password,
-        expiryDays,
+        // expiryDays,
         signatureType,
       });
     } catch (error) {
@@ -197,7 +196,7 @@ export function DocumentSigning() {
           </div>
 
           {/* Expiry Setting */}
-          <div className="grid w-full gap-1.5">
+          {/* <div className="grid w-full gap-1.5">
             <Label htmlFor="expiry" className="mb-1">
               Document Expiry
             </Label>
@@ -212,7 +211,7 @@ export function DocumentSigning() {
                 <SelectItem value="never">Never</SelectItem>
               </SelectContent>
             </Select>
-          </div>
+          </div> */}
         </CardContent>
       </Card>
 
