@@ -2,10 +2,8 @@ import {
   LayoutDashboard,
   Folder,
   PenTool,
-  Book,
   CopyPlus,
   Send,
-  Snowflake,
   TrendingUp,
   Zap,
   User,
@@ -47,12 +45,6 @@ export const navRoutes: Route[] = [
     description: "Write documents with AI.",
   },
   {
-    name: "Blog",
-    path: "/blog",
-    Icon: Book,
-    description: "Read our blog.",
-  },
-  {
     name: "Templates",
     path: "/templates",
     Icon: CopyPlus,
@@ -63,12 +55,6 @@ export const navRoutes: Route[] = [
     path: "/send",
     Icon: Send,
     description: "Send documents to others.",
-  },
-  {
-    name: "Free Tools",
-    path: "/free-tools",
-    Icon: Snowflake,
-    description: "Use our free tools.",
   },
   {
     name: "Changelog",

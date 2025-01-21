@@ -2,7 +2,21 @@ import { withSentryConfig } from "@sentry/nextjs";
 import bundleAnyalzer from "@next/bundle-analyzer";
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {};
+const nextConfig: NextConfig = {
+  rewrites: async () => {
+    return [
+      "/writer",
+      "/templates",
+      "/send",
+      "/changelog",
+      "/pricing",
+      "/account",
+    ].map((path) => ({
+      source: path,
+      destination: "/coming-soon",
+    }));
+  },
+};
 
 const withBundleAnalyzer = bundleAnyalzer({
   enabled: process.env.ANALYZE === "true",
@@ -48,5 +62,5 @@ export default withBundleAnalyzer(
     // https://docs.sentry.io/product/crons/
     // https://vercel.com/docs/cron-jobs
     automaticVercelMonitors: true,
-  }),
+  })
 );

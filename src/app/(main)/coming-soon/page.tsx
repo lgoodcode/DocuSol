@@ -1,5 +1,5 @@
 import { ComingSoon } from "./coming-soon";
 
-export default function MarketingPage() {
+export default function ComingSoonPage() {
   return <ComingSoon />;
 }

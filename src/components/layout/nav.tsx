@@ -17,7 +17,7 @@ export function Nav() {
   return (
     <>
       <MobileMenu />
-      <aside className="w-[60px] hidden md:flex flex-col border-r border-border sticky top-0 h-screen z-50">
+      <aside className="w-[60px] py-4 hidden md:flex flex-col border-r border-border sticky top-0 h-screen z-50">
         <div className="flex flex-col flex-1">
           <Link href="/" className="p-3 w-full h-12 mb-3">
             <Image
