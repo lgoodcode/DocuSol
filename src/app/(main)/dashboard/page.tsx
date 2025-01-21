@@ -12,7 +12,7 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-8 py-8 max-w-5xl mx-auto">
       <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           <h1 className="text-2xl font-bold">Dashboard</h1>
           <Badge>Coming Soon</Badge>
         </div>

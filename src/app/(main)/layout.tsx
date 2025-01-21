@@ -13,7 +13,7 @@ export default function MainLayout({
       </div>
 
       <Nav />
-      <main className="relative -z-10 flex-1 bg-background px-6">
+      <main className="relative z-10 flex-1 px-6 mt-[64px] md:mt-0">
         {children}
       </main>
     </div>

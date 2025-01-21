@@ -15,7 +15,7 @@ export function DashboardContent() {
   return (
     <div className="grid gap-8">
       <Tabs defaultValue="agent" className="w-full">
-        <TabsList className="w-full justify-start bg-background border-b rounded-none h-12 p-0">
+        <TabsList className="w-full justify-start bg-transparent border-b border-stone-500 dark:border-stone-800 rounded-none h-12 p-0">
           <TabsTrigger
             value="agent"
             className="rounded-none h-12 px-6 data-[state=active]:bg-background data-[state=active]:border-b-2 data-[state=active]:border-primary"
