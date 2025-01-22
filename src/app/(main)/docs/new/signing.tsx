@@ -2,6 +2,11 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { z } from "zod";
+import { motion } from "framer-motion";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { captureException } from "@sentry/nextjs";
 import {
   UploadIcon as FileUpload,
   Pencil,
@@ -9,11 +14,6 @@ import {
   Trash2,
   Lock,
 } from "lucide-react";
-import { z } from "zod";
-import { motion } from "framer-motion";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { captureException } from "@sentry/nextjs";
 
 import { useDrawing } from "@/hooks/use-drawing";
 import { useFileUpload } from "@/hooks/use-file-upload";

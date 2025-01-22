@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 
 export function ComingSoon() {
   return (
-    <div className="relative bg-background overflow-hidden">
+    <div className="relative overflow-hidden">
       {/* Animated background grid */}
       <div className="absolute inset-0 bg-grid-primary/[0.02] bg-[size:60px_60px]" />
       <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
