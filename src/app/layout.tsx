@@ -2,7 +2,12 @@ import localFont from "next/font/local";
 import NextTopLoader from "nextjs-toploader";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
+import { ThemeProvider as NextThemesProvider } from "next-themes";
 
+import {
+  metadata as siteMetadata,
+  viewport as siteViewport,
+} from "@/config/site";
 import { ToastProvider } from "@/components/ui/toast";
 import { Toaster } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils/cn";
@@ -13,6 +18,9 @@ const satoshiFont = localFont({
   variable: "--font-satoshi",
   display: "swap",
 });
+
+export const metadata = siteMetadata;
+export const viewport = siteViewport;
 
 export default function RootLayout({
   children,
@@ -30,14 +38,20 @@ export default function RootLayout({
         <SpeedInsights />
         <Analytics />
         <NextTopLoader
-          color="#8a3ef4"
           showSpinner={false}
           easing="cubic-bezier(0.4, 0, 0.2, 1)"
         />
-        <ToastProvider duration={2000} swipeDirection="right">
-          {children}
-          <Toaster />
-        </ToastProvider>
+        <NextThemesProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <ToastProvider swipeDirection="right">
+            <Toaster />
+            {children}
+          </ToastProvider>
+        </NextThemesProvider>
       </body>
     </html>
   );

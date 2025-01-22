@@ -17,7 +17,13 @@ export function NavTooltip({ children, content }: NavTooltipProps) {
     <TooltipProvider delayDuration={100}>
       <Tooltip>
         <TooltipTrigger asChild>{children}</TooltipTrigger>
-        <TooltipContent side="right" align="start">
+        <TooltipContent
+          className="text-sm font-medium"
+          side="right"
+          sideOffset={12}
+          align="start"
+          alignOffset={6}
+        >
           <p>{content}</p>
         </TooltipContent>
       </Tooltip>

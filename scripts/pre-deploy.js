@@ -1,4 +1,9 @@
-const requiredEnvList = ["SENTRY_PROJECT", "SENTRY_ORG", "SENTRY_AUTH_TOKEN"];
+const requiredEnvList = [
+  "SENTRY_PROJECT",
+  "SENTRY_ORG",
+  "SENTRY_AUTH_TOKEN",
+  "NEXT_PUBLIC_SENTRY_DSN",
+];
 
 // Skip checking environment variables if in local development or running on CI
 if (
