@@ -50,7 +50,7 @@ const DockLink = memo(
       aria-label={label}
       className={cn(
         buttonVariants({ variant: "ghost", size: "icon" }),
-        "size-12 rounded-md",
+        "size-12 rounded-md !bg-transparent",
         className
       )}
       onClick={onClick}

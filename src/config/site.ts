@@ -31,7 +31,7 @@ export const viewport: Viewport = {
   colorScheme: "dark",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#faf9f6" },
-    { media: "(prefers-color-scheme: dark)", color: "#8c4bcb" },
+    { media: "(prefers-color-scheme: dark)", color: "#000" },
   ],
 };
 
@@ -44,9 +44,9 @@ export const metadata: Metadata = {
   keywords: keywords,
   description: seoDescription,
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/img/icon.png",
-    apple: "/img/icon.png",
+    icon: "/img/docusol_icon.png",
+    shortcut: "/img/docusol_icon.png",
+    apple: "/img/docusol_icon.png",
   },
   openGraph: {
     type: "website",
@@ -62,7 +62,7 @@ export const metadata: Metadata = {
         alt: "alt text",
       },
       {
-        url: "/img/icon.png",
+        url: "/img/docusol_icon.png",
         width: 64,
         height: 52,
         alt: "alt text",

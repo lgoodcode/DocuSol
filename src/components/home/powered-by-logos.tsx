@@ -29,7 +29,7 @@ export const PoweredByLogos = () => (
       />
       <span className="text-muted-foreground">•</span>
       <Image
-        src="/svg/openai.svg"
+        src="/svg/openAi.svg"
         alt="OpenAI"
         width={100}
         height={40}
