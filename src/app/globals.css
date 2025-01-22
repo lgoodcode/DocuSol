@@ -13,7 +13,7 @@ body {
   :root {
     --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;
-    --card: 0 0% 98%;
+    --card: 0 0% 94%;
     --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
@@ -91,6 +91,7 @@ body {
     width: 0.75em;
   }
 
+  /* Light mode scrollbar */
   ::-webkit-scrollbar-track {
     background: hsl(var(--background));
   }
@@ -103,6 +104,38 @@ body {
 
   ::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--accent));
+  }
+
+  /* Dark mode scrollbar */
+  @media (prefers-color-scheme: dark) {
+    ::-webkit-scrollbar-track {
+      background: hsl(var(--background));
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: hsl(var(--muted-foreground));
+      border-radius: var(--radius);
+      border: 2px solid hsl(var(--background));
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: hsl(var(--accent-foreground));
+    }
+  }
+
+  /* For class-based dark mode */
+  .dark ::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground));
+    border-radius: var(--radius);
+    border: 2px solid hsl(var(--background));
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--accent-foreground));
   }
 
   /* Change Autofill styles in Chrome*/
