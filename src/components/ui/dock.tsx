@@ -51,7 +51,7 @@ const StaticDockIcon = ({
         height: size,
       }}
       className={cn(
-        "flex aspect-square cursor-pointer items-center justify-center rounded-full transition-colors duration-200",
+        "flex aspect-square cursor-pointer items-center justify-center rounded-full transition-colors duration-200 hover:bg-black/10",
         className
       )}
       {...props}
@@ -79,6 +79,7 @@ const StaticDock = React.forwardRef<HTMLDivElement, BaseDockProps>(
         if (React.isValidElement(child)) {
           return (
             <StaticDockIcon size={iconSize}>
+              {/* @ts-expect-error - child.props is not defined */}
               {child.props.children}
             </StaticDockIcon>
           );
@@ -193,6 +194,7 @@ const AnimatedDock = React.forwardRef<HTMLDivElement, BaseDockProps>(
               magnification={iconMagnification}
               distance={iconDistance}
             >
+              {/* @ts-expect-error - child.props is not defined */}
               {child.props.children}
             </AnimatedDockIcon>
           );
