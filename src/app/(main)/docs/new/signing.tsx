@@ -158,7 +158,10 @@ export function DocumentSigning() {
                     <Button
                       variant="outline"
                       className="w-full md:w-auto"
-                      onClick={() => fileInputRef.current?.click()}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        fileInputRef.current?.click();
+                      }}
                     >
                       <FileText className="h-4 w-4" />
                       Select File
