@@ -1,5 +1,4 @@
 import localFont from "next/font/local";
-import NextTopLoader from "nextjs-toploader";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
@@ -37,10 +36,6 @@ export default function RootLayout({
       >
         <SpeedInsights />
         <Analytics />
-        <NextTopLoader
-          showSpinner={false}
-          easing="cubic-bezier(0.4, 0, 0.2, 1)"
-        />
         <NextThemesProvider
           attribute="class"
           defaultTheme="system"

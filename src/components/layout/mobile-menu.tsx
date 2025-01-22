@@ -38,6 +38,7 @@ export function MobileMenu() {
             <Button
               variant="ghost"
               size="icon"
+              className="bg-transparent hover:bg-transparent hover:text-primary"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             >
               {theme === "dark" ? (
