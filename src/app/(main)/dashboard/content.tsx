@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Bot, FileText, Send, Sparkles, Upload, User } from "lucide-react";
+import { Bot, FileText, Send, Sparkles, User, X } from "lucide-react";
 
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useFileUpload } from "@/hooks/use-file-upload";
 
 const container = {
   hidden: { opacity: 0 },
@@ -91,6 +92,7 @@ export function DashboardContent() {
   );
   const [documentName, setDocumentName] = useState("");
   const [goal, setGoal] = useState("");
+  const { file, handleFileChange, clearFile, fileInputRef } = useFileUpload();
 
   const handleSubmit =
     (type: "document" | "chat" | "agent") => async (e: React.FormEvent) => {
@@ -124,6 +126,7 @@ export function DashboardContent() {
         } else if (type === "agent") {
           setAgentLoading(false);
         }
+        clearFile();
       }
     };
 
@@ -255,21 +258,20 @@ export function DashboardContent() {
         </TabsContent>
 
         {/* Document Tab */}
-        <TabsContent value="document" className="space-y-8 mt-8">
+        <TabsContent value="document" className="space-y-6 mt-6 sm:mt-8">
           <div className="grid gap-6">
             {/* AI Document Generation */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5" />
+                <CardTitle className="text-lg sm:text-xl">
                   Generate Document with AI
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-4 sm:space-y-6">
                 <div className="space-y-2">
                   <Label>Document Type</Label>
                   <Select>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select document type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -290,38 +292,60 @@ export function DashboardContent() {
                   <Label>Prompt</Label>
                   <Textarea
                     placeholder="Describe the document you want to generate..."
-                    className="min-h-[100px]"
+                    className="min-h-[100px] w-full"
                   />
                 </div>
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-2 md:gap-4 justify-end">
                   <Button
-                    className="flex-1"
+                    className="w-full sm:w-auto"
                     isLoading={documentLoading}
                     onClick={handleSubmit("document")}
                   >
+                    <Sparkles className="h-4 w-4" />
                     Generate Document
                   </Button>
-                  <Input
-                    type="file"
-                    id="fileUpload"
-                    className="hidden"
-                    accept=".pdf,.doc,.docx,.txt"
-                  />
-                  <Button
-                    variant="outline"
-                    onClick={() =>
-                      document.getElementById("fileUpload")?.click()
-                    }
-                  >
-                    <Upload className="h-4 w-4" />
-                    Upload Reference
-                  </Button>
+                  {/* Upload Reference */}
+                  <div className="flex flex-col lg:flex-row gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <FileText className="h-4 w-4" />
+                      Upload Reference
+                    </Button>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      accept=".pdf,.doc,.docx,.txt"
+                      className="hidden"
+                    />
+                    {file && (
+                      <div className="flex flex-row gap-4">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={clearFile}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground">
+                            Selected: {file.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Size: {(file.size / (1024 * 1024)).toFixed(2)}MB
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
             {/* Recent Generations */}
-            <div className="grid gap-4">
+            <div className="space-y-4">
               <h3 className="text-lg font-medium">Recent Generations</h3>
               <div className="grid gap-4">
                 {[
@@ -350,15 +374,19 @@ export function DashboardContent() {
                     <Card>
                       <CardContent className="flex items-center justify-between p-4">
                         <div className="flex items-center gap-4">
-                          <FileText className="h-8 w-8 text-primary" />
-                          <div>
-                            <p className="font-medium">{item.title}</p>
-                            <p className="text-sm text-muted-foreground">
+                          <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-primary flex-shrink-0" />
+                          <div className="min-w-0">
+                            <p className="font-medium truncate">{item.title}</p>
+                            <p className="text-xs sm:text-sm text-muted-foreground">
                               {item.timestamp}
                             </p>
                           </div>
                         </div>
-                        <Button variant="outline" size="sm">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="ml-2 flex-shrink-0"
+                        >
                           View
                         </Button>
                       </CardContent>
@@ -404,7 +432,7 @@ export function DashboardContent() {
                       }`}
                     >
                       <div
-                        className={`flex h-8 w-8 shrink-0 select-none font-semibold items-center justify-center rounded-md border ${
+                        className={`flex h-8 w-8 shrink-0 select-none items-center justify-center border ${
                           message.type === "user"
                             ? "bg-primary text-primary-foreground"
                             : "bg-muted"
@@ -417,9 +445,9 @@ export function DashboardContent() {
                         )}
                       </div>
                       <div
-                        className={`rounded-lg px-4 py-2 max-w-[80%] ${
+                        className={`px-4 py-2 max-w-[80%] ${
                           message.type === "user"
-                            ? "bg-primary text-primary-foreground"
+                            ? "bg-primary text-primary-foreground font-medium"
                             : "bg-muted"
                         }`}
                       >
@@ -437,7 +465,7 @@ export function DashboardContent() {
                       className="flex-1"
                     />
                     <Button isLoading={chatLoading}>
-                      <Send className="h-4 w-4" />
+                      {!chatLoading && <Send className="h-4 w-4" />}
                       <span className="sr-only">Send message</span>
                     </Button>
                   </form>

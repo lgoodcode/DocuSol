@@ -91,7 +91,7 @@ export function MobileMenu() {
                       key={route.path}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.1 + i * 0.05 }}
+                      transition={{ delay: 0.2 + i * 0.05 }}
                     >
                       <Link
                         href={route.path}
