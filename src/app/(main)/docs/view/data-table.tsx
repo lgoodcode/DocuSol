@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useState } from "react";
 import {
   type ColumnDef,
   type ColumnFiltersState,
@@ -39,12 +39,9 @@ export function DataTable<TData, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
   const table = useReactTable({
     data,
@@ -101,7 +98,7 @@ export function DataTable<TData, TValue>({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="rounded-md border">
+      <div className="w-full max-w-[calc(100vw-48px)] overflow-x-auto border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
