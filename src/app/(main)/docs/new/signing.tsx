@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
 import { z } from "zod";
 import { motion } from "framer-motion";
@@ -21,6 +20,7 @@ import { useDrawing } from "@/hooks/use-drawing";
 import { useFileUpload } from "@/hooks/use-file-upload";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { FilePreview } from "@/components/file-preview";
 import {
   Card,
   CardContent,
@@ -196,27 +196,7 @@ export function DocumentSigning() {
                   )}
                 </div>
 
-                {preview && (
-                  <div className="max-h-[400px] w-full max-w-sm mx-auto overflow-hidden rounded-md border">
-                    {file?.type === "application/pdf" ? (
-                      <iframe
-                        src={preview}
-                        className="w-full h-[400px]"
-                        title="Document preview"
-                      />
-                    ) : (
-                      <div className="relative h-[300px] w-full">
-                        <Image
-                          src={preview}
-                          alt="Document preview"
-                          className="object-contain"
-                          fill
-                          sizes="(max-width: 640px) 100vw, 640px"
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
+                {preview && <FilePreview file={file} preview={preview} />}
               </CardContent>
             </Card>
           </motion.div>
