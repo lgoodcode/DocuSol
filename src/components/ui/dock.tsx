@@ -8,12 +8,13 @@ import {
   useMotionValue,
   useSpring,
   useTransform,
-} from "motion/react";
+} from "framer-motion";
 import React, { PropsWithChildren, useRef } from "react";
 
 import { cn } from "@/lib/utils/cn";
 
-export interface DockProps extends VariantProps<typeof dockVariants> {
+// Shared types and constants
+export interface BaseDockProps extends VariantProps<typeof dockVariants> {
   className?: string;
   iconSize?: number;
   iconMagnification?: number;
@@ -26,46 +27,69 @@ const DEFAULT_SIZE = 40;
 const DEFAULT_MAGNIFICATION = 60;
 const DEFAULT_DISTANCE = 140;
 
-const dockVariants = cva(
+export const dockVariants = cva(
   "supports-backdrop-blur:bg-white/10 supports-backdrop-blur:dark:bg-black/10 mx-auto mt-8 flex h-[58px] w-max items-center justify-center gap-2 rounded-2xl border p-2 backdrop-blur-md"
 );
 
-const Dock = React.forwardRef<HTMLDivElement, DockProps>(
+// Static (Disabled) Components
+interface StaticDockIconProps extends React.HTMLAttributes<HTMLDivElement> {
+  size?: number;
+  className?: string;
+  children?: React.ReactNode;
+}
+
+const StaticDockIcon = ({
+  size = DEFAULT_SIZE,
+  className,
+  children,
+  ...props
+}: StaticDockIconProps) => {
+  return (
+    <div
+      style={{
+        width: size,
+        height: size,
+      }}
+      className={cn(
+        "flex aspect-square cursor-pointer items-center justify-center rounded-full transition-colors duration-200",
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+};
+
+StaticDockIcon.displayName = "StaticDockIcon";
+
+const StaticDock = React.forwardRef<HTMLDivElement, BaseDockProps>(
   (
     {
       className,
       children,
       iconSize = DEFAULT_SIZE,
-      iconMagnification = DEFAULT_MAGNIFICATION,
-      iconDistance = DEFAULT_DISTANCE,
       direction = "middle",
       ...props
     },
     ref
   ) => {
-    const mouseX = useMotionValue(Infinity);
-
     const renderChildren = () => {
       return React.Children.map(children, (child) => {
-        if (React.isValidElement(child) && child.type === DockIcon) {
-          return React.cloneElement(child, {
-            // @ts-expect-error - TODO: fix this
-            ...child.props,
-            mouseX: mouseX,
-            size: iconSize,
-            magnification: iconMagnification,
-            distance: iconDistance,
-          });
+        if (React.isValidElement(child)) {
+          return (
+            <StaticDockIcon size={iconSize}>
+              {child.props.children}
+            </StaticDockIcon>
+          );
         }
         return child;
       });
     };
 
     return (
-      <motion.div
+      <div
         ref={ref}
-        onMouseMove={(e) => mouseX.set(e.pageX)}
-        onMouseLeave={() => mouseX.set(Infinity)}
         {...props}
         className={cn(dockVariants({ className }), {
           "items-start": direction === "top",
@@ -74,14 +98,15 @@ const Dock = React.forwardRef<HTMLDivElement, DockProps>(
         })}
       >
         {renderChildren()}
-      </motion.div>
+      </div>
     );
   }
 );
 
-Dock.displayName = "Dock";
+StaticDock.displayName = "StaticDock";
 
-export interface DockIconProps
+// Animated Components
+interface AnimatedDockIconProps
   extends Omit<MotionProps & React.HTMLAttributes<HTMLDivElement>, "children"> {
   size?: number;
   magnification?: number;
@@ -92,7 +117,7 @@ export interface DockIconProps
   props?: PropsWithChildren;
 }
 
-const DockIcon = ({
+const AnimatedDockIcon = ({
   size = DEFAULT_SIZE,
   magnification = DEFAULT_MAGNIFICATION,
   distance = DEFAULT_DISTANCE,
@@ -100,7 +125,7 @@ const DockIcon = ({
   className,
   children,
   ...props
-}: DockIconProps) => {
+}: AnimatedDockIconProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const padding = Math.max(6, size * 0.2);
   const defaultMouseX = useMotionValue(Infinity);
@@ -125,9 +150,13 @@ const DockIcon = ({
   return (
     <motion.div
       ref={ref}
-      style={{ width: scaleSize, height: scaleSize, padding }}
+      style={{
+        width: scaleSize,
+        height: scaleSize,
+        padding,
+      }}
       className={cn(
-        "flex aspect-square cursor-pointer items-center justify-center rounded-full",
+        "flex aspect-square cursor-pointer items-center justify-center rounded-full transition-colors duration-200",
         className
       )}
       {...props}
@@ -137,6 +166,73 @@ const DockIcon = ({
   );
 };
 
-DockIcon.displayName = "DockIcon";
+AnimatedDockIcon.displayName = "AnimatedDockIcon";
 
-export { Dock, DockIcon, dockVariants };
+const AnimatedDock = React.forwardRef<HTMLDivElement, BaseDockProps>(
+  (
+    {
+      className,
+      children,
+      iconSize = DEFAULT_SIZE,
+      iconMagnification = DEFAULT_MAGNIFICATION,
+      iconDistance = DEFAULT_DISTANCE,
+      direction = "middle",
+      ...props
+    },
+    ref
+  ) => {
+    const mouseX = useMotionValue(Infinity);
+
+    const renderChildren = () => {
+      return React.Children.map(children, (child) => {
+        if (React.isValidElement(child)) {
+          return (
+            <AnimatedDockIcon
+              mouseX={mouseX}
+              size={iconSize}
+              magnification={iconMagnification}
+              distance={iconDistance}
+            >
+              {child.props.children}
+            </AnimatedDockIcon>
+          );
+        }
+        return child;
+      });
+    };
+
+    return (
+      <motion.div
+        ref={ref}
+        onMouseMove={(e) => mouseX.set(e.pageX)}
+        onMouseLeave={() => mouseX.set(Infinity)}
+        {...props}
+        className={cn(dockVariants({ className }), {
+          "items-start": direction === "top",
+          "items-center": direction === "middle",
+          "items-end": direction === "bottom",
+        })}
+      >
+        {renderChildren()}
+      </motion.div>
+    );
+  }
+);
+
+AnimatedDock.displayName = "AnimatedDock";
+
+// Main Export Component
+interface DockProps extends BaseDockProps {
+  animated?: boolean;
+}
+
+const Dock = React.forwardRef<HTMLDivElement, DockProps>(
+  ({ animated = true, ...props }, ref) => {
+    const Component = animated ? AnimatedDock : StaticDock;
+    return <Component ref={ref} {...props} />;
+  }
+);
+
+Dock.displayName = "Dock";
+
+export { Dock, AnimatedDock, StaticDock, AnimatedDockIcon, StaticDockIcon };
