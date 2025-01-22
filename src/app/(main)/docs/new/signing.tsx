@@ -13,8 +13,10 @@ import {
   Save,
   Trash2,
   Lock,
+  FileText,
 } from "lucide-react";
 
+import { formatFileSize } from "@/lib/utils/format-file-size";
 import { useDrawing } from "@/hooks/use-drawing";
 import { useFileUpload } from "@/hooks/use-file-upload";
 import { useToast } from "@/hooks/use-toast";
@@ -151,15 +153,22 @@ export function DocumentSigning() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid w-full">
-                  <div className="flex justify-between gap-2">
-                    <Input
-                      ref={fileInputRef}
-                      id="document"
+                <div className="grid w-full gap-2">
+                  <div className="flex flex-row gap-2">
+                    <Button
+                      variant="outline"
+                      className="w-full md:w-auto"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <FileText className="h-4 w-4" />
+                      Select File
+                    </Button>
+                    <input
                       type="file"
-                      accept=".pdf,image/*"
+                      ref={fileInputRef}
                       onChange={handleFileChange}
-                      className="cursor-pointer"
+                      accept=".pdf,image/*"
+                      className="hidden"
                     />
                     {file && (
                       <Button
@@ -168,11 +177,23 @@ export function DocumentSigning() {
                         size="icon"
                         onClick={clearFile}
                       >
-                        <Trash2 className="h-5 w-5" />
+                        <Trash2 className="h-4 w-4" />
                         <span className="sr-only">Remove file</span>
                       </Button>
                     )}
                   </div>
+                  {file && (
+                    <div className="space-y-1">
+                      <div className="space-y-1">
+                        <p className="text-xs sm:text-sm text-muted-foreground">
+                          Selected: {file.name}
+                        </p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
+                          Size: {formatFileSize(file.size)}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {preview && (
