@@ -129,7 +129,7 @@ export function DocumentSigning() {
           {/* File Upload Card */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
                 <FileUpload className="h-5 w-5" />
                 Upload Document
               </CardTitle>
@@ -192,7 +192,7 @@ export function DocumentSigning() {
           {/* Document Options Card */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
                 <Lock className="h-5 w-5" />
                 Document Options
               </CardTitle>
@@ -280,7 +280,7 @@ export function DocumentSigning() {
           {/* Signature Card */}
           <Card>
             <CardHeader className="flex flex-col sm:flex-row items-start gap-4 sm:gap-0 sm:items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
                 <Pencil className="h-5 w-5" />
                 Sign Document
               </CardTitle>
@@ -294,7 +294,7 @@ export function DocumentSigning() {
                     <SelectItem value="type">Type</SelectItem>
                   </SelectContent>
                 </Select>
-                {signatureType === "draw" && (
+                {signatureType === "draw" && hasDrawn && (
                   <Button
                     type="button"
                     variant="destructive"
@@ -310,7 +310,7 @@ export function DocumentSigning() {
             </CardHeader>
             <CardContent>
               {signatureType === "draw" ? (
-                <div className="relative aspect-[3/1] w-full border rounded-lg overflow-hidden bg-background dark:bg-background/60">
+                <div className="relative aspect-[3/2] sm:aspect-[3/1] w-full border rounded-lg overflow-hidden bg-background dark:bg-background/60">
                   <canvas
                     ref={canvasRef}
                     width={900}

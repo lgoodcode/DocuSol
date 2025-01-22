@@ -261,88 +261,94 @@ export function DashboardContent() {
         <TabsContent value="document" className="space-y-6 mt-6 sm:mt-8">
           <div className="grid gap-6">
             {/* AI Document Generation */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg sm:text-xl">
-                  Generate Document with AI
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 sm:space-y-6">
-                <div className="space-y-2">
-                  <Label>Document Type</Label>
-                  <Select>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select document type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="contract">
-                        Contract Agreement
-                      </SelectItem>
-                      <SelectItem value="proposal">
-                        Business Proposal
-                      </SelectItem>
-                      <SelectItem value="letter">
-                        Professional Letter
-                      </SelectItem>
-                      <SelectItem value="report">Technical Report</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Prompt</Label>
-                  <Textarea
-                    placeholder="Describe the document you want to generate..."
-                    className="min-h-[100px] w-full"
-                  />
-                </div>
-                <div className="flex flex-col sm:flex-row gap-2 md:gap-4 justify-end">
-                  <Button
-                    className="w-full sm:w-auto"
-                    isLoading={documentLoading}
-                    onClick={handleSubmit("document")}
-                  >
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
                     <Sparkles className="h-4 w-4" />
-                    Generate Document
-                  </Button>
-                  {/* Upload Reference */}
-                  <div className="flex flex-col lg:flex-row gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <FileText className="h-4 w-4" />
-                      Upload Reference
-                    </Button>
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleFileChange}
-                      accept=".pdf,.doc,.docx,.txt"
-                      className="hidden"
-                    />
-                    {file && (
-                      <div className="flex flex-row gap-4">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={clearFile}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                        <div className="space-y-1">
-                          <p className="text-xs text-muted-foreground">
-                            Selected: {file.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Size: {(file.size / (1024 * 1024)).toFixed(2)}MB
-                          </p>
-                        </div>
-                      </div>
-                    )}
+                    Generate Document with AI
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 sm:space-y-6">
+                  <div className="space-y-2">
+                    <Label>Document Type</Label>
+                    <Select>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select document type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="contract">
+                          Contract Agreement
+                        </SelectItem>
+                        <SelectItem value="proposal">
+                          Business Proposal
+                        </SelectItem>
+                        <SelectItem value="letter">
+                          Professional Letter
+                        </SelectItem>
+                        <SelectItem value="report">Technical Report</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                  <div className="space-y-2">
+                    <Label>Prompt</Label>
+                    <Textarea
+                      placeholder="Describe the document you want to generate..."
+                      className="min-h-[100px] w-full"
+                    />
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-2 md:gap-4 justify-end">
+                    <Button
+                      className="w-full sm:w-auto"
+                      isLoading={documentLoading}
+                      onClick={handleSubmit("document")}
+                    >
+                      Generate Document
+                    </Button>
+                    {/* Upload Reference */}
+                    <div className="flex flex-col lg:flex-row gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <FileText className="h-4 w-4" />
+                        Upload Reference
+                      </Button>
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        accept=".pdf,.doc,.docx,.txt"
+                        className="hidden"
+                      />
+                      {file && (
+                        <div className="flex flex-row gap-4">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={clearFile}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                          <div className="space-y-1">
+                            <p className="text-xs text-muted-foreground">
+                              Selected: {file.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Size: {(file.size / (1024 * 1024)).toFixed(2)}MB
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
 
             {/* Recent Generations */}
             <div className="space-y-4">
