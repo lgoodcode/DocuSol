@@ -2,18 +2,16 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useTheme } from "next-themes";
-import { Moon, User, Sun } from "lucide-react";
+import { User } from "lucide-react";
 
 import { navRoutes, accountRoute } from "@/config/routes";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { NavButton } from "@/components/layout/nav-button";
 import { NavTooltip } from "@/components/layout/nav-tooltip";
 import { MobileMenu } from "@/components/layout/mobile-menu";
 
 export function Nav() {
-  const { theme, setTheme } = useTheme();
-
   return (
     <>
       <MobileMenu />
@@ -42,20 +40,7 @@ export function Nav() {
 
         <div className="mt-auto">
           <div className="border-t border-border">
-            <NavTooltip content={theme === "dark" ? "Light" : "Dark"}>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="w-full h-12 text-primary/60 hover:text-primary-foreground bg-primary-foreground/10 hover:bg-primary dark:hover:bg-white dark:hover:text-black"
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              >
-                {theme === "dark" ? (
-                  <Sun className="h-5 w-5" />
-                ) : (
-                  <Moon className="h-5 w-5" />
-                )}
-              </Button>
-            </NavTooltip>
+            <ThemeToggle withTooltip />
             <NavTooltip content="Account">
               <Link href={accountRoute.path}>
                 <Button
