@@ -9,7 +9,7 @@ export default function MainLayout({
     <div className="relative flex">
       {/* Tech pattern overlay */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="fixed inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-black/5 dark:from-primary/5 to-transparent" />
+        <div className="fixed inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-black/5 dark:from-primary/[0.03] to-transparent" />
       </div>
 
       <Nav />
