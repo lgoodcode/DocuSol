@@ -1,0 +1,19 @@
+async function uploadFile(file: File, password?: string) {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("mimeType", file.type);
+  if (password) {
+    formData.append("password", password);
+  }
+
+  const response = await fetch("/api/docs/new", {
+    method: "POST",
+    body: formData,
+    headers: {
+      "Cache-Control": "no-cache",
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  return response.json();
+}
