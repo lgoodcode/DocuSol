@@ -14,7 +14,7 @@ export function HeroImage({ theme }: { theme: string }) {
           ease: "easeOut",
           delay: 1,
         }}
-        className="hidden xl:block absolute xl:-right-[22%] 2xl:-right-[13%] 3xl:-right-[10%] backdrop-blur-sm will-change-transform"
+        className="hidden xl:block absolute xl:-right-[22%] 2xl:-right-[13%] 3xl:-right-[10%] will-change-transform"
       >
         <div className="p-4 md:p-16 relative z-10 [perspective:2000px]">
           <motion.div
@@ -43,8 +43,8 @@ export function HeroImage({ theme }: { theme: string }) {
             <Image
               src={
                 theme === "dark"
-                  ? "/img/landing/new_document.png"
-                  : "/img/landing/new_document_light.png"
+                  ? "/img/landing/new_document.webp"
+                  : "/img/landing/new_document_light.webp"
               }
               alt="DocuSol Dashboard Preview"
               width={823}
@@ -65,9 +65,9 @@ export function HeroImage({ theme }: { theme: string }) {
           ease: "easeOut",
           delay: 1,
         }}
-        className="xl:hidden backdrop-blur-sm will-change-transform"
+        className="xl:hidden will-change-transform"
       >
-        <div className="px-4 !pt-0 md:p-16 max-w-[960px] mx-auto relative z-10">
+        <div className="px-8 !pt-0 md:p-16 max-w-[960px] mx-auto relative z-10">
           <motion.div
             className="
               relative rounded-xl overflow-hidden
@@ -95,8 +95,8 @@ export function HeroImage({ theme }: { theme: string }) {
             <Image
               src={
                 theme === "dark"
-                  ? "/img/landing/small_new_document.png"
-                  : "/img/landing/small_new_document_light.png"
+                  ? "/img/landing/small_new_document.webp"
+                  : "/img/landing/small_new_document_light.webp"
               }
               alt="DocuSol Dashboard Preview"
               width={823}

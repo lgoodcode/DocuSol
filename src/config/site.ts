@@ -5,7 +5,7 @@ export const siteName = "DocuSol";
 export const heroDescription = "Share documents securely on the blockchain.";
 
 const seoDescription =
-  "DocuSol - The ultimate platform for sharing documents securely on the blockchain.";
+  "The ultimate platform for sharing documents securely on the blockchain.";
 const keywords = [
   "DocuSol",
   "Blockchain",
@@ -44,9 +44,9 @@ export const metadata: Metadata = {
   keywords: keywords,
   description: seoDescription,
   icons: {
-    icon: "/img/docusol_icon.png",
-    shortcut: "/img/docusol_icon.png",
-    apple: "/img/docusol_icon.png",
+    icon: "/img/docusol_icon.webp",
+    shortcut: "/img/docusol_icon.webp",
+    apple: "/img/docusol_icon.webp",
   },
   openGraph: {
     type: "website",
@@ -56,28 +56,28 @@ export const metadata: Metadata = {
     siteName: siteName,
     images: [
       {
-        url: "/img/logo-318x85.png",
+        url: "/img/docusol_logo.webp",
         width: 318,
         height: 85,
-        alt: "alt text",
+        alt: "DocuSol Logo",
       },
       {
-        url: "/img/docusol_icon.png",
+        url: "/img/docusol_icon.webp",
         width: 64,
         height: 52,
-        alt: "alt text",
+        alt: "DocuSol Logo",
       },
       {
-        url: "/img/icon-logo-1231x1049.png",
+        url: "/img/docusol_logo.webp",
         width: 1231,
         height: 1049,
-        alt: "alt text",
+        alt: "DocuSol Logo",
       },
       {
-        url: "/img/icon-1024x1024.png",
+        url: "/img/docusol_logo.webp",
         width: 1024,
         height: 1024,
-        alt: "alt text",
+        alt: "DocuSol Logo",
       },
     ],
   },

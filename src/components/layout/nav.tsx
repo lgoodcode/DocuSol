@@ -19,7 +19,7 @@ export function Nav() {
         <div className="flex flex-col flex-1">
           <Link href="/" className="p-3 w-full h-12 mb-3">
             <Image
-              src="/img/docusol_icon.png"
+              src="/img/docusol_icon.webp"
               alt="DocuSol"
               width={318}
               height={85}

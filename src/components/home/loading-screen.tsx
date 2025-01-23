@@ -41,7 +41,7 @@ export function LoadingScreen({ onAnimationComplete }: LoadingScreenProps) {
           }}
         >
           <Image
-            src="/img/docusol_icon.png"
+            src="/img/docusol_icon.webp"
             alt="DocuSol Logo"
             fill
             className="object-contain"

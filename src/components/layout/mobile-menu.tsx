@@ -24,7 +24,7 @@ export function MobileMenu() {
       <div className="flex h-16 items-center justify-between px-4">
         <Link href="/" className="p-2 w-12 h-12 flex items-center gap-2">
           <Image
-            src="/img/docusol_icon.png"
+            src="/img/docusol_icon.webp"
             alt="DocuSol"
             width={318}
             height={85}
@@ -67,7 +67,7 @@ export function MobileMenu() {
               <div className="flex items-center justify-between border-b border-border pb-4">
                 <div className="p-2 w-12 h-12 flex items-center gap-2">
                   <Image
-                    src="/img/docusol_icon.png"
+                    src="/img/docusol_icon.webp"
                     alt="DocuSol"
                     width={318}
                     height={85}

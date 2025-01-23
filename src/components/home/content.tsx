@@ -85,7 +85,7 @@ export function HomeContent() {
       // Start showing content AFTER loading screen exit animation completes
       const startContentTimer = setTimeout(() => {
         setShowContent(true);
-      }, 800); // Match loading screen exit duration
+      }, 100); // Match loading screen exit duration
 
       return () => clearTimeout(startContentTimer);
     }
@@ -95,7 +95,7 @@ export function HomeContent() {
     <>
       {/* Root layout component cannot be a client component - just copy pasta */}
       <ProgressBar
-        height="2px"
+        height="3px"
         color={theme === "dark" ? "#fff" : "#000"}
         options={{
           showSpinner: false,
@@ -152,8 +152,8 @@ export function HomeContent() {
               {/* Hero Section */}
               <section className="relative max-w-[1720px] mx-auto grid grid-cols-1 xl:grid-cols-2 min-h-[100vh]">
                 {/* Left Column */}
-                <div className="px-36 py-12 pt-24 !pb-28 xl:p-36 xl:pr-16 2xl:p-24 flex flex-col relative z-10">
-                  <div className="flex items-center mb-4">
+                <div className="px-16 py-12 pt-24 lg:px-32 !pb-28 xl:p-36 xl:pr-16 2xl:p-24 flex flex-col relative z-10">
+                  <div className="flex items-center mb-6">
                     <Badge>Beta</Badge>
                   </div>
 
@@ -165,7 +165,7 @@ export function HomeContent() {
                     <div className="flex items-center gap-4">
                       <div className="w-[50px] h-[50px] md:w-[76px] md:h-[76px] flex items-center justify-center">
                         <Image
-                          src="/img/docusol_icon.png"
+                          src="/img/docusol_icon.webp"
                           alt="DocuSol Logo"
                           width={120}
                           height={48}
@@ -173,7 +173,7 @@ export function HomeContent() {
                           priority
                         />
                       </div>
-                      <h1 className="text-3xl md:text-5xl lg:text-7xl font-bold bg-gradient-to-br from-primary to-black/45 dark:to-primary-foreground bg-clip-text text-transparent">
+                      <h1 className="text-5xl lg:text-7xl font-bold bg-gradient-to-br from-primary to-black/45 dark:to-primary-foreground bg-clip-text text-transparent">
                         DocuSol
                       </h1>
                     </div>
@@ -207,12 +207,11 @@ export function HomeContent() {
               </section>
 
               {/* What is DocuSol? */}
-              <section className="mt-24 border-t border-border">
-                <h2 className="text-center p-4 text-lg font-semibold border-b border-border">
+              <section className="relative my-24 lg:top-24 border-t border-border">
+                <h2 className="text-center p-4 text-4xl font-semibold border-b border-border">
                   What is DocuSol?
                 </h2>
-                <div className="max-w-2xl mx-auto my-32 text-center px-8">
-                  <p className="text-muted-foreground mb-4">DocuSol is</p>
+                <div className="max-w-2xl mx-auto my-24 pb-24 text-center px-8">
                   <h3 className="text-2xl font-semibold">
                     A revolutionary platform that combines AI-powered document
                     generation with secure blockchain-based signing and sharing
@@ -222,13 +221,13 @@ export function HomeContent() {
               </section>
 
               {/* Features */}
-              <section className="border-t border-border">
-                <h2 className="text-center p-4 text-lg font-semibold border-b border-border">
+              <section id="features" className="border-t border-border my-24">
+                <h2 className="text-center p-4 text-2xl md:text-4xl font-semibold border-b border-border">
                   Key Features
                 </h2>
-                <div className="grid md:grid-cols-2 gap-8 p-8 md:p-16">
+                <div className="grid md:grid-cols-2 gap-8 p-8 md:p-16 lg:px-32 2xl:px-64">
                   <div className="space-y-4">
-                    <p className="text-muted-foreground">
+                    <p className="text-lg text-muted-foreground">
                       DocuSol empowers you with
                     </p>
                     <h3 className="text-3xl font-semibold">
@@ -294,9 +293,9 @@ export function HomeContent() {
                 <div className="relative flex h-[500px] w-full flex-col items-center justify-center overflow-hidden border border-border bg-transparent shadow-xl">
                   <Marquee className="[--duration:20s] py-0">
                     {[
-                      "/img/landing/dashboard.png",
-                      "/img/landing/documents.png",
-                      "/img/landing/new_document.png",
+                      "/img/landing/dashboard.webp",
+                      "/img/landing/documents.webp",
+                      "/img/landing/new_document.webp",
                     ].map((src) => (
                       <Image
                         key={src}
@@ -321,19 +320,19 @@ export function HomeContent() {
               <section className="py-12">
                 <div className="min-h-[50vh] flex items-center justify-center p-8">
                   <div className="text-center">
-                    <h2 className="max-w-md mx-auto mb-4 h-16 md:max-w-none text-4xl md:text-5xl font-bold bg-gradient-to-br from-primary to-black/45 dark:to-primary-foreground bg-clip-text text-transparent">
+                    <h2 className="max-w-md mx-auto mb-12 xl:mb-8 h-24 xl:h-16 xl:max-w-none text-4xl md:text-5xl font-bold bg-gradient-to-br from-primary to-black/45 dark:to-primary-foreground bg-clip-text text-transparent">
                       Start Securing Your Documents Today
                     </h2>
                     <div className="flex flex-col gap-6">
                       <p className="text-xl text-muted-foreground font-medium">
-                        Join thousands of professionals who trust DocuSol for
-                        their document needs
+                        Build your documents with AI and sign them on the
+                        blockchain
                       </p>
                       <Button
                         size="lg"
                         className="bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 text-lg font-semibold shadow-lg hover:shadow-xl"
                       >
-                        Try for free
+                        Try it out now
                       </Button>
                     </div>
                   </div>

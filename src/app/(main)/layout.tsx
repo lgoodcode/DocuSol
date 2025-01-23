@@ -14,7 +14,7 @@ export default function MainLayout({
   return (
     <>
       <ProgressBar
-        height="2px"
+        height="3px"
         color={theme === "dark" ? "#fff" : "#000"}
         options={{
           showSpinner: false,
