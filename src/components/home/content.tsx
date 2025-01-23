@@ -152,18 +152,15 @@ export function HomeContent() {
               {/* Hero Section */}
               <section className="relative max-w-[1720px] mx-auto grid grid-cols-1 xl:grid-cols-2 min-h-[100vh]">
                 {/* Left Column */}
-                <div className="px-16 py-12 pt-24 lg:px-32 !pb-28 xl:p-36 xl:pr-16 2xl:p-24 flex flex-col relative z-10">
+                <div className="px-8 md:px-16 py-12 pt-28 md:pt-20 lg:px-32 !pb-28 xl:p-36 xl:pt-24 xl:pr-16 2xl:p-24 flex flex-col relative z-10">
                   <div className="flex items-center mb-6">
                     <Badge>Beta</Badge>
                   </div>
 
                   {/* Left Column Content */}
-                  <motion.div
-                    variants={childVariants}
-                    className="space-y-6 lg:space-y-8"
-                  >
+                  <motion.div variants={childVariants} className="space-y-8">
                     <div className="flex items-center gap-4">
-                      <div className="w-[50px] h-[50px] md:w-[76px] md:h-[76px] flex items-center justify-center">
+                      <div className="w-[64px] h-[64px] md:w-[92px] md:h-[92px] xl:w-[108px] xl:h-[108px] flex items-center justify-center">
                         <Image
                           src="/img/docusol_icon.webp"
                           alt="DocuSol Logo"
@@ -207,7 +204,7 @@ export function HomeContent() {
               </section>
 
               {/* What is DocuSol? */}
-              <section className="relative my-24 lg:top-24 border-t border-border">
+              <section className="relative my-24 lg:top-16 border-t border-border">
                 <h2 className="text-center p-4 text-4xl font-semibold border-b border-border">
                   What is DocuSol?
                 </h2>
@@ -290,7 +287,7 @@ export function HomeContent() {
 
               {/* Marquee */}
               <section className="mt-24 mb-12">
-                <div className="relative flex h-[500px] w-full flex-col items-center justify-center overflow-hidden border border-border bg-transparent shadow-xl">
+                <div className="relative flex h-[500px] w-full flex-col items-center justify-center overflow-hidden border border-border bg-transparent">
                   <Marquee className="[--duration:20s] py-0">
                     {[
                       "/img/landing/dashboard.webp",
@@ -309,10 +306,10 @@ export function HomeContent() {
                   </Marquee>
 
                   {/* Left gradient overlay */}
-                  <div className="pointer-events-none absolute inset-y-0 left-0 w-1/6 md:w-1/4 xl:w-1/4 bg-gradient-to-r from-background via-background/80 to-transparent dark:from-background/95 dark:via-background/75 dark:to-transparent"></div>
+                  <div className="pointer-events-none absolute inset-y-0 left-0 w-[15%] sm:w-1/6 md:w-1/4 xl:w-1/4 bg-gradient-to-r from-background via-background/80 to-transparent dark:from-background/95 dark:via-background/75 dark:to-transparent"></div>
 
                   {/* Right gradient overlay */}
-                  <div className="pointer-events-none absolute inset-y-0 right-0 w-1/6 md:w-1/4 xl:w-1/4 bg-gradient-to-l from-background via-background/80 to-transparent dark:from-background/95 dark:via-background/75 dark:to-transparent"></div>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 w-[15%] sm:w-1/6 md:w-1/4 xl:w-1/4 bg-gradient-to-l from-background via-background/80 to-transparent dark:from-background/95 dark:via-background/75 dark:to-transparent"></div>
                 </div>
               </section>
 
@@ -320,7 +317,7 @@ export function HomeContent() {
               <section className="py-12">
                 <div className="min-h-[50vh] flex items-center justify-center p-8">
                   <div className="text-center">
-                    <h2 className="max-w-md mx-auto mb-12 xl:mb-8 h-24 xl:h-16 xl:max-w-none text-4xl md:text-5xl font-bold bg-gradient-to-br from-primary to-black/45 dark:to-primary-foreground bg-clip-text text-transparent">
+                    <h2 className="max-w-md mx-auto mb-2 md:mb-10 h-32 sm:h-24 xl:h-16 xl:max-w-none text-4xl md:text-5xl font-bold bg-gradient-to-br from-primary to-black/45 dark:to-primary-foreground bg-clip-text text-transparent">
                       Start Securing Your Documents Today
                     </h2>
                     <div className="flex flex-col gap-6">

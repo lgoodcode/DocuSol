@@ -13,7 +13,38 @@ export function Footer() {
               technology.
             </p>
           </div>
-          <div className="col-start-4">
+          <div>
+            <h4 className="text-sm font-semibold mb-4">Documentation</h4>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link
+                  href="/api-documentation"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  API Documentation
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="https://solana-labs.github.io/solana-web3.js/"
+                  target="_blank"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  JavaScript SDK
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="https://solana.com/docs/clients/javascript"
+                  target="_blank"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Solana API
+                </Link>
+              </li>
+            </ul>
+          </div>
+          <div>
             <h4 className="text-sm font-semibold mb-4">Product</h4>
             <ul className="space-y-2 text-sm">
               <li>
@@ -27,6 +58,7 @@ export function Footer() {
               <li>
                 <Link
                   href="https://solana.com/developers/courses/program-security"
+                  target="_blank"
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
                   Security
@@ -35,6 +67,7 @@ export function Footer() {
               <li>
                 <Link
                   href="https://www.quicknode.com/guides/solana-development/getting-started/how-to-use-the-solana-memo-program"
+                  target="_blank"
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
                   Blockchain
