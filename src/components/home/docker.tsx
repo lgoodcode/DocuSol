@@ -41,7 +41,12 @@ const DockItem = memo(
   }) => (
     <DockTooltip content={content}>
       {href ? (
-        <Link href={href} className="block">
+        <Link
+          href={href}
+          className="block"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           <Button
             className="!bg-transparent px-2.5 rounded-full border-none text-foreground hover:text-foreground hover:bg-gray-300"
             onClick={onClick}

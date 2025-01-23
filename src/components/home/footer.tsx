@@ -51,6 +51,7 @@ export function Footer() {
           <div className="flex items-center space-x-5 mt-4 md:mt-0">
             <Link
               href="#"
+              target="_blank"
               className="text-muted-foreground hover:text-primary transition-colors"
             >
               <div className="w-5 h-5">
@@ -66,6 +67,7 @@ export function Footer() {
             </Link>
             <Link
               href="https://github.com/DocuSol"
+              target="_blank"
               className="text-muted-foreground hover:text-primary transition-colors"
             >
               <Github size={24} />
@@ -73,6 +75,7 @@ export function Footer() {
             </Link>
             <Link
               href="#"
+              target="_blank"
               className="text-muted-foreground hover:text-primary transition-colors"
             >
               <Pill size={24} />
@@ -80,6 +83,7 @@ export function Footer() {
             </Link>
             <Link
               href="#"
+              target="_blank"
               className="text-muted-foreground hover:text-primary transition-colors"
             >
               <div className="w-6 h-6 fill-current">
