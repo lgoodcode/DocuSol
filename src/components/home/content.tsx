@@ -137,7 +137,7 @@ export function HomeContent() {
             initial="initial"
             animate={contentControls}
           >
-            <DockerContainer />
+            <DockerContainer delay={0.5} />
           </motion.div>
 
           {/* Main Content */}
