@@ -47,6 +47,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
+import { uploadFile, overlaySignature } from "./utils";
+
+const ACCEPTED_FILE_TYPES = [".pdf", ".jpeg", ".png", ".jpg"];
+
 const documentSchema = z
   .object({
     name: z.string().min(1, "Document name is required"),
@@ -62,14 +66,34 @@ export function DocumentSigning() {
   const { toast } = useToast();
   const { file, preview, handleFileChange, clearFile, fileInputRef } =
     useFileUpload();
-  const { canvasRef, startDrawing, draw, hasDrawn, stopDrawing, clearCanvas } =
-    useDrawing();
+  const {
+    canvasRef,
+    startDrawing,
+    draw,
+    hasDrawn,
+    getSignatureAsBlack,
+    stopDrawing,
+    clearCanvas,
+  } = useDrawing();
 
   const [signatureType, setSignatureType] = useState("draw"); // "draw" or "type"
   const [typedSignature, setTypedSignature] = useState("");
   const form = useForm<z.infer<typeof documentSchema>>({
     resolver: zodResolver(documentSchema),
   });
+
+  const previewBlob = async () => {
+    if (!file) return;
+
+    const signedDoc = await overlaySignature(
+      file,
+      signatureType === "draw" ? getSignatureAsBlack() : null,
+      signatureType === "type" ? typedSignature : undefined
+    );
+
+    const url = URL.createObjectURL(signedDoc as Blob);
+    window.open(url, "_blank");
+  };
 
   const onSubmit = async ({
     name,
@@ -79,36 +103,50 @@ export function DocumentSigning() {
       !file ||
       (!hasDrawn && signatureType === "draw") ||
       (!typedSignature && signatureType === "type")
-    )
+    ) {
       return;
-
-    // Get the signature as a data URL if drawn
-    const signatureDataUrl =
-      signatureType === "draw" ? canvasRef.current?.toDataURL() : null;
+    }
 
     try {
-      // Here you would typically send the data to your server
-      console.log("Submitting:", {
-        name,
+      const signedDoc = await overlaySignature(
         file,
-        signature: signatureType === "draw" ? signatureDataUrl : typedSignature,
-        password,
-        signatureType,
+        signatureType === "draw" ? getSignatureAsBlack() : null,
+        signatureType === "type" ? typedSignature : undefined
+      );
+
+      previewBlob();
+
+      // await uploadFile({
+      //   name,
+      //   password: password || "",
+      //   original_filename: file.name,
+      //   mime_type: file.type,
+      //   unsigned_document: file,
+      //   signed_document:
+      //     signatureType === "draw"
+      //       ? canvasRef.current?.toDataURL()
+      //       : typedSignature,
+      // });
+
+      console.log({
+        name,
+        password: password || "",
+        original_filename: file.name,
+        mime_type: file.type,
+        unsigned_document: file,
+        signed_document: signedDoc,
       });
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+
       toast({
         title: "Document signed",
         description: "Your document has been signed and saved",
         variant: "success",
       });
 
-      form.reset({
-        name: "",
-        password: "",
-        confirmPassword: "",
-      });
+      // form.reset({ name: "", password: "", confirmPassword: "" });
       clearFile();
       clearCanvas();
+      setTypedSignature("");
     } catch (error) {
       console.error(error);
       captureException(error);
@@ -170,7 +208,7 @@ export function DocumentSigning() {
                       type="file"
                       ref={fileInputRef}
                       onChange={handleFileChange}
-                      accept=".pdf,image/*"
+                      accept={ACCEPTED_FILE_TYPES.join(",")}
                       className="hidden"
                     />
                     {file && (

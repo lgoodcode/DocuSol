@@ -1,4 +1,5 @@
-import pdfjs from "pdfjs-dist";
+import * as pdfjs from "pdfjs-dist";
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
 type NewDocument = {
   name: string;
@@ -29,18 +30,20 @@ export async function uploadFile(newDocument: NewDocument) {
 
 export async function overlaySignature(
   file: File,
-  signatureCanvas: HTMLCanvasElement,
+  signatureCanvas: HTMLCanvasElement | null,
+  typedSignature?: string,
   position?: { x: number; y: number }
 ) {
   const isPDF = file.type === "application/pdf";
   return isPDF
-    ? overlayPDFSignature(file, signatureCanvas, position)
-    : overlayImageSignature(file, signatureCanvas, position);
+    ? overlayPDFSignature(file, signatureCanvas, typedSignature, position)
+    : overlayImageSignature(file, signatureCanvas, typedSignature, position);
 }
 
 async function overlayPDFSignature(
   file: File,
-  signatureCanvas: HTMLCanvasElement,
+  signatureCanvas: HTMLCanvasElement | null,
+  typedSignature?: string,
   position?: { x: number; y: number }
 ) {
   const pdfData = await file.arrayBuffer();
@@ -58,20 +61,46 @@ async function overlayPDFSignature(
     viewport,
   }).promise;
 
-  const { width, height, x, y } = calculateSignatureDimensions(
-    signatureCanvas,
-    viewport.width,
-    viewport.height,
-    position
-  );
+  if (signatureCanvas) {
+    const { width, height, x, y } = calculateSignatureDimensions(
+      signatureCanvas.width,
+      signatureCanvas.height,
+      viewport.width,
+      viewport.height,
+      position
+    );
 
-  ctx.drawImage(signatureCanvas, x, y, width, height);
+    // Create temporary canvas for signature manipulation
+    const sigCanvas = document.createElement("canvas");
+    const sigCtx = sigCanvas.getContext("2d")!;
+    sigCanvas.width = signatureCanvas.width;
+    sigCanvas.height = signatureCanvas.height;
+
+    // Draw original signature
+    sigCtx.drawImage(signatureCanvas, 0, 0);
+
+    // Convert to black
+    sigCtx.globalCompositeOperation = "source-in";
+    sigCtx.fillStyle = "#000";
+    sigCtx.fillRect(0, 0, sigCanvas.width, sigCanvas.height);
+
+    // Draw on main canvas
+    ctx.save();
+    ctx.globalAlpha = 0.7;
+    ctx.fillStyle = "white";
+    ctx.fillRect(x - 10, y - 10, width + 20, height + 20);
+    ctx.globalAlpha = 1;
+    ctx.drawImage(sigCanvas, x, y, width, height);
+    ctx.restore();
+  }
+
   return new Promise((resolve) => canvas.toBlob(resolve, "application/pdf"));
 }
 
 async function overlayImageSignature(
   file: File,
-  signatureCanvas: HTMLCanvasElement,
+  signatureCanvas: HTMLCanvasElement | null,
+  typedSignature?: string,
   position?: { x: number; y: number }
 ) {
   const image = await createImageBitmap(file);
@@ -82,26 +111,52 @@ async function overlayImageSignature(
   canvas.height = image.height;
   ctx.drawImage(image, 0, 0);
 
-  const { width, height, x, y } = calculateSignatureDimensions(
-    signatureCanvas,
-    image.width,
-    image.height,
-    position
-  );
+  if (signatureCanvas) {
+    const { width, height, x, y } = calculateSignatureDimensions(
+      signatureCanvas.width,
+      signatureCanvas.height,
+      image.width,
+      image.height,
+      position
+    );
 
-  ctx.drawImage(signatureCanvas, x, y, width, height);
+    // Create temporary canvas for signature manipulation
+    const sigCanvas = document.createElement("canvas");
+    const sigCtx = sigCanvas.getContext("2d")!;
+    sigCanvas.width = signatureCanvas.width;
+    sigCanvas.height = signatureCanvas.height;
+
+    // Draw original signature
+    sigCtx.drawImage(signatureCanvas, 0, 0);
+
+    // Convert to black
+    sigCtx.globalCompositeOperation = "source-in";
+    sigCtx.fillStyle = "#000";
+    sigCtx.fillRect(0, 0, sigCanvas.width, sigCanvas.height);
+
+    // Draw on main canvas
+    ctx.save();
+    ctx.globalAlpha = 0.7;
+    ctx.fillStyle = "white";
+    ctx.fillRect(x - 10, y - 10, width + 20, height + 20);
+    ctx.globalAlpha = 1;
+    ctx.drawImage(sigCanvas, x, y, width, height);
+    ctx.restore();
+  }
+
   return new Promise((resolve) => canvas.toBlob(resolve, file.type));
 }
 
 function calculateSignatureDimensions(
-  signatureCanvas: HTMLCanvasElement,
+  sigWidth: number,
+  sigHeight: number,
   docWidth: number,
   docHeight: number,
   position?: { x: number; y: number }
 ) {
-  const sigAspectRatio = signatureCanvas.width / signatureCanvas.height;
-  const maxWidth = docWidth * 0.3; // 30% of document width
-  const maxHeight = docHeight * 0.2; // 20% of document height
+  const sigAspectRatio = sigWidth / sigHeight;
+  const maxWidth = docWidth * 0.3;
+  const maxHeight = docHeight * 0.2;
 
   let width = maxWidth;
   let height = width / sigAspectRatio;
@@ -111,7 +166,6 @@ function calculateSignatureDimensions(
     width = height * sigAspectRatio;
   }
 
-  // Center the signature if no position provided
   const x = position?.x ?? (docWidth - width) / 2;
   const y = position?.y ?? (docHeight - height) / 2;
 
