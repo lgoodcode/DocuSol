@@ -306,10 +306,10 @@ export function HomeContent() {
                   </Marquee>
 
                   {/* Left gradient overlay */}
-                  <div className="pointer-events-none absolute inset-y-0 left-0 w-[15%] sm:w-1/6 md:w-1/4 xl:w-1/4 bg-gradient-to-r from-background via-background/80 to-transparent dark:from-background/95 dark:via-background/75 dark:to-transparent"></div>
+                  <div className="pointer-events-none absolute inset-y-0 left-0 w-[10%] sm:w-1/6 md:w-1/4 xl:w-1/4 bg-gradient-to-r from-background via-background/80 to-transparent dark:from-background/95 dark:via-background/75 dark:to-transparent"></div>
 
                   {/* Right gradient overlay */}
-                  <div className="pointer-events-none absolute inset-y-0 right-0 w-[15%] sm:w-1/6 md:w-1/4 xl:w-1/4 bg-gradient-to-l from-background via-background/80 to-transparent dark:from-background/95 dark:via-background/75 dark:to-transparent"></div>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 w-[10%] sm:w-1/6 md:w-1/4 xl:w-1/4 bg-gradient-to-l from-background via-background/80 to-transparent dark:from-background/95 dark:via-background/75 dark:to-transparent"></div>
                 </div>
               </section>
 
