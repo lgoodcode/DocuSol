@@ -13,7 +13,7 @@ export function Footer() {
               technology.
             </p>
           </div>
-          <div className="col-start-3">
+          <div>
             <h4 className="text-sm font-semibold mb-4">Documentation</h4>
             <ul className="space-y-2 text-sm">
               <li>
@@ -44,7 +44,7 @@ export function Footer() {
               </li>
             </ul>
           </div>
-          <div className="col-start-4">
+          <div>
             <h4 className="text-sm font-semibold mb-4">Product</h4>
             <ul className="space-y-2 text-sm">
               <li>
