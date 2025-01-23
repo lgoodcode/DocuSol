@@ -30,6 +30,69 @@ const CodeBlock = ({
   </div>
 );
 
+const DOCUMENT_SCHEMA = [
+  {
+    field: "id",
+    type: "INTEGER PRIMARY KEY AUTOINCREMENT",
+    description: "Unique identifier for each document.",
+  },
+  {
+    field: "unsigned_hash",
+    type: "TEXT NOT NULL UNIQUE",
+    description: "SHA-256 hash of the unsigned document.",
+  },
+  {
+    field: "signed_hash",
+    type: "TEXT UNIQUE",
+    description: "SHA-256 hash of the signed document.",
+  },
+  {
+    field: "password",
+    type: "TEXT",
+    description: "Password required to access the document, if any.",
+  },
+  {
+    field: "created_at",
+    type: `INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))`,
+    description: "Timestamp of when the document was created (Unix epoch).",
+  },
+  {
+    field: "unsigned_transaction_signature",
+    type: "TEXT",
+    description: "Solana transaction signature for the unsigned document.",
+  },
+  {
+    field: "signed_transaction_signature",
+    type: "TEXT",
+    description: "Solana transaction signature for the signed document.",
+  },
+  {
+    field: "unsigned_document",
+    type: "BLOB NOT NULL",
+    description: "Binary data of the unsigned document.",
+  },
+  {
+    field: "signed_document",
+    type: "BLOB",
+    description: "Binary data of the signed document.",
+  },
+  {
+    field: "original_filename",
+    type: "TEXT NOT NULL",
+    description: "Original filename of the uploaded document.",
+  },
+  {
+    field: "is_signed",
+    type: "BOOLEAN DEFAULT FALSE",
+    description: "Indicates whether the document has been signed.",
+  },
+  {
+    field: "signed_at",
+    type: "INTEGER",
+    description: "Timestamp of when the document was signed (Unix epoch).",
+  },
+] as const;
+
 const dbSchema = `CREATE TABLE documents (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   unsigned_hash TEXT NOT NULL UNIQUE,
@@ -120,90 +183,13 @@ export default function DocsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="border-b">
-                    <td className="p-4">id</td>
-                    <td className="p-4">INTEGER PRIMARY KEY AUTOINCREMENT</td>
-                    <td className="p-4">
-                      Unique identifier for each document.
-                    </td>
-                  </tr>
-                  <tr className="border-b">
-                    <td className="p-4">unsigned_hash</td>
-                    <td className="p-4">TEXT NOT NULL UNIQUE</td>
-                    <td className="p-4">
-                      SHA-256 hash of the unsigned document.
-                    </td>
-                  </tr>
-                  <tr className="border-b">
-                    <td className="p-4">signed_hash</td>
-                    <td className="p-4">TEXT UNIQUE</td>
-                    <td className="p-4">
-                      SHA-256 hash of the signed document.
-                    </td>
-                  </tr>
-                  <tr className="border-b">
-                    <td className="p-4">password</td>
-                    <td className="p-4">TEXT</td>
-                    <td className="p-4">
-                      Password required to access the document, if any.
-                    </td>
-                  </tr>
-                  <tr className="border-b">
-                    <td className="p-4">created_at</td>
-                    <td className="p-4">
-                      {`INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))`}
-                    </td>
-                    <td className="p-4">
-                      Timestamp of when the document was created (Unix epoch).
-                    </td>
-                  </tr>
-                  <tr className="border-b">
-                    <td className="p-4">unsigned_transaction_signature</td>
-                    <td className="p-4">TEXT</td>
-                    <td className="p-4">
-                      Solana transaction signature for the unsigned document.
-                    </td>
-                  </tr>
-                  <tr className="border-b">
-                    <td className="p-4">signed_transaction_signature</td>
-                    <td className="p-4">TEXT</td>
-                    <td className="p-4">
-                      Solana transaction signature for the signed document.
-                    </td>
-                  </tr>
-                  <tr className="border-b">
-                    <td className="p-4">unsigned_document</td>
-                    <td className="p-4">BLOB NOT NULL</td>
-                    <td className="p-4">
-                      Binary data of the unsigned document.
-                    </td>
-                  </tr>
-                  <tr className="border-b">
-                    <td className="p-4">signed_document</td>
-                    <td className="p-4">BLOB</td>
-                    <td className="p-4">Binary data of the signed document.</td>
-                  </tr>
-                  <tr className="border-b">
-                    <td className="p-4">original_filename</td>
-                    <td className="p-4">TEXT NOT NULL</td>
-                    <td className="p-4">
-                      Original filename of the uploaded document.
-                    </td>
-                  </tr>
-                  <tr className="border-b">
-                    <td className="p-4">is_signed</td>
-                    <td className="p-4">BOOLEAN DEFAULT FALSE</td>
-                    <td className="p-4">
-                      Indicates whether the document has been signed.
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="p-4">signed_at</td>
-                    <td className="p-4">INTEGER</td>
-                    <td className="p-4">
-                      Timestamp of when the document was signed (Unix epoch).
-                    </td>
-                  </tr>
+                  {DOCUMENT_SCHEMA.map((schema) => (
+                    <tr key={schema.field} className="border-b">
+                      <td className="p-4">{schema.field}</td>
+                      <td className="p-4">{schema.type}</td>
+                      <td className="p-4">{schema.description}</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
