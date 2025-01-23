@@ -61,24 +61,6 @@ export const metadata: Metadata = {
         height: 85,
         alt: "DocuSol Logo",
       },
-      {
-        url: "/img/docusol_icon.webp",
-        width: 64,
-        height: 52,
-        alt: "DocuSol Logo",
-      },
-      {
-        url: "/img/docusol_logo.webp",
-        width: 1231,
-        height: 1049,
-        alt: "DocuSol Logo",
-      },
-      {
-        url: "/img/docusol_logo.webp",
-        width: 1024,
-        height: 1024,
-        alt: "DocuSol Logo",
-      },
     ],
   },
 };

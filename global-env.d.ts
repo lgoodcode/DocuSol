@@ -5,6 +5,7 @@ export declare global {
       SENTRY_ORG: string;
       SENTRY_AUTH_TOKEN: string;
       NEXT_PUBLIC_SENTRY_DSN: string;
+      HELIUS_API_URL: string;
     }
   }
 }
