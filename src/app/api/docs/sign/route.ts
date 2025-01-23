@@ -25,9 +25,7 @@ export async function POST(request: Request) {
 
     if (fetchError || !document) {
       throw new Error("Document not found");
-    }
-
-    if (document.is_signed) {
+    } else if (document.is_signed) {
       return NextResponse.json(
         {
           error: "Document is already signed",
@@ -35,14 +33,10 @@ export async function POST(request: Request) {
         },
         { status: 409 }
       );
-    }
-
-    if (document.password) {
+    } else if (document.password) {
       if (!password) {
         throw new Error("Password required for this document");
-      }
-
-      if (password !== document.password) {
+      } else if (password !== document.password) {
         throw new Error("Invalid password");
       }
     }

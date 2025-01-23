@@ -48,12 +48,12 @@ const form = new FormData();
 form.append('file', file);
 form.append('password', password); // Optional
 
-const response = await fetch('/api/new', {
+const response = await fetch('/api/docs/new', {
 method: 'POST',
 body: form
 });`;
 
-const searchExample = `const response = await fetch('/api/search', {
+const searchExample = `const response = await fetch('/api/docs/search', {
 method: 'POST',
 headers: {
   'Content-Type': 'application/json'
@@ -208,7 +208,7 @@ export default function DocsPage() {
               <span className="bg-primary px-2 py-1 text-sm rounded text-primary-foreground">
                 POST
               </span>
-              <h3 className="text-xl font-medium">/api/new</h3>
+              <h3 className="text-xl font-medium">/api/docs/new</h3>
             </div>
 
             <p className="mb-4">Upload a new document to the system.</p>
@@ -274,7 +274,7 @@ export default function DocsPage() {
               <span className="bg-primary px-2 py-1 text-sm rounded text-primary-foreground">
                 POST
               </span>
-              <h3 className="text-xl font-medium">/api/search</h3>
+              <h3 className="text-xl font-medium">/api/docs/search</h3>
             </div>
 
             <p className="mb-4">Search for a document by its hash.</p>
@@ -310,7 +310,7 @@ export default function DocsPage() {
               <span className="bg-primary px-2 py-1 text-sm rounded text-primary-foreground">
                 POST
               </span>
-              <h3 className="text-xl font-medium">/api/sign</h3>
+              <h3 className="text-xl font-medium">/api/docs/sign</h3>
             </div>
 
             <p className="mb-4">Sign an existing document.</p>

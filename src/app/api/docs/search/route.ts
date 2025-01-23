@@ -1,259 +1,107 @@
-import path from "path";
-import { Database } from "sqlite3";
 import { captureException } from "@sentry/nextjs";
 
-// Types
-type DocumentRow = {
-  id: number;
-  unsigned_hash: string;
-  signed_hash: string | null;
-  password: string | null;
-  created_at: number;
-  unsigned_transaction_signature: string | null;
-  signed_transaction_signature: string | null;
-  unsigned_document: Buffer;
-  signed_document: Buffer | null;
-  original_filename: string;
-  is_signed: boolean;
-  signed_at: number | null;
-};
+import { supabase } from "@/lib/supabase/client";
 
-const dbPath = path.join(process.cwd(), "db", "documents.db");
+export async function POST(request: Request) {
+  try {
+    const { hash, password } = await request.json();
 
-/**
- * Initializes and returns a new SQLite database connection
- *
- * @returns Promise<Database> The database connection
- * @throws Error if database connection fails
- */
-function initializeDatabase(): Promise<Database> {
-  return new Promise((resolve, reject) => {
-    const db = new Database(dbPath, (err) => {
-      if (err) {
-        captureException(err);
-        reject(new Error("Failed to connect to database"));
-      }
-    });
+    if (!hash) {
+      return Response.json(
+        { error: "Missing required field: hash" },
+        { status: 400 }
+      );
+    }
 
-    db.serialize(() => {
-      db.run(`
-        CREATE TABLE IF NOT EXISTS documents (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          unsigned_hash TEXT NOT NULL UNIQUE,
-          signed_hash TEXT UNIQUE,
-          password TEXT,
-          created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
-          unsigned_transaction_signature TEXT,
-          signed_transaction_signature TEXT,
-          unsigned_document BLOB NOT NULL,
-          signed_document BLOB,
-          original_filename TEXT NOT NULL,
-          is_signed BOOLEAN DEFAULT FALSE,
-          signed_at INTEGER
-        )
-      `);
-    });
-
-    resolve(db);
-  });
-}
-
-/**
- * Checks if a document exists in the database
- *
- * @param db - The database connection
- * @param hash - The document hash to check
- * @returns Promise<DocumentRow | undefined>
- * @throws Error if database query fails
- */
-async function checkDocumentExists(
-  db: Database,
-  hash: string
-): Promise<DocumentRow | undefined> {
-  return new Promise((resolve, reject) => {
-    db.get(
-      "SELECT * FROM documents WHERE unsigned_hash = ? OR signed_hash = ?",
-      [hash, hash],
-      (err, row) => {
-        if (err) {
-          captureException(err);
-          reject(new Error("Failed to check document existence"));
-        }
-        resolve(row as DocumentRow | undefined);
-      }
-    );
-  });
-}
-
-/**
- * Inserts a new document into the database
- *
- * @param db - The database connection
- * @param hash - The document hash
- * @param password - Optional password for the document
- * @param transactionSignature - The transaction signature
- * @param documentBuffer - The document buffer
- * @param originalFilename - The original filename
- * @returns Promise<number> The ID of the inserted document
- * @throws Error if insertion fails
- */
-async function insertDocument(
-  db: Database,
-  hash: string,
-  password: string | null,
-  transactionSignature: string,
-  documentBuffer: Buffer,
-  originalFilename: string
-): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const currentEpoch = Math.floor(Date.now() / 1000);
-    db.run(
-      `INSERT INTO documents (
+    // Get full document details
+    const { error, data: document } = await supabase
+      .from("documents")
+      .select(
+        `
         unsigned_hash,
-        password,
+        signed_hash,
+        created_at,
         unsigned_transaction_signature,
+        signed_transaction_signature,
         unsigned_document,
+        signed_document,
         original_filename,
-        created_at
-      ) VALUES (?, ?, ?, ?, ?, ?)`,
-      [
-        hash,
-        password,
-        transactionSignature,
-        documentBuffer,
-        originalFilename,
-        currentEpoch,
-      ],
-      function (err) {
-        if (err) {
-          captureException(err);
-          reject(new Error("Failed to insert document"));
-        }
-        resolve(this.lastID);
-      }
-    );
-  });
-}
+        is_signed,
+        signed_at,
+        password
+      `
+      )
+      .or(`unsigned_hash.eq.${hash},signed_hash.eq.${hash}`)
+      .single();
 
-/**
- * Updates a document with signature information
- *
- * @param db - The database connection
- * @param unsignedHash - The original document hash
- * @param signedHash - The signed document hash
- * @param transactionSignature - The transaction signature
- * @param signedDocumentBuffer - The signed document buffer
- * @returns Promise<number> The number of affected rows
- * @throws Error if update fails
- */
-async function updateDocumentSignature(
-  db: Database,
-  unsignedHash: string,
-  signedHash: string,
-  transactionSignature: string,
-  signedDocumentBuffer: Buffer
-): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const currentEpoch = Math.floor(Date.now() / 1000);
-    db.run(
-      `UPDATE documents
-       SET is_signed = TRUE,
-           signed_hash = ?,
-           signed_transaction_signature = ?,
-           signed_document = ?,
-           signed_at = ?
-       WHERE unsigned_hash = ?`,
-      [
-        signedHash,
-        transactionSignature,
-        signedDocumentBuffer,
-        currentEpoch,
-        unsignedHash,
-      ],
-      function (err) {
-        if (err) {
-          captureException(err);
-          reject(new Error("Failed to update document signature"));
-        }
-        resolve(this.changes);
-      }
-    );
-  });
-}
+    if (error) {
+      throw error;
+    } else if (!document) {
+      return Response.json({ error: "Document not found" }, { status: 404 });
+    }
 
-/**
- * Retrieves a document from the database
- *
- * @param db - The database connection
- * @param hash - The document hash
- * @param isSigned - Whether to retrieve the signed or unsigned version
- * @returns Promise<Pick<DocumentRow, 'unsigned_document' | 'signed_document' | 'original_filename' | 'password'> | undefined>
- * @throws Error if retrieval fails
- */
-async function getDocument(
-  db: Database,
-  hash: string,
-  isSigned = false
-): Promise<
-  | Pick<
-      DocumentRow,
-      "unsigned_document" | "signed_document" | "original_filename" | "password"
-    >
-  | undefined
-> {
-  return new Promise((resolve, reject) => {
-    const field = isSigned ? "signed_document" : "unsigned_document";
-    const hashField = isSigned ? "signed_hash" : "unsigned_hash";
-
-    db.get(
-      `SELECT ${field}, original_filename, password FROM documents WHERE ${hashField} = ?`,
-      [hash],
-      (err, row) => {
-        if (err) {
-          captureException(err);
-          reject(new Error("Failed to retrieve document"));
-        }
-        resolve(
-          row as
-            | Pick<
-                DocumentRow,
-                | "unsigned_document"
-                | "signed_document"
-                | "original_filename"
-                | "password"
-              >
-            | undefined
+    // Verify password if required
+    if (document.password) {
+      if (!password) {
+        return Response.json(
+          { error: "Password required for this document" },
+          { status: 401 }
         );
+      } else if (password !== document.password) {
+        return Response.json({ error: "Invalid password" }, { status: 401 });
       }
+    }
+
+    // Prepare metadata
+    const metadata = {
+      unsignedHash: document.unsigned_hash,
+      signedHash: document.signed_hash || null,
+      createdAt: document.created_at,
+      unsignedTransactionSignature: document.unsigned_transaction_signature,
+      signedTransactionSignature: document.signed_transaction_signature || null,
+      isSigned: Boolean(document.is_signed),
+      signedAt: document.signed_at || null,
+      hasPassword: Boolean(document.password),
+      originalFilename: document.original_filename,
+    };
+
+    // Create FormData and append files and metadata
+    const formData = new FormData();
+
+    // Append metadata as JSON
+    formData.append("metadata", JSON.stringify(metadata));
+
+    // Append unsigned document
+    formData.append(
+      "unsignedDocument",
+      new Blob([document.unsigned_document], {
+        type: "application/octet-stream",
+      }),
+      document.original_filename
     );
-  });
-}
 
-/**
- * Closes the database connection
- *
- * @param db - The database connection to close
- * @throws Error if closing fails
- */
-async function closeDatabase(db: Database): Promise<void> {
-  return new Promise((resolve, reject) => {
-    db.close((err) => {
-      if (err) {
-        captureException(err);
-        reject(new Error("Failed to close database connection"));
-      }
-      resolve();
-    });
-  });
-}
+    // Append signed document if it exists
+    if (document.is_signed && document.signed_document) {
+      formData.append(
+        "signedDocument",
+        new Blob([document.signed_document], {
+          type: "application/octet-stream",
+        }),
+        `signed_${document.original_filename}`
+      );
+    }
 
-export {
-  initializeDatabase,
-  checkDocumentExists,
-  insertDocument,
-  updateDocumentSignature,
-  getDocument,
-  closeDatabase,
-  dbPath,
-  type DocumentRow,
-};
+    return new Response(formData);
+  } catch (err) {
+    const error = err as Error;
+    console.error(error);
+    captureException(error);
+    return Response.json(
+      {
+        error: "Internal server error",
+        message: error.message,
+      },
+      { status: 500 }
+    );
+  }
+}

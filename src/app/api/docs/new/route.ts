@@ -28,14 +28,9 @@ export async function POST(request: Request) {
 
     if (!file) {
       throw new Error("No file provided");
-    }
-
-    if (!mimeType) {
+    } else if (!mimeType) {
       throw new Error("No mime type provided");
-    }
-
-    // Validate mime type
-    if (!allowedMimeTypes.includes(mimeType)) {
+    } else if (!allowedMimeTypes.includes(mimeType)) {
       throw new Error("Invalid file type");
     }
 
@@ -66,7 +61,6 @@ export async function POST(request: Request) {
       mimeType
     );
 
-
     return NextResponse.json({
       success: true,
       transactionUrl: getTransactionUrl(transactionSignature),
@@ -86,8 +80,6 @@ export async function POST(request: Request) {
           : error.message === "Document already exists in the database"
           ? 409
           : 500;
-
-
 
       return NextResponse.json(
         { error: error.message },
