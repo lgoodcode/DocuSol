@@ -38,8 +38,8 @@ export default function RootLayout({
         <Analytics />
         <NextThemesProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme="dark"
+          enableSystem={false}
           disableTransitionOnChange
         >
           <ToastProvider swipeDirection="right">

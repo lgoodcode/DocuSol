@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
 import { z } from "zod";
 import { motion } from "framer-motion";
@@ -13,12 +12,15 @@ import {
   Save,
   Trash2,
   Lock,
+  FileText,
 } from "lucide-react";
 
+import { formatFileSize } from "@/lib/utils/format-file-size";
 import { useDrawing } from "@/hooks/use-drawing";
 import { useFileUpload } from "@/hooks/use-file-upload";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { FilePreview } from "@/components/file-preview";
 import {
   Card,
   CardContent,
@@ -151,15 +153,25 @@ export function DocumentSigning() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid w-full">
-                  <div className="flex justify-between gap-2">
-                    <Input
-                      ref={fileInputRef}
-                      id="document"
+                <div className="grid w-full gap-2">
+                  <div className="flex flex-row gap-2">
+                    <Button
+                      variant="outline"
+                      className="w-full md:w-auto"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        fileInputRef.current?.click();
+                      }}
+                    >
+                      <FileText className="h-4 w-4" />
+                      Select File
+                    </Button>
+                    <input
                       type="file"
-                      accept=".pdf,image/*"
+                      ref={fileInputRef}
                       onChange={handleFileChange}
-                      className="cursor-pointer"
+                      accept=".pdf,image/*"
+                      className="hidden"
                     />
                     {file && (
                       <Button
@@ -168,34 +180,26 @@ export function DocumentSigning() {
                         size="icon"
                         onClick={clearFile}
                       >
-                        <Trash2 className="h-5 w-5" />
+                        <Trash2 className="h-4 w-4" />
                         <span className="sr-only">Remove file</span>
                       </Button>
                     )}
                   </div>
+                  {file && (
+                    <div className="space-y-1">
+                      <div className="space-y-1">
+                        <p className="text-xs sm:text-sm text-muted-foreground">
+                          Selected: {file.name}
+                        </p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
+                          Size: {formatFileSize(file.size)}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {preview && (
-                  <div className="max-h-[400px] w-full max-w-sm mx-auto overflow-hidden rounded-md border">
-                    {file?.type === "application/pdf" ? (
-                      <iframe
-                        src={preview}
-                        className="w-full h-[400px]"
-                        title="Document preview"
-                      />
-                    ) : (
-                      <div className="relative h-[300px] w-full">
-                        <Image
-                          src={preview}
-                          alt="Document preview"
-                          className="object-contain"
-                          fill
-                          sizes="(max-width: 640px) 100vw, 640px"
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
+                {preview && <FilePreview file={file} preview={preview} />}
               </CardContent>
             </Card>
           </motion.div>

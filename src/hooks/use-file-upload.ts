@@ -17,6 +17,8 @@ export function useFileUpload() {
   }, [preview]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+
     const selectedFile = e.target.files?.[0] || null;
 
     // Clean up previous preview

@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Bot, FileText, Send, Sparkles, User, X } from "lucide-react";
+import { Bot, FileText, Send, Sparkles, User, Trash2 } from "lucide-react";
 
+import { formatFileSize } from "@/lib/utils/format-file-size";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -361,18 +362,20 @@ export function DashboardContent() {
                         {file && (
                           <div className="flex flex-row gap-4">
                             <Button
-                              variant="outline"
-                              size="icon"
+                              type="button"
+                              variant="destructive"
+                              className="px-2"
                               onClick={clearFile}
                             >
-                              <X className="h-4 w-4" />
+                              <Trash2 className="h-4 w-4" />
+                              <span className="sr-only">Remove file</span>
                             </Button>
                             <div className="space-y-1">
-                              <p className="text-xs text-muted-foreground">
+                              <p className="text-xs sm:text-sm text-muted-foreground">
                                 Selected: {file.name}
                               </p>
-                              <p className="text-xs text-muted-foreground">
-                                Size: {(file.size / (1024 * 1024)).toFixed(2)}MB
+                              <p className="text-xs sm:text-sm text-muted-foreground">
+                                Size: {formatFileSize(file.size)}
                               </p>
                             </div>
                           </div>
