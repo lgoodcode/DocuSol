@@ -37,7 +37,7 @@ export const PoweredByLogos = () => (
           </defs>
         </svg>
       </div>
-      <span className="hidden md:block text-muted-foreground">•</span>
+      <span className="hidden md:block text-muted-foreground mb-1">•</span>
       {/* OpenAI */}
       <div className="w-fit my-auto mr-auto md:mr-0">
         <svg
