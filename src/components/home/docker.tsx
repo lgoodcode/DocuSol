@@ -1,4 +1,4 @@
-import { Moon, Sun, Pill, FileText, Github } from "lucide-react";
+import { Moon, Sun, Pill, FileText, Github, PenTool } from "lucide-react";
 import Link from "next/link";
 import React, { memo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
@@ -88,6 +88,11 @@ function Docker() {
     <StaticDock direction="middle">
       <StaticDockIcon>
         <DockItem href="/docs/new" content="Get Started">
+          <PenTool className="size-5" />
+        </DockItem>
+      </StaticDockIcon>
+      <StaticDockIcon>
+        <DockItem href="/api-documentation" content="API Documentation">
           <FileText className="size-5" />
         </DockItem>
       </StaticDockIcon>
