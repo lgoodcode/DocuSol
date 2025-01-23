@@ -5,10 +5,6 @@ import { motion } from "framer-motion";
 export function ComingSoon() {
   return (
     <div className="relative overflow-hidden min-h-[calc(100vh-200px)] flex items-center justify-center">
-      {/* Animated background grid */}
-      <div className="absolute inset-0 bg-grid-primary/[0.02] bg-[size:60px_60px]" />
-      <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
-
       <div className="relative container mx-auto flex flex-col items-center justify-center max-w-4xl text-center gap-4 px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
