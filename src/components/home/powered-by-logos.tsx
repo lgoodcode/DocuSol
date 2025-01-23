@@ -1,6 +1,6 @@
 export const PoweredByLogos = () => (
   <div className="space-y-4">
-    <p className="text-sm text-muted-foreground">Powered by</p>
+    <p className="text-muted-foreground">Powered by</p>
     <div className="flex flex-col md:flex-row items-center gap-4">
       {/* Vercel */}
       <div className="w-fit mb-5 md:mb-0 mr-auto md:mr-0">

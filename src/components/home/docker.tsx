@@ -69,7 +69,7 @@ const DockItem = memo(
 DockItem.displayName = "DockItem";
 const DockTooltip = memo(
   ({ children, content }: { children: React.ReactNode; content: string }) => (
-    <TooltipProvider delayDuration={100}>
+    <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>{children}</TooltipTrigger>
         <TooltipContent side="bottom" sideOffset={10}>

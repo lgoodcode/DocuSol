@@ -160,7 +160,7 @@ export function HomeContent() {
                   {/* Left Column Content */}
                   <motion.div variants={childVariants} className="space-y-8">
                     <div className="flex items-center gap-4">
-                      <div className="w-[64px] h-[64px] md:w-[84x] md:h-[84px] flex items-center justify-center">
+                      <div className="w-[64px] h-[64px] md:w-[92px] md:h-[92px] xl:w-[108px] xl:h-[108px] flex items-center justify-center">
                         <Image
                           src="/img/docusol_icon.webp"
                           alt="DocuSol Logo"
