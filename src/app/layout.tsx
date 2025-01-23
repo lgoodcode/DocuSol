@@ -7,9 +7,11 @@ import {
   metadata as siteMetadata,
   viewport as siteViewport,
 } from "@/config/site";
+import { UserProvider } from "@/components/providers/user-provider";
 import { ToastProvider } from "@/components/ui/toast";
 import { Toaster } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils/cn";
+
 import "./globals.css";
 
 const satoshiFont = localFont({
@@ -42,10 +44,12 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
-          <ToastProvider swipeDirection="right">
-            <Toaster />
-            {children}
-          </ToastProvider>
+          <UserProvider>
+            <ToastProvider swipeDirection="right">
+              <Toaster />
+              {children}
+            </ToastProvider>
+          </UserProvider>
         </NextThemesProvider>
       </body>
     </html>

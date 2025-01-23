@@ -4,6 +4,9 @@ const requiredEnvList = [
   "SENTRY_AUTH_TOKEN",
   "NEXT_PUBLIC_SENTRY_DSN",
   "HELIUS_API_URL",
+  "NEXT_PUBLIC_SUPABASE_URL",
+  "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+  "PRIVATE_KEY",
 ];
 
 // Skip checking environment variables if in local development or running on CI

@@ -8,6 +8,7 @@ import {
 } from "@solana/web3.js";
 
 const RPC_URL = process.env.HELIUS_API_URL;
+const PRIVATE_KEY = process.env.PRIVATE_KEY;
 const MEMO_PROGRAM_ID = new PublicKey(
   "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"
 );
@@ -30,7 +31,6 @@ export function getTransactionUrl(signature: string) {
  */
 export async function sendMemoTransaction(
   message: string,
-  privateKey: string
 ): Promise<string> {
   if (!message || message.length === 0) {
     throw new Error("Message cannot be empty");
@@ -40,13 +40,9 @@ export async function sendMemoTransaction(
     throw new Error("Message is too long (max 1000 characters)");
   }
 
-  if (!privateKey) {
-    throw new Error("Private key is required");
-  }
-
   let secretKeyBytes: Uint8Array;
   try {
-    secretKeyBytes = bs58.decode(privateKey);
+    secretKeyBytes = bs58.decode(PRIVATE_KEY);
   } catch (error) {
     console.error(error);
     throw new Error("Invalid private key format");

@@ -5,11 +5,14 @@ import { captureException } from "@sentry/nextjs";
 import { sendMemoTransaction, getTransactionUrl } from "@/lib/utils/solana";
 import { checkDocumentExists, insertDocument } from "@/lib/utils/db";
 
-/**
- * Handles the POST request for uploading and processing new documents
- *
- * @param request - The incoming request object containing blob data and metadata
- */
+const allowedMimeTypes = [
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+];
+
 export async function POST(request: Request) {
   try {
     // Check content type
@@ -32,14 +35,6 @@ export async function POST(request: Request) {
     }
 
     // Validate mime type
-    const allowedMimeTypes = [
-      "application/pdf",
-      "image/jpeg",
-      "image/png",
-      "image/gif",
-      "image/webp",
-    ];
-
     if (!allowedMimeTypes.includes(mimeType)) {
       throw new Error("Invalid file type");
     }
@@ -92,8 +87,7 @@ export async function POST(request: Request) {
           ? 409
           : 500;
 
-      console.error("Error processing request:", error);
-      captureException(error);
+
 
       return NextResponse.json(
         { error: error.message },
