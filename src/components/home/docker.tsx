@@ -31,11 +31,13 @@ XIcon.displayName = "XIcon";
 const DockItem = memo(
   ({
     href,
+    newTab = true,
     content,
     children,
     onClick,
   }: {
     href?: string;
+    newTab?: boolean;
     content: string;
     children: React.ReactNode;
     onClick?: () => void;
@@ -45,8 +47,8 @@ const DockItem = memo(
         <Link
           href={href}
           className="block"
-          target="_blank"
-          rel="noopener noreferrer"
+          target={newTab ? "_blank" : undefined}
+          rel={newTab ? "noopener noreferrer" : undefined}
         >
           <Button
             className="!bg-transparent px-2.5 rounded-full border-none text-foreground hover:text-foreground hover:bg-gray-300"
@@ -88,12 +90,16 @@ function Docker() {
   return (
     <StaticDock direction="middle">
       <StaticDockIcon>
-        <DockItem href="/docs/new" content="Get Started">
+        <DockItem href="/docs/new" newTab={false} content="Get Started">
           <PenTool className="size-5" />
         </DockItem>
       </StaticDockIcon>
       <StaticDockIcon>
-        <DockItem href="/api-documentation" content="API Documentation">
+        <DockItem
+          href="/api-documentation"
+          newTab={false}
+          content="API Documentation"
+        >
           <FileText className="size-5" />
         </DockItem>
       </StaticDockIcon>
