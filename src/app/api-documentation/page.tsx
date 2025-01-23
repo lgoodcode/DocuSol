@@ -74,7 +74,7 @@ export default function DocsPage() {
   return (
     <main className="min-h-screen py-12 bg-background">
       <Link href="/">
-        <div className="flex items-center gap-4 justify-center mb-26">
+        <div className="flex items-center gap-4 justify-center mb-16">
           <div className="w-[64px] h-[64px] md:w-[92px] md:h-[92px] xl:w-[108px] xl:h-[108px] flex items-center justify-center">
             <Image
               src="/img/docusol_icon.webp"
@@ -92,8 +92,8 @@ export default function DocsPage() {
       </Link>
 
       <div className="container max-w-4xl mx-auto px-4">
-        <h1 className="text-4xl font-bold mb-6">
-          📄 Document Management API Documentation
+        <h1 className="text-4xl text-center font-bold mb-6">
+          📄 DocuSol API Documentation
         </h1>
 
         <p className="text-muted-foreground mb-12">
