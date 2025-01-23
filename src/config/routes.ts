@@ -9,6 +9,7 @@ import {
   User,
   Plus,
   type LucideIcon,
+  Compass,
 } from "lucide-react";
 
 export type Route = {
@@ -37,6 +38,12 @@ export const navRoutes: Route[] = [
     path: "/docs/view",
     Icon: Folder,
     description: "View your documents.",
+  },
+  {
+    name: "Explorer",
+    path: "/docs/explorer",
+    Icon: Compass,
+    description: "Search for documents.",
   },
   {
     name: "Writer",
