@@ -327,7 +327,7 @@ export function HomeContent() {
                       </p>
                       <Button
                         size="lg"
-                        className="bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 text-lg font-semibold shadow-lg hover:shadow-xl"
+                        className="w-fit mx-auto bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 text-lg font-semibold shadow-lg hover:shadow-xl"
                       >
                         Try it out now
                       </Button>

@@ -22,49 +22,60 @@ export async function POST(request: Request) {
     }
 
     const form = await request.formData();
-    const file = form.get("file") as File | null;
+    const name = form.get("name") as string | null;
     const password = form.get("password") as string | null;
+    const originalFilename = form.get("originalFilename") as string | null;
     const mimeType = form.get("mimeType") as string | null;
+    const unsignedDocument = form.get("unsigned_document") as File | null;
+    const signedDocument = form.get("signed_document") as File | null;
 
-    if (!file) {
-      throw new Error("No file provided");
+    if (!name) {
+      throw new Error("No name provided");
+    } else if (!originalFilename) {
+      throw new Error("No original filename provided");
     } else if (!mimeType) {
       throw new Error("No mime type provided");
+    } else if (!unsignedDocument) {
+      throw new Error("No unsigned document provided");
+    } else if (!signedDocument) {
+      throw new Error("No signed document provided");
     } else if (!allowedMimeTypes.includes(mimeType)) {
       throw new Error("Invalid file type");
     }
 
     // Get file data and hash
-    const fileBuffer = Buffer.from(await file.arrayBuffer());
-    const fileHash = crypto
+    const unsignedDocumentBuffer = Buffer.from(
+      await unsignedDocument.arrayBuffer()
+    );
+    const unsignedDocumentHash = crypto
       .createHash("sha256")
-      .update(fileBuffer)
+      .update(unsignedDocumentBuffer)
       .digest("hex");
 
     // Check if document already exists
-    const existingDoc = await checkDocumentExists(fileHash);
+    const existingDoc = await checkDocumentExists(unsignedDocumentHash);
     if (existingDoc) {
       throw new Error("Document already exists in the database");
     }
 
     // Create memo message and send transaction
-    const memoMessage = `FILE_HASH=${fileHash}`;
+    const memoMessage = `FILE_HASH=${unsignedDocumentHash}`;
     const transactionSignature = await sendMemoTransaction(memoMessage);
 
     // Store document in database
     await insertDocument(
-      fileHash,
+      unsignedDocumentHash,
       password,
       transactionSignature,
-      fileBuffer,
-      file.name,
+      unsignedDocumentBuffer,
+      originalFilename,
       mimeType
     );
 
     return NextResponse.json({
       success: true,
       transactionUrl: getTransactionUrl(transactionSignature),
-      hash: fileHash,
+      hash: unsignedDocumentHash,
     });
   } catch (error) {
     console.error("Error processing request:", error);

@@ -150,9 +150,6 @@ devDependencies:
   '@types/react-dom':
     specifier: ^19
     version: 19.0.3(@types/react@19.0.7)
-  '@types/sqlite3':
-    specifier: ^3.1.11
-    version: 3.1.11
   '@vitejs/plugin-react':
     specifier: ^4.3.4
     version: 4.3.4(vite@6.0.11)
@@ -3517,12 +3514,6 @@ packages:
   /@types/shimmer@1.2.0:
     resolution: {integrity: sha512-UE7oxhQLLd9gub6JKIAhDq06T0F6FnztwMNRvYgjeQSBeMc1ZG/tA47EwfduvkuQS8apbkM/lpLpWsaCeYsXVg==}
     dev: false
-
-  /@types/sqlite3@3.1.11:
-    resolution: {integrity: sha512-KYF+QgxAnnAh7DWPdNDroxkDI3/MspH1NMx6m/N/6fT1G6+jvsw4/ZePt8R8cr7ta58aboeTfYFBDxTJ5yv15w==}
-    dependencies:
-      '@types/node': 20.17.15
-    dev: true
 
   /@types/stack-utils@2.0.3:
     resolution: {integrity: sha512-9aEbYZ3TbYMznPdcdr3SmIrLXwC/AKZXQeCf9Pgao5CKb8CyHuEX5jzWPTkvregvhRJHcpRO6BFoGW9ycaOkYw==}

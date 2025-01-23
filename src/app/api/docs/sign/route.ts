@@ -8,11 +8,11 @@ import { sendMemoTransaction, getTransactionUrl } from "@/lib/utils/solana";
 export async function POST(request: Request) {
   try {
     const form = await request.formData();
-    const file = form.get("file") as File | null;
+    const unsignedDocument = form.get("unsigned_document") as File | null;
     const unsignedHash = form.get("hash") as string | null;
     const password = form.get("password") as string | null;
 
-    if (!file || !unsignedHash) {
+    if (!unsignedDocument || !unsignedHash) {
       throw new Error("Missing required fields: file and/or hash");
     }
 
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     }
 
     // Process signed document
-    const fileBuffer = Buffer.from(await file.arrayBuffer());
+    const fileBuffer = Buffer.from(await unsignedDocument.arrayBuffer());
     const signedHash = crypto
       .createHash("sha256")
       .update(fileBuffer)

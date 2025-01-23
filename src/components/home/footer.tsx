@@ -45,7 +45,7 @@ export function Footer() {
             </ul>
           </div>
           <div>
-            <h4 className="text-sm font-semibold mb-4">Product</h4>
+            <h4 className="text-sm font-semibold mb-4">Solana</h4>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link

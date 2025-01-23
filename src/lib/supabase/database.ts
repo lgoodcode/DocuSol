@@ -15,6 +15,7 @@ export type Database = {
           id: string
           is_signed: boolean
           mime_type: string
+          name: string
           original_filename: string
           password: string | null
           signed_at: string | null
@@ -31,6 +32,7 @@ export type Database = {
           id?: string
           is_signed?: boolean
           mime_type: string
+          name: string
           original_filename: string
           password?: string | null
           signed_at?: string | null
@@ -47,6 +49,7 @@ export type Database = {
           id?: string
           is_signed?: boolean
           mime_type?: string
+          name?: string
           original_filename?: string
           password?: string | null
           signed_at?: string | null

@@ -16,22 +16,9 @@ export async function POST(request: Request) {
     // Get full document details
     const { error, data: document } = await supabase
       .from("documents")
-      .select(
-        `
-        unsigned_hash,
-        signed_hash,
-        created_at,
-        unsigned_transaction_signature,
-        signed_transaction_signature,
-        unsigned_document,
-        signed_document,
-        original_filename,
-        is_signed,
-        signed_at,
-        password
-      `
-      )
-      .or(`unsigned_hash.eq.${hash},signed_hash.eq.${hash}`)
+      .select("*")
+      .eq("unsigned_hash", hash)
+      .eq("signed_hash", hash)
       .single();
 
     if (error) {
@@ -54,6 +41,8 @@ export async function POST(request: Request) {
 
     // Prepare metadata
     const metadata = {
+      id: document.id,
+      name: document.name,
       unsignedHash: document.unsigned_hash,
       signedHash: document.signed_hash || null,
       createdAt: document.created_at,
