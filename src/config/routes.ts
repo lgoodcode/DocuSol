@@ -5,7 +5,6 @@ import {
   CopyPlus,
   Send,
   TrendingUp,
-  Zap,
   User,
   Plus,
   type LucideIcon,
@@ -68,12 +67,6 @@ export const navRoutes: Route[] = [
     path: "/changelog",
     Icon: TrendingUp,
     description: "View our changelog.",
-  },
-  {
-    name: "Pricing",
-    path: "/pricing",
-    Icon: Zap,
-    description: "View our pricing.",
   },
 ];
 
