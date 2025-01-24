@@ -11,7 +11,7 @@ import {
 } from "framer-motion";
 import React, { PropsWithChildren, useRef } from "react";
 
-import { cn } from "@/lib/utils/cn";
+import { cn } from "@/lib/utils";
 
 // Shared types and constants
 export interface BaseDockProps extends VariantProps<typeof dockVariants> {

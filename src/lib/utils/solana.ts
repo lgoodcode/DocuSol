@@ -17,6 +17,38 @@ export function getTransactionUrl(signature: string) {
   return `https://explorer.solana.com/tx/${signature}`;
 }
 
+export const isTransactionSignature = (val: string) => {
+  try {
+    return val.length === 88 && bs58.decode(val).length === 64;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Get the hash from a transaction signature. Since we know when we send the
+ * memo transaction, there should only be 4 log messages, with the second
+ * containing the file hash.
+ *
+ * @param tx - The transaction signature
+ * @returns The hash or null if not found
+ */
+export const getHashFromTransactionSignature = async (tx: string) => {
+  const connection = new Connection(RPC_URL, "confirmed");
+  const txRes = await connection.getTransaction(tx, {
+    maxSupportedTransactionVersion: 0,
+  });
+  const messages = txRes?.meta?.logMessages;
+  if (Array.isArray(messages) && messages.length === 4) {
+    const memo = messages[1];
+    if (memo.includes("Memo")) {
+      const hash = memo.match(/FILE_HASH=([a-f0-9]{64})/i)?.[1];
+      return hash ?? null;
+    }
+  }
+  return null;
+};
+
 /**
  * Sends a transaction with a memo instruction containing the provided message to the Solana blockchain.
  * This function creates a new transaction with a single memo instruction and broadcasts it to the network.
@@ -29,9 +61,7 @@ export function getTransactionUrl(signature: string) {
  * @throws {Error} If there's insufficient balance
  * @returns {Promise<string>} The transaction signature
  */
-export async function sendMemoTransaction(
-  message: string,
-): Promise<string> {
+export async function sendMemoTransaction(message: string): Promise<string> {
   if (!message || message.length === 0) {
     throw new Error("Message cannot be empty");
   }
@@ -55,7 +85,6 @@ export async function sendMemoTransaction(
   if (balance === 0) {
     throw new Error("Insufficient balance in sender account");
   }
-
 
   const memoData = Buffer.from(message, "utf-8");
   const memoInstruction = new TransactionInstruction({

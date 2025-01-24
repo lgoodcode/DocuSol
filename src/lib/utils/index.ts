@@ -1,10 +1,18 @@
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+
 export const previewBlob = (blob: Blob) => {
   const url = URL.createObjectURL(blob);
   window.open(url, "_blank");
 };
 
 // Convert Buffer/ArrayBuffer to hex string for BYTEA
-export const bytesToHex = (buffer: Buffer) => "\\x" + buffer.toString("hex");
+export const bufferToHex = (buffer: Buffer) => "\\x" + buffer.toString("hex");
 
 export const hexToBuffer = (hex: string): Uint8Array => {
   if (!hex.startsWith("\\x")) {

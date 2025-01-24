@@ -39,8 +39,8 @@ export const navRoutes: Route[] = [
     description: "View your documents.",
   },
   {
-    name: "Explorer",
-    path: "/docs/explorer",
+    name: "Explore",
+    path: "/docs/explore",
     Icon: Compass,
     description: "Search for documents.",
   },

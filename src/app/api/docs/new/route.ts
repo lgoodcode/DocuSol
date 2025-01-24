@@ -4,7 +4,7 @@ import { captureException } from "@sentry/nextjs";
 
 import { sendMemoTransaction } from "@/lib/utils/solana";
 import { insertDocument } from "@/lib/utils/db";
-import { bytesToHex } from "@/lib/utils";
+import { bufferToHex } from "@/lib/utils";
 
 const allowedMimeTypes = [
   "application/pdf",
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
 
     const form = await request.formData();
     const name = form.get("name") as string | null;
-    const password = form.get("password") as string | null;
+    const password = (form.get("password") as string) || "";
     const originalFilename = form.get("original_filename") as string | null;
     const mimeType = form.get("mime_type") as string | null;
     const unsignedDocument = form.get("unsigned_document") as File | null;
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
     );
     const unsignedDocumentHash = crypto
       .createHash("sha256")
-      .update(unsignedDocumentBuffer)
+      .update(unsignedDocumentBuffer + password)
       .digest("hex");
 
     // Create memo message and send transaction
@@ -63,11 +63,11 @@ export async function POST(request: Request) {
     // Store document in database
     const id = await insertDocument({
       name,
-      password: password || "",
+      password,
       original_filename: originalFilename,
       mime_type: mimeType,
-      original_document: bytesToHex(originalDocumentBuffer),
-      unsigned_document: bytesToHex(unsignedDocumentBuffer),
+      original_document: bufferToHex(originalDocumentBuffer),
+      unsigned_document: bufferToHex(unsignedDocumentBuffer),
       unsigned_transaction_signature: txSignature,
       unsigned_hash: unsignedDocumentHash,
     });

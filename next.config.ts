@@ -5,7 +5,6 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   rewrites: async () => {
     return [
-      "/docs/explorer",
       "/writer",
       "/templates",
       "/send",

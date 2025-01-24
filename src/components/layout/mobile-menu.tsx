@@ -8,7 +8,7 @@ import { motion } from "framer-motion";
 import { Menu, X, Sun, Moon } from "lucide-react";
 
 import { navRoutes } from "@/config/routes";
-import { cn } from "@/lib/utils/cn";
+import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
