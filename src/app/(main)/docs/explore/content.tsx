@@ -24,7 +24,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-import { DocumentDetails } from "./details";
+import { DocumentDetails } from "./doc-details";
 
 const searchSchema = z.object({
   hashOrSignature: z
@@ -120,7 +120,7 @@ export function ExploreContent() {
                               <Button
                                 className="hidden md:flex"
                                 type="submit"
-                                isLoading={!form.formState.isSubmitting}
+                                isLoading={form.formState.isSubmitting}
                               >
                                 Search
                               </Button>
@@ -137,7 +137,7 @@ export function ExploreContent() {
                     <Button
                       className="flex md:hidden"
                       type="submit"
-                      isLoading={!form.formState.isSubmitting}
+                      isLoading={form.formState.isSubmitting}
                     >
                       Search
                     </Button>

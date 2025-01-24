@@ -156,7 +156,7 @@ export function DocumentDetails({ document }: { document: Document }) {
                   <button
                     onClick={handleViewDocument(field.value)}
                     className="flex items-center gap-2 text-blue-600 hover:text-blue-800 hover:underline"
-                    aria-label="Open in new tab"
+                    aria-label="View document"
                   >
                     View document
                     <ExternalLink className="h-4 w-4" />
