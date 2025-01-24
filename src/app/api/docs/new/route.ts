@@ -66,7 +66,8 @@ export async function POST(request: Request) {
       password: password || "",
       original_filename: originalFilename,
       mime_type: mimeType,
-      unsigned_document: bytesToHex(originalDocumentBuffer),
+      original_document: bytesToHex(originalDocumentBuffer),
+      unsigned_document: bytesToHex(unsignedDocumentBuffer),
       unsigned_transaction_signature: txSignature,
       unsigned_hash: unsignedDocumentHash,
     });

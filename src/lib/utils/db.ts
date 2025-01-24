@@ -43,6 +43,7 @@ export async function insertDocument(
       unsigned_hash: newDocument.unsigned_hash,
       unsigned_transaction_signature:
         newDocument.unsigned_transaction_signature,
+      original_document: newDocument.original_document,
       unsigned_document: newDocument.unsigned_document,
       original_filename: newDocument.original_filename,
       mime_type: newDocument.mime_type,

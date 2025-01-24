@@ -21,8 +21,26 @@ export declare global {
     signed_document: Blob;
   }
 
+  interface ViewDocument {
+    id: string;
+    name: string;
+    password: string | null;
+    status: "signed" | "pending";
+    mimeType: string;
+    unsignedTxSignature: string;
+    signedTxSignature: string | null;
+    unsignedDocument: Uint8Array;
+    signedDocument: Uint8Array | null;
+    createdAt: string;
+    updatedAt: string;
+  }
+
+  /**
+   * Store the documents as hex strings
+   */
   interface InsertNewDocument
     extends Omit<NewDocument, "unsigned_document" | "signed_document"> {
+    original_document: string;
     unsigned_document: string;
     unsigned_transaction_signature: string;
     unsigned_hash: string;

@@ -14,7 +14,6 @@ import {
 } from "@tanstack/react-table";
 import { motion } from "framer-motion";
 
-import type { ViewDocument } from "@/lib/supabase/types";
 import {
   Table,
   TableBody,

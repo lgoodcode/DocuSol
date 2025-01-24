@@ -10,9 +10,9 @@ import {
   Trash,
   Lock,
   Globe,
+  Compass,
 } from "lucide-react";
 
-import type { ViewDocument } from "@/lib/supabase/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -26,12 +26,18 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { removeDocument } from "@/lib/utils/db";
 
-import { viewDocument, downloadDocument, deleteDocument } from "./actions";
+import {
+  viewDocument,
+  viewTransaction,
+  downloadDocument,
+  deleteDocument,
+} from "./actions";
 
-type ActionType = "view" | "download" | "delete";
+type ActionType = "view" | "viewTransaction" | "download" | "delete";
 
 const actionMap = {
   view: viewDocument,
+  viewTransaction,
   download: downloadDocument,
   delete: deleteDocument,
 } as const;
@@ -40,14 +46,14 @@ export function useColumns(handleDelete: (id: string) => void) {
   const { toast } = useToast();
 
   const createActionHandler = useCallback((actionType: ActionType) => {
-    return async (documentId: string) => {
+    return async (id: string) => {
       try {
-        await actionMap[actionType](documentId);
+        await actionMap[actionType](id);
 
         if (actionType === "delete") {
-          handleDelete(documentId);
+          handleDelete(id);
           // Remove from IndexedDB
-          removeDocument(documentId).catch((error) => {
+          removeDocument(id).catch((error) => {
             console.error(error);
             captureException(error);
           });
@@ -67,6 +73,7 @@ export function useColumns(handleDelete: (id: string) => void) {
 
   const wrappedActions = {
     handleViewDocument: createActionHandler("view"),
+    handleViewTransaction: createActionHandler("viewTransaction"),
     handleDownloadDocument: createActionHandler("download"),
     handleDeleteDocument: createActionHandler("delete"),
   };
@@ -80,9 +87,9 @@ export function useColumns(handleDelete: (id: string) => void) {
         cell: ({ row }) => {
           const doc = row.original;
           return (
-            <div className="flex items-center gap-2">
-              <span className="font-medium">{doc.name}</span>
-              <div className="flex gap-1">
+            <div className="flex items-center gap-2 min-w-[200px]">
+              <span className="font-medium truncate">{doc.name}</span>
+              <div className="flex gap-1 flex-shrink-0">
                 {doc.password ? (
                   <Lock className="h-4 w-4 text-muted-foreground" />
                 ) : (
@@ -96,6 +103,7 @@ export function useColumns(handleDelete: (id: string) => void) {
       {
         accessorKey: "status",
         header: "Status",
+        size: 100,
         cell: ({ row }) => {
           const status = row.getValue("status") as string;
           return (
@@ -113,13 +121,6 @@ export function useColumns(handleDelete: (id: string) => void) {
           );
         },
       },
-      {
-        accessorKey: "createdAt",
-        header: "Created",
-        cell: ({ row }) => {
-          return new Date(row.getValue("createdAt")).toLocaleDateString();
-        },
-      },
       // {
       //   accessorKey: "expiresAt",
       //   header: "Expires",
@@ -131,13 +132,31 @@ export function useColumns(handleDelete: (id: string) => void) {
       {
         accessorKey: "mimeType",
         header: "Type",
+        size: 100,
         cell: ({ row }) => {
           return row.getValue("mimeType") as string;
         },
       },
       {
+        accessorKey: "createdAt",
+        header: "Created",
+        size: 180,
+        cell: ({ row }) => {
+          return new Date(row.getValue("createdAt")).toLocaleString();
+        },
+      },
+      {
+        accessorKey: "updatedAt",
+        header: "Updated",
+        size: 180,
+        cell: ({ row }) => {
+          return new Date(row.getValue("updatedAt")).toLocaleString();
+        },
+      },
+      {
         id: "actions",
         enableHiding: false,
+        size: 50,
         cell: ({ row }) => {
           // const document = row.original;
           return (
@@ -157,6 +176,17 @@ export function useColumns(handleDelete: (id: string) => void) {
                 >
                   <Eye className="mr-2 h-4 w-4" />
                   View
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    wrappedActions.handleViewTransaction(
+                      row.original.signedTxSignature ||
+                        row.original.unsignedTxSignature
+                    )
+                  }
+                >
+                  <Compass className="mr-2 h-4 w-4" />
+                  View Transaction
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() =>

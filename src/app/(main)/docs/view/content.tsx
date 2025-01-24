@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
-import type { ViewDocument } from "@/lib/supabase/types";
-import { getAllStoredDocuments } from "@/lib/utils";
+import { getAllStoredDocuments, hexToBuffer } from "@/lib/utils";
 
 import { DataTable } from "./data-table";
 import { supabase } from "@/lib/supabase/client";
@@ -45,7 +44,21 @@ const getDocuments = async (): Promise<ViewDocument[]> => {
   );
   const { data, error } = await supabase
     .from("documents")
-    .select("id,name,password,is_signed,mime_type,created_at")
+    .select(
+      `
+      id,
+      name,
+      password,
+      is_signed,
+      mime_type,
+      unsigned_transaction_signature,
+      signed_transaction_signature,
+      unsigned_document,
+      signed_document,
+      created_at,
+      updated_at
+      `
+    )
     .in("id", ids);
 
   if (error) {
@@ -60,7 +73,14 @@ const getDocuments = async (): Promise<ViewDocument[]> => {
     password: doc.password,
     status: doc.is_signed ? "signed" : "pending",
     mimeType: doc.mime_type,
+    unsignedTxSignature: doc.unsigned_transaction_signature,
+    signedTxSignature: doc.signed_transaction_signature,
+    unsignedDocument: hexToBuffer(doc.unsigned_document),
+    signedDocument: doc.signed_document
+      ? hexToBuffer(doc.signed_document)
+      : null,
     createdAt: doc.created_at,
+    updatedAt: doc.updated_at,
   }));
 
   return documents;

@@ -10,7 +10,7 @@ export const hexToBuffer = (hex: string): Uint8Array => {
   if (!hex.startsWith("\\x")) {
     throw new Error("Invalid hex string format - must start with \\x");
   }
-  // @ts-expect-error - It's fine
+  // Ignore the TS error - it's fine
   return new Uint8Array(Buffer.from(hex.slice(2), "hex"));
 };
 

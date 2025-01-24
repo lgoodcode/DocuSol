@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase/client";
 import { hexToBuffer, previewBlob } from "@/lib/utils";
+import { getTransactionUrl } from "@/lib/utils/solana";
 
 const getDocument = async (id: string): Promise<Blob> => {
   const { error, data } = await supabase
@@ -30,6 +31,11 @@ const getDocument = async (id: string): Promise<Blob> => {
 export const viewDocument = async (id: string): Promise<void> => {
   const blob = await getDocument(id);
   previewBlob(blob);
+};
+
+export const viewTransaction = async (txSignature: string): Promise<void> => {
+  const url = getTransactionUrl(txSignature);
+  window.open(url, "_blank");
 };
 
 export const downloadDocument = async (id: string): Promise<void> => {

@@ -16,6 +16,7 @@ export type Database = {
           is_signed: boolean
           mime_type: string
           name: string
+          original_document: string
           original_filename: string
           password: string | null
           signed_at: string | null
@@ -24,7 +25,7 @@ export type Database = {
           signed_transaction_signature: string | null
           unsigned_document: string
           unsigned_hash: string
-          unsigned_transaction_signature: string | null
+          unsigned_transaction_signature: string
           updated_at: string
         }
         Insert: {
@@ -33,6 +34,7 @@ export type Database = {
           is_signed?: boolean
           mime_type: string
           name: string
+          original_document: string
           original_filename: string
           password?: string | null
           signed_at?: string | null
@@ -41,7 +43,7 @@ export type Database = {
           signed_transaction_signature?: string | null
           unsigned_document: string
           unsigned_hash: string
-          unsigned_transaction_signature?: string | null
+          unsigned_transaction_signature: string
           updated_at?: string
         }
         Update: {
@@ -50,6 +52,7 @@ export type Database = {
           is_signed?: boolean
           mime_type?: string
           name?: string
+          original_document?: string
           original_filename?: string
           password?: string | null
           signed_at?: string | null
@@ -58,7 +61,7 @@ export type Database = {
           signed_transaction_signature?: string | null
           unsigned_document?: string
           unsigned_hash?: string
-          unsigned_transaction_signature?: string | null
+          unsigned_transaction_signature?: string
           updated_at?: string
         }
         Relationships: []
