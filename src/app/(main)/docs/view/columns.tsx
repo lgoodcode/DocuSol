@@ -11,6 +11,7 @@ import {
   Lock,
   Globe,
   Compass,
+  Copy,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -29,15 +30,22 @@ import { removeDocument } from "@/lib/utils/db";
 import {
   viewDocument,
   viewTransaction,
+  copyTxSignature,
   downloadDocument,
   deleteDocument,
 } from "./actions";
 
-type ActionType = "view" | "viewTransaction" | "download" | "delete";
+type ActionType =
+  | "view"
+  | "viewTransaction"
+  | "copyTxSignature"
+  | "download"
+  | "delete";
 
 const actionMap = {
   view: viewDocument,
   viewTransaction,
+  copyTxSignature,
   download: downloadDocument,
   delete: deleteDocument,
 } as const;
@@ -57,6 +65,12 @@ export function useColumns(handleDelete: (id: string) => void) {
             console.error(error);
             captureException(error);
           });
+        } else if (actionType === "copyTxSignature") {
+          toast({
+            title: "Tx Signature Copied",
+            description:
+              "The transaction signature has been copied to your clipboard",
+          });
         }
       } catch (error) {
         console.error(error);
@@ -74,6 +88,7 @@ export function useColumns(handleDelete: (id: string) => void) {
   const wrappedActions = {
     handleViewDocument: createActionHandler("view"),
     handleViewTransaction: createActionHandler("viewTransaction"),
+    handleCopyTxSignature: createActionHandler("copyTxSignature"),
     handleDownloadDocument: createActionHandler("download"),
     handleDeleteDocument: createActionHandler("delete"),
   };
@@ -187,6 +202,17 @@ export function useColumns(handleDelete: (id: string) => void) {
                 >
                   <Compass className="mr-2 h-4 w-4" />
                   View Transaction
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    wrappedActions.handleCopyTxSignature(
+                      row.original.signedTxSignature ||
+                        row.original.unsignedTxSignature
+                    )
+                  }
+                >
+                  <Copy className="mr-2 h-4 w-4" />
+                  Copy Tx Signature
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() =>

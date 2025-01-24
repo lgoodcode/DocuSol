@@ -38,6 +38,10 @@ export const viewTransaction = async (txSignature: string): Promise<void> => {
   window.open(url, "_blank");
 };
 
+export const copyTxSignature = async (txSignature: string): Promise<void> => {
+  navigator.clipboard.writeText(txSignature);
+};
+
 export const downloadDocument = async (id: string): Promise<void> => {
   const { data } = await supabase
     .from("documents")
