@@ -1,6 +1,8 @@
+"use client";
+
 import { Moon, Sun, Pill, FileText, Github, PenTool } from "lucide-react";
 import Link from "next/link";
-import React, { memo, useState, useEffect } from "react";
+import React, { memo } from "react";
 import { motion } from "framer-motion";
 import { useTheme } from "next-themes";
 
@@ -11,7 +13,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils/cn";
 import { StaticDock, StaticDockIcon } from "@/components/ui/dock";
 
 export type IconProps = React.HTMLAttributes<SVGElement>;
@@ -30,11 +31,13 @@ XIcon.displayName = "XIcon";
 const DockItem = memo(
   ({
     href,
+    newTab = true,
     content,
     children,
     onClick,
   }: {
     href?: string;
+    newTab?: boolean;
     content: string;
     children: React.ReactNode;
     onClick?: () => void;
@@ -44,8 +47,8 @@ const DockItem = memo(
         <Link
           href={href}
           className="block"
-          target="_blank"
-          rel="noopener noreferrer"
+          target={newTab ? "_blank" : undefined}
+          rel={newTab ? "noopener noreferrer" : undefined}
         >
           <Button
             className="!bg-transparent px-2.5 rounded-full border-none text-foreground hover:text-foreground hover:bg-gray-300"
@@ -69,7 +72,7 @@ const DockItem = memo(
 DockItem.displayName = "DockItem";
 const DockTooltip = memo(
   ({ children, content }: { children: React.ReactNode; content: string }) => (
-    <TooltipProvider>
+    <TooltipProvider delayDuration={350}>
       <Tooltip>
         <TooltipTrigger asChild>{children}</TooltipTrigger>
         <TooltipContent side="bottom" sideOffset={10}>
@@ -87,12 +90,16 @@ function Docker() {
   return (
     <StaticDock direction="middle">
       <StaticDockIcon>
-        <DockItem href="/docs/new" content="Get Started">
+        <DockItem href="/docs/new" newTab={false} content="Get Started">
           <PenTool className="size-5" />
         </DockItem>
       </StaticDockIcon>
       <StaticDockIcon>
-        <DockItem href="/api-documentation" content="API Documentation">
+        <DockItem
+          href="/api-documentation"
+          newTab={false}
+          content="API Documentation"
+        >
           <FileText className="size-5" />
         </DockItem>
       </StaticDockIcon>
@@ -117,7 +124,6 @@ function Docker() {
             xmlns="http://www.w3.org/2000/svg"
             width="100%"
             height="100%"
-            fill-rule="evenodd"
             viewBox="0 0 252 300"
             focusable="false"
             className="fill-current"
@@ -145,40 +151,20 @@ function Docker() {
   );
 }
 
-export function DockerContainer() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
-
-  useEffect(() => {
-    setIsInitialized(true);
-    setIsOpen(true);
-  }, []);
-
-  const handleDockerClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsOpen(true);
-  };
-
-  const handlePageClick = () => {
-    setIsOpen(false);
-  };
-
+export function DockerContainer({ delay }: { delay: number }) {
   return (
-    <>
-      <div className="fixed inset-0 z-0" onClick={handlePageClick} />
-      <motion.div
-        className={cn(
-          "fixed top-0 left-0 w-full z-50",
-          isInitialized && "transition-transform duration-300",
-          !isOpen && "-translate-y-full"
-        )}
-        onClick={handleDockerClick}
-        initial={{ y: "-100%" }}
-        animate={{ y: isOpen ? 0 : "-100%" }}
-        transition={{ duration: 0.3 }}
-      >
-        <Docker />
-      </motion.div>
-    </>
+    <motion.div
+      className="fixed top-0 left-0 w-full z-50"
+      initial={{ y: "-100%", opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{
+        duration: 0.4,
+        ease: "easeOut",
+        opacity: { duration: 0.5 },
+        delay: delay,
+      }}
+    >
+      <Docker />
+    </motion.div>
   );
 }

@@ -1,42 +1,98 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
-import type { Document } from "@/types/document";
-import { columns } from "./columns";
-import { DataTable } from "./data-table";
+import { getAllStoredDocuments, hexToBuffer } from "@/lib/utils";
 
-const documents: Document[] = [
-  {
-    id: "1",
-    name: "Contract-2024.pdf",
-    createdAt: "2024-01-15T09:24:00Z",
-    expiresAt: "2024-02-15T09:24:00Z",
-    status: "pending",
-    password: "123456",
-    size: 1240000,
-  },
-  {
-    id: "2",
-    name: "Agreement.pdf",
-    createdAt: "2024-01-14T15:30:00Z",
-    expiresAt: null,
-    status: "signed",
-    password: null,
-    size: 890000,
-  },
-  {
-    id: "3",
-    name: "NDA-2023.pdf",
-    createdAt: "2023-12-20T11:00:00Z",
-    expiresAt: "2024-01-20T11:00:00Z",
-    status: "expired",
-    password: "123456",
-    size: 450000,
-  },
-];
+import { DataTable } from "./data-table";
+import { supabase } from "@/lib/supabase/client";
+
+// const documents: Document[] = [
+//   {
+//     id: "1",
+//     name: "Contract-2024.pdf",
+//     createdAt: "2024-01-15T09:24:00Z",
+//     expiresAt: "2024-02-15T09:24:00Z",
+//     status: "pending",
+//     password: "123456",
+//     size: 1240000,
+//   },
+//   {
+//     id: "2",
+//     name: "Agreement.pdf",
+//     createdAt: "2024-01-14T15:30:00Z",
+//     expiresAt: null,
+//     status: "signed",
+//     password: null,
+//     size: 890000,
+//   },
+//   {
+//     id: "3",
+//     name: "NDA-2023.pdf",
+//     createdAt: "2023-12-20T11:00:00Z",
+//     expiresAt: "2024-01-20T11:00:00Z",
+//     status: "expired",
+//     password: "123456",
+//     size: 450000,
+//   },
+// ];
+
+const getDocuments = async (): Promise<ViewDocument[]> => {
+  const ids = await getAllStoredDocuments().then((docs) =>
+    docs.map((doc) => doc.id)
+  );
+  const { data, error } = await supabase
+    .from("documents")
+    .select(
+      `
+      id,
+      name,
+      password,
+      is_signed,
+      mime_type,
+      unsigned_transaction_signature,
+      signed_transaction_signature,
+      unsigned_document,
+      signed_document,
+      created_at,
+      updated_at
+      `
+    )
+    .in("id", ids);
+
+  if (error) {
+    throw error;
+  } else if (!data) {
+    return [];
+  }
+
+  const documents: ViewDocument[] = data.map((doc) => ({
+    id: doc.id,
+    name: doc.name,
+    password: doc.password,
+    status: doc.is_signed ? "signed" : "pending",
+    mimeType: doc.mime_type,
+    unsignedTxSignature: doc.unsigned_transaction_signature,
+    signedTxSignature: doc.signed_transaction_signature,
+    unsignedDocument: hexToBuffer(doc.unsigned_document),
+    signedDocument: doc.signed_document
+      ? hexToBuffer(doc.signed_document)
+      : null,
+    createdAt: doc.created_at,
+    updatedAt: doc.updated_at,
+  }));
+
+  return documents;
+};
 
 export function ViewContent() {
+  const [documents, setDocuments] = useState<ViewDocument[]>([]);
+
+  useEffect(() => {
+    getDocuments().then((docs) => setDocuments(docs));
+  }, []);
+
   return (
     <>
       <motion.div
@@ -49,7 +105,7 @@ export function ViewContent() {
           Manage and track your document signatures
         </p>
       </motion.div>
-      <DataTable columns={columns} data={documents} />
+      <DataTable data={documents} setData={setDocuments} />
     </>
   );
 }

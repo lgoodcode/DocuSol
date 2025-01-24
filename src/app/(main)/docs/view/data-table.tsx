@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import {
-  type ColumnDef,
   type ColumnFiltersState,
   type SortingState,
   type VisibilityState,
@@ -32,15 +31,18 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
-  data: TData[];
-}
+import { useColumns } from "./columns";
 
-export function DataTable<TData, TValue>({
-  columns,
+export function DataTable({
   data,
-}: DataTableProps<TData, TValue>) {
+  setData,
+}: {
+  data: ViewDocument[];
+  setData: React.Dispatch<React.SetStateAction<ViewDocument[]>>;
+}) {
+  const columns = useColumns((id: string) => {
+    setData((prev) => prev.filter((doc) => doc.id !== id));
+  });
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});

@@ -3,11 +3,11 @@ import { Github, Pill } from "lucide-react";
 
 export function Footer() {
   return (
-    <footer className="bg-black border-t border-border z-100">
+    <footer className="bg-black/95 border-t border-border z-100 text-primary-foreground dark:text-primary">
       <div className="container mx-auto px-6 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-primary">DocuSol</h3>
+            <h3 className="text-lg font-semibold">DocuSol</h3>
             <p className="text-sm text-muted-foreground">
               Secure document signing and sharing powered by AI and blockchain
               technology.
@@ -45,7 +45,7 @@ export function Footer() {
             </ul>
           </div>
           <div>
-            <h4 className="text-sm font-semibold mb-4">Product</h4>
+            <h4 className="text-sm font-semibold mb-4">Solana</h4>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link

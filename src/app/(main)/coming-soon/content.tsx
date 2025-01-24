@@ -7,7 +7,7 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export function ComingSoon() {
+export function ComingSoonContent() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -27,7 +27,7 @@ export function ComingSoon() {
       <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
 
       {/* Content */}
-      <div className="z-10 relative container mx-auto flex flex-col items-center justify-center min-h-screen max-w-3xl text-center gap-8 px-4">
+      <div className="z-10 relative container mx-auto flex flex-col items-center justify-center max-w-3xl text-center gap-8 px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

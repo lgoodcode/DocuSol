@@ -47,6 +47,12 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
+import { uploadFile, sign } from "./utils";
+import { storeDocument } from "@/lib/utils";
+import { getTransactionUrl } from "@/lib/utils/solana";
+
+const ACCEPTED_FILE_TYPES = [".pdf", ".jpeg", ".png", ".jpg"];
+
 const documentSchema = z
   .object({
     name: z.string().min(1, "Document name is required"),
@@ -62,8 +68,15 @@ export function DocumentSigning() {
   const { toast } = useToast();
   const { file, preview, handleFileChange, clearFile, fileInputRef } =
     useFileUpload();
-  const { canvasRef, startDrawing, draw, hasDrawn, stopDrawing, clearCanvas } =
-    useDrawing();
+  const {
+    canvasRef,
+    startDrawing,
+    draw,
+    hasDrawn,
+    getSignatureAsBlack,
+    stopDrawing,
+    clearCanvas,
+  } = useDrawing();
 
   const [signatureType, setSignatureType] = useState("draw"); // "draw" or "type"
   const [typedSignature, setTypedSignature] = useState("");
@@ -79,36 +92,72 @@ export function DocumentSigning() {
       !file ||
       (!hasDrawn && signatureType === "draw") ||
       (!typedSignature && signatureType === "type")
-    )
+    ) {
       return;
-
-    // Get the signature as a data URL if drawn
-    const signatureDataUrl =
-      signatureType === "draw" ? canvasRef.current?.toDataURL() : null;
+    }
 
     try {
-      // Here you would typically send the data to your server
-      console.log("Submitting:", {
-        name,
+      const signedDoc = await sign(
         file,
-        signature: signatureType === "draw" ? signatureDataUrl : typedSignature,
-        password,
-        signatureType,
+        signatureType === "draw" ? getSignatureAsBlack() : null,
+        signatureType === "type" ? typedSignature : undefined
+      );
+
+      if (!signedDoc) {
+        throw new Error("Failed to sign document");
+      }
+
+      const { error, id, txSignature, unsignedHash } = await uploadFile({
+        name,
+        password: password || "",
+        original_filename: file.name,
+        mime_type: file.type,
+        unsigned_document: file,
+        signed_document: signedDoc,
       });
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+
+      if (error) {
+        throw new Error(error);
+      } else if (!id || !txSignature || !unsignedHash) {
+        throw new Error("Failed to upload document");
+      }
+
+      storeDocument({ id, txSignature, unsignedHash }).catch((error) => {
+        console.error("Error storing document:", error);
+        captureException(error, {
+          extra: {
+            id,
+            txSignature,
+            unsignedHash,
+          },
+        });
+      });
+
+      const txUrl = getTransactionUrl(txSignature!);
       toast({
         title: "Document signed",
-        description: "Your document has been signed and saved",
+        description: (
+          <>
+            Your document has been signed and saved. You can view the
+            transaction on{" "}
+            <a
+              href={txUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium underline underline-offset-4"
+            >
+              Solana Explorer
+            </a>
+            . Refer to the memo for the document hash.
+          </>
+        ),
         variant: "success",
       });
 
-      form.reset({
-        name: "",
-        password: "",
-        confirmPassword: "",
-      });
+      form.reset({ name: "", password: "", confirmPassword: "" });
       clearFile();
       clearCanvas();
+      setTypedSignature("");
     } catch (error) {
       console.error(error);
       captureException(error);
@@ -170,7 +219,7 @@ export function DocumentSigning() {
                       type="file"
                       ref={fileInputRef}
                       onChange={handleFileChange}
-                      accept=".pdf,image/*"
+                      accept={ACCEPTED_FILE_TYPES.join(",")}
                       className="hidden"
                     />
                     {file && (
@@ -241,7 +290,11 @@ export function DocumentSigning() {
                       <FormItem>
                         <FormLabel>Password Protection (Optional)</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter password" {...field} />
+                          <Input
+                            type="password"
+                            placeholder="Enter password"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                         <FormDescription>
@@ -259,7 +312,11 @@ export function DocumentSigning() {
                         <FormItem>
                           <FormLabel>Confirm Password</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter password" {...field} />
+                            <Input
+                              type="password"
+                              placeholder="Enter password"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                           <FormDescription>

@@ -84,11 +84,36 @@ const templates: Template[] = [
   },
 ];
 
+type RecentGeneration = {
+  title: string;
+  timestamp: string;
+  status: string;
+};
+
+// const templateRecentGenerations: RecentGeneration[] = [
+//   {
+//     title: "Employment Contract",
+//     timestamp: "2 hours ago",
+//     status: "Completed",
+//   },
+//   {
+//     title: "Project Proposal",
+//     timestamp: "5 hours ago",
+//     status: "Completed",
+//   },
+//   {
+//     title: "NDA Agreement",
+//     timestamp: "1 day ago",
+//     status: "Completed",
+//   },
+// ];
+
 export function DashboardContent() {
   const { toast } = useToast();
   const [agentLoading, setAgentLoading] = useState(false);
   const [documentLoading, setDocumentLoading] = useState(false);
   const [chatLoading, setChatLoading] = useState(false);
+  const [recentGenerations] = useState<RecentGeneration[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(
     null
   );
@@ -390,53 +415,43 @@ export function DashboardContent() {
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">Recent Generations</h3>
                 <div className="grid gap-4">
-                  {[
-                    {
-                      title: "Employment Contract",
-                      timestamp: "2 hours ago",
-                      status: "Completed",
-                    },
-                    {
-                      title: "Project Proposal",
-                      timestamp: "5 hours ago",
-                      status: "Completed",
-                    },
-                    {
-                      title: "NDA Agreement",
-                      timestamp: "1 day ago",
-                      status: "Completed",
-                    },
-                  ].map((item, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                    >
-                      <Card>
-                        <CardContent className="flex items-center justify-between p-4">
-                          <div className="flex items-center gap-4">
-                            <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-primary flex-shrink-0" />
-                            <div className="min-w-0">
-                              <p className="font-medium truncate">
-                                {item.title}
-                              </p>
-                              <p className="text-xs sm:text-sm text-muted-foreground">
-                                {item.timestamp}
-                              </p>
+                  {!recentGenerations.length ? (
+                    <p className="text-sm text-muted-foreground">
+                      No recent generations.
+                    </p>
+                  ) : (
+                    recentGenerations.map((item, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                      >
+                        <Card>
+                          <CardContent className="flex items-center justify-between p-4">
+                            <div className="flex items-center gap-4">
+                              <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-primary flex-shrink-0" />
+                              <div className="min-w-0">
+                                <p className="font-medium truncate">
+                                  {item.title}
+                                </p>
+                                <p className="text-xs sm:text-sm text-muted-foreground">
+                                  {item.timestamp}
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="ml-2 flex-shrink-0"
-                          >
-                            View
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  ))}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="ml-2 flex-shrink-0"
+                            >
+                              View
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    ))
+                  )}
                 </div>
               </div>
             </div>
@@ -455,16 +470,16 @@ export function DashboardContent() {
                         message:
                           "Hello! I'm your document assistant. How can I help improve your documents today?",
                       },
-                      {
-                        type: "user",
-                        message:
-                          "Can you help me make this contract more concise?",
-                      },
-                      {
-                        type: "bot",
-                        message:
-                          "Of course! Please share the contract you'd like me to review, and I'll help you make it more concise while maintaining its legal integrity.",
-                      },
+                      // {
+                      //   type: "user",
+                      //   message:
+                      //     "Can you help me make this contract more concise?",
+                      // },
+                      // {
+                      //   type: "bot",
+                      //   message:
+                      //     "Of course! Please share the contract you'd like me to review, and I'll help you make it more concise while maintaining its legal integrity.",
+                      // },
                     ].map((message, index) => (
                       <motion.div
                         key={index}

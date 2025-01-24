@@ -13,6 +13,29 @@ interface Path {
   points: Point[];
 }
 
+// Helper function to get coordinates for both mouse and touch events
+function getCoordinates(
+  event: React.MouseEvent | React.TouchEvent,
+  canvas: HTMLCanvasElement
+) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+
+  if ("touches" in event) {
+    const touch = event.touches[0];
+    return {
+      x: (touch.clientX - rect.left) * scaleX,
+      y: (touch.clientY - rect.top) * scaleY,
+    };
+  } else {
+    return {
+      x: (event.clientX - rect.left) * scaleX,
+      y: (event.clientY - rect.top) * scaleY,
+    };
+  }
+}
+
 export function useDrawing() {
   const { theme } = useTheme();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -21,48 +44,62 @@ export function useDrawing() {
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
   const pathsRef = useRef<Path[]>([]);
   const currentPathRef = useRef<Point[]>([]);
+  const [strokeColor, setStrokeColor] = useState(
+    theme === "dark" ? "white" : "black"
+  );
 
-  // Set up the context
+  const drawPaths = (context: CanvasRenderingContext2D, color: string) => {
+    context.strokeStyle = color;
+    context.lineWidth = 2;
+    context.lineCap = "round";
+
+    pathsRef.current.forEach((path) => {
+      context.beginPath();
+      path.points.forEach((point, index) => {
+        if (point.type === "start" || index === 0) {
+          context.moveTo(point.x, point.y);
+        } else {
+          context.lineTo(point.x, point.y);
+        }
+      });
+      context.stroke();
+    });
+  };
+
+  const getSignatureAsBlack = () => {
+    if (!canvasRef.current || !contextRef.current || !hasDrawn) return null;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = canvasRef.current.width;
+    canvas.height = canvasRef.current.height;
+    const context = canvas.getContext("2d")!;
+
+    drawPaths(context, "#000");
+    return canvas;
+  };
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const context = canvas.getContext("2d");
     if (!context) return;
 
-    // Set up the context
-    context.strokeStyle = theme === "dark" ? "white" : "black";
+    context.strokeStyle = strokeColor;
     context.lineWidth = 2;
     context.lineCap = "round";
     contextRef.current = context;
-  }, [theme]);
+  }, [strokeColor]);
 
-  // Update the context when the theme changes
   useEffect(() => {
+    setStrokeColor(theme === "dark" ? "white" : "black");
+
     if (contextRef.current && hasDrawn) {
       const context = contextRef.current;
       const canvas = canvasRef.current;
       if (!canvas) return;
 
-      // Clear the canvas
       context.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Update context style
-      context.strokeStyle = theme === "dark" ? "white" : "black";
-      context.lineWidth = 2;
-      context.lineCap = "round";
-
-      // Redraw all paths with the new color
-      pathsRef.current.forEach((path) => {
-        context.beginPath();
-        path.points.forEach((point, index) => {
-          if (point.type === "start" || index === 0) {
-            context.moveTo(point.x, point.y);
-          } else {
-            context.lineTo(point.x, point.y);
-          }
-        });
-        context.stroke();
-      });
+      drawPaths(context, theme === "dark" ? "white" : "black");
     }
   }, [theme, hasDrawn]);
 
@@ -78,8 +115,6 @@ export function useDrawing() {
     const { x, y } = getCoordinates(event, canvas);
     context.beginPath();
     context.moveTo(x, y);
-
-    // Start a new path
     currentPathRef.current = [{ x, y, type: "start" }];
   };
 
@@ -94,14 +129,11 @@ export function useDrawing() {
     const { x, y } = getCoordinates(event, canvas);
     context.lineTo(x, y);
     context.stroke();
-
-    // Add point to current path
     currentPathRef.current.push({ x, y, type: "move" });
   };
 
   const stopDrawing = () => {
     if (isDrawing && currentPathRef.current.length > 0) {
-      // Save the completed path
       pathsRef.current.push({ points: [...currentPathRef.current] });
       currentPathRef.current = [];
     }
@@ -126,28 +158,6 @@ export function useDrawing() {
     stopDrawing,
     clearCanvas,
     hasDrawn,
+    getSignatureAsBlack,
   };
-}
-
-// Helper function to get coordinates for both mouse and touch events
-function getCoordinates(
-  event: React.MouseEvent | React.TouchEvent,
-  canvas: HTMLCanvasElement
-) {
-  const rect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
-
-  if ("touches" in event) {
-    const touch = event.touches[0];
-    return {
-      x: (touch.clientX - rect.left) * scaleX,
-      y: (touch.clientY - rect.top) * scaleY,
-    };
-  } else {
-    return {
-      x: (event.clientX - rect.left) * scaleX,
-      y: (event.clientY - rect.top) * scaleY,
-    };
-  }
 }

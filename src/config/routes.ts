@@ -5,10 +5,10 @@ import {
   CopyPlus,
   Send,
   TrendingUp,
-  Zap,
   User,
   Plus,
   type LucideIcon,
+  Compass,
 } from "lucide-react";
 
 export type Route = {
@@ -39,6 +39,12 @@ export const navRoutes: Route[] = [
     description: "View your documents.",
   },
   {
+    name: "Explorer",
+    path: "/docs/explorer",
+    Icon: Compass,
+    description: "Search for documents.",
+  },
+  {
     name: "Writer",
     path: "/writer",
     Icon: PenTool,
@@ -61,12 +67,6 @@ export const navRoutes: Route[] = [
     path: "/changelog",
     Icon: TrendingUp,
     description: "View our changelog.",
-  },
-  {
-    name: "Pricing",
-    path: "/pricing",
-    Icon: Zap,
-    description: "View our pricing.",
   },
 ];
 
