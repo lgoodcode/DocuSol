@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { ExternalLink } from "lucide-react";
 
 import { IS_MOBILE } from "@/constants";
+import { hexToBuffer } from "@/lib/utils";
 
 interface PreviewProps {
-  file: File | null;
+  file: File | Blob | null;
   preview: string | null;
 }
 
@@ -23,9 +25,7 @@ export function FilePreview({ file, preview }: PreviewProps) {
 
     checkMobileWidth();
 
-    // Add resize listener
     window.addEventListener("resize", checkMobileWidth);
-
     return () => window.removeEventListener("resize", checkMobileWidth);
   }, []);
 
@@ -77,8 +77,9 @@ export function FilePreview({ file, preview }: PreviewProps) {
             href={preview}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-block text-sm text-primary hover:text-primary/80 underline underline-offset-4"
+            className="inline-flex items-center gap-1 text-sm text-primary hover:text-primary/80 underline underline-offset-4"
           >
+            <ExternalLink className="h-4 w-4" />
             Open in new tab
           </a>
         </div>
@@ -120,3 +121,31 @@ export function FilePreview({ file, preview }: PreviewProps) {
     </div>
   );
 }
+
+export const BlobPreview = ({
+  hexValue,
+  mimeType,
+}: {
+  hexValue: string;
+  mimeType: string;
+}) => {
+  const [blob, setBlob] = useState<Blob | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    const rawData = hexToBuffer(hexValue);
+    const file = new Blob([rawData], { type: mimeType });
+    const preview = URL.createObjectURL(file);
+    setBlob(file);
+    setPreview(preview);
+    setUrl(preview);
+
+    return () => {
+      if (url) {
+        URL.revokeObjectURL(url);
+      }
+    };
+  }, [hexValue, mimeType, url]);
+
+  return <FilePreview file={blob} preview={preview} />;
+};

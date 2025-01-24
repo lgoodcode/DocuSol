@@ -15,6 +15,7 @@ import type { Document } from "@/lib/supabase/types";
 import { hexToBuffer, previewBlob } from "@/lib/utils";
 import { Card, CardContent, CardTitle, CardHeader } from "@/components/ui/card";
 import { CopyButton } from "@/components/ui/copy-button";
+import { BlobPreview } from "@/components/file-preview";
 
 type DocumentField = {
   icon: React.ReactNode;
@@ -153,14 +154,20 @@ export function DocumentDetails({ document }: { document: Document }) {
               </div>
               <div className="flex flex-col">
                 {field.binary && field.value !== "Not available" ? (
-                  <button
-                    onClick={handleViewDocument(field.value)}
-                    className="flex items-center gap-2 text-blue-600 hover:text-blue-800 hover:underline"
-                    aria-label="View document"
-                  >
-                    View document
-                    <ExternalLink className="h-4 w-4" />
-                  </button>
+                  <div className="flex flex-col justify-center items-center gap-2">
+                    <BlobPreview
+                      hexValue={field.value}
+                      mimeType={document.mime_type}
+                    />
+                    <button
+                      onClick={handleViewDocument(field.value)}
+                      className="flex items-center gap-2 text-blue-600 hover:text-blue-800 hover:underline"
+                      aria-label="View document"
+                    >
+                      View in new tab
+                      <ExternalLink className="h-4 w-4" />
+                    </button>
+                  </div>
                 ) : (
                   <span className="text-sm md:text-base text-muted-foreground break-all">
                     {field.value}
