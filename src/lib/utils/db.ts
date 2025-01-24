@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/server";
 import { type Database } from "@/lib/supabase/database";
 
 type Document = Database["public"]["Tables"]["documents"]["Row"];
@@ -11,6 +11,7 @@ type Document = Database["public"]["Tables"]["documents"]["Row"];
  * @throws {Error} If database query fails
  */
 export async function checkDocumentExists(hash: string): Promise<boolean> {
+  const supabase = await createClient();
   const { error, data } = await supabase
     .from("documents")
     .select("id")
@@ -35,6 +36,7 @@ export async function checkDocumentExists(hash: string): Promise<boolean> {
 export async function insertDocument(
   newDocument: InsertNewDocument
 ): Promise<string> {
+  const supabase = await createClient();
   const { error, data } = await supabase
     .from("documents")
     .insert({
@@ -71,6 +73,7 @@ export async function updateDocumentSignature(
   transactionSignature: string,
   signedDocumentBuffer: Buffer
 ): Promise<number> {
+  const supabase = await createClient();
   const { error, count } = await supabase
     .from("documents")
     .update({
@@ -97,6 +100,7 @@ export async function updateDocumentSignature(
 export async function getSignedDocument(
   hash: string
 ): Promise<Document | null> {
+  const supabase = await createClient();
   const { error, data } = await supabase
     .from("documents")
     .select("*")
@@ -117,6 +121,7 @@ export async function getSignedDocument(
 export async function getUnsignedDocument(
   hash: string
 ): Promise<Document | null> {
+  const supabase = await createClient();
   const { error, data } = await supabase
     .from("documents")
     .select("*")
@@ -129,6 +134,7 @@ export async function getUnsignedDocument(
 }
 
 export async function removeDocument(id: string): Promise<number> {
+  const supabase = await createClient();
   const { error, count } = await supabase
     .from("documents")
     .delete()
