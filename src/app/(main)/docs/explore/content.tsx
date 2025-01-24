@@ -102,7 +102,7 @@ export function ExploreContent() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid w-full gap-2">
-                  <div className="flex w-full flex-1 flex-col md:flex-row gap-4">
+                  <div className="flex w-full flex-1 flex-col gap-4">
                     <FormField
                       control={form.control}
                       name="hashOrSignature"
@@ -110,21 +110,12 @@ export function ExploreContent() {
                         <FormItem className="w-full">
                           <FormLabel>Hash or Transaction Signature</FormLabel>
                           <FormControl>
-                            <div className="flex flex-col md:flex-row gap-4">
-                              <Input
-                                {...field}
-                                type="search"
-                                placeholder="Enter hash ortransaction signature"
-                                className="w-full pl-4"
-                              />
-                              <Button
-                                className="hidden md:flex"
-                                type="submit"
-                                isLoading={form.formState.isSubmitting}
-                              >
-                                Search
-                              </Button>
-                            </div>
+                            <Input
+                              {...field}
+                              type="search"
+                              placeholder="Enter hash ortransaction signature"
+                              className="w-full pl-4"
+                            />
                           </FormControl>
                           <FormDescription className="text-sm">
                             Enter the file hash of a signed document or the
@@ -135,8 +126,8 @@ export function ExploreContent() {
                       )}
                     />
                     <Button
-                      className="flex md:hidden"
                       type="submit"
+                      className="w-full"
                       isLoading={form.formState.isSubmitting}
                     >
                       Search

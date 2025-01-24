@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { ExternalLink } from "lucide-react";
 
 import { IS_MOBILE } from "@/constants";
+import { ExternalLink } from "lucide-react";
 import { hexToBuffer } from "@/lib/utils";
 
 interface PreviewProps {
@@ -129,23 +129,8 @@ export const BlobPreview = ({
   hexValue: string;
   mimeType: string;
 }) => {
-  const [blob, setBlob] = useState<Blob | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
-  const [url, setUrl] = useState<string | null>(null);
-  useEffect(() => {
-    const rawData = hexToBuffer(hexValue);
-    const file = new Blob([rawData], { type: mimeType });
-    const preview = URL.createObjectURL(file);
-    setBlob(file);
-    setPreview(preview);
-    setUrl(preview);
-
-    return () => {
-      if (url) {
-        URL.revokeObjectURL(url);
-      }
-    };
-  }, [hexValue, mimeType, url]);
-
-  return <FilePreview file={blob} preview={preview} />;
+  const rawData = hexToBuffer(hexValue);
+  const file = new Blob([rawData], { type: mimeType });
+  const preview = URL.createObjectURL(file);
+  return <FilePreview file={file} preview={preview} />;
 };
