@@ -228,7 +228,11 @@ export function DashboardContent() {
               initial="hidden"
               animate="show"
             >
-              <motion.h3 className="text-lg font-medium" variants={item}>
+              <motion.h3
+                className="text-lg font-medium"
+                variants={item}
+                transition={{ delay: 0.1 }}
+              >
                 Templates
               </motion.h3>
               <motion.div
@@ -412,7 +416,11 @@ export function DashboardContent() {
               </motion.div>
 
               {/* Recent Generations */}
-              <div className="space-y-4">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
                 <h3 className="text-lg font-medium">Recent Generations</h3>
                 <div className="grid gap-4">
                   {!recentGenerations.length ? (
@@ -453,7 +461,7 @@ export function DashboardContent() {
                     ))
                   )}
                 </div>
-              </div>
+              </motion.div>
             </div>
           </TabsContent>
 

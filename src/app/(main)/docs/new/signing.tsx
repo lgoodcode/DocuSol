@@ -15,6 +15,8 @@ import {
   FileText,
 } from "lucide-react";
 
+import { storeDocument } from "@/lib/utils";
+import { getTransactionUrl } from "@/lib/utils/solana";
 import { formatFileSize } from "@/lib/utils/format-file-size";
 import { useDrawing } from "@/hooks/use-drawing";
 import { useFileUpload } from "@/hooks/use-file-upload";
@@ -48,8 +50,6 @@ import {
 } from "@/components/ui/form";
 
 import { uploadFile, sign } from "./utils";
-import { storeDocument } from "@/lib/utils";
-import { getTransactionUrl } from "@/lib/utils/solana";
 
 const ACCEPTED_FILE_TYPES = [".pdf", ".jpeg", ".png", ".jpg"];
 
@@ -82,6 +82,7 @@ export function DocumentSigning() {
   const [typedSignature, setTypedSignature] = useState("");
   const form = useForm<z.infer<typeof documentSchema>>({
     resolver: zodResolver(documentSchema),
+    mode: "onSubmit",
   });
 
   const onSubmit = async ({
@@ -97,11 +98,26 @@ export function DocumentSigning() {
     }
 
     try {
-      const signedDoc = await sign(
-        file,
-        signatureType === "draw" ? getSignatureAsBlack() : null,
-        signatureType === "type" ? typedSignature : undefined
-      );
+      let signedDoc: Blob | null = null;
+      try {
+        signedDoc = await sign(
+          file,
+          signatureType === "draw" ? getSignatureAsBlack() : null,
+          signatureType === "type" ? typedSignature : undefined
+        );
+      } catch (err) {
+        const error = err as Error;
+        console.error(error);
+        if (error.message.includes("encrypted")) {
+          toast({
+            title: "Error",
+            description: "The document is encrypted and cannot be modified",
+            variant: "destructive",
+          });
+          return;
+        }
+        throw error;
+      }
 
       if (!signedDoc) {
         throw new Error("Failed to sign document");
@@ -399,7 +415,7 @@ export function DocumentSigning() {
                         disabled={!hasDrawn}
                         onClick={clearCanvas}
                       >
-                        <Trash2 className="h-5 w-5" />
+                        <Trash2 className="h-4 w-4" />
                         <span className="sr-only">Clear signature</span>
                       </Button>
                     )}
@@ -455,7 +471,7 @@ export function DocumentSigning() {
                     (signatureType === "draw" ? !hasDrawn : !typedSignature)
                   }
                 >
-                  <Save className="h-5 w-5" />
+                  <Save className="h-4 w-4" />
                   Save Document
                 </Button>
               </CardFooter>
