@@ -100,8 +100,10 @@ export function ViewContent() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
       >
-        <h1 className="text-3xl font-bold tracking-tight">Documents</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+          Documents
+        </h1>
+        <p className="text-sm md:text-base text-muted-foreground">
           Manage and track your document signatures
         </p>
       </motion.div>

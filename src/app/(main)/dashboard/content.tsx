@@ -182,10 +182,10 @@ export function DashboardContent() {
       >
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-bold">Dashboard</h1>
+            <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
             <Badge>Beta</Badge>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm md:text-base text-muted-foreground">
             Use AI to generate documents, sign them, and share on the
             blockchain.
           </p>

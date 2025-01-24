@@ -4,7 +4,7 @@ import { captureException } from "@sentry/nextjs";
 
 import { sendMemoTransaction } from "@/lib/utils/solana";
 import { insertDocument } from "@/lib/utils/db";
-import { bytesToHex } from "@/lib/utils";
+import { bufferToHex } from "@/lib/utils";
 
 const allowedMimeTypes = [
   "application/pdf",
@@ -66,8 +66,8 @@ export async function POST(request: Request) {
       password: password || "",
       original_filename: originalFilename,
       mime_type: mimeType,
-      original_document: bytesToHex(originalDocumentBuffer),
-      unsigned_document: bytesToHex(unsignedDocumentBuffer),
+      original_document: bufferToHex(originalDocumentBuffer),
+      unsigned_document: bufferToHex(unsignedDocumentBuffer),
       unsigned_transaction_signature: txSignature,
       unsigned_hash: unsignedDocumentHash,
     });

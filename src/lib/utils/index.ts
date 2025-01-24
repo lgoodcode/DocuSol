@@ -4,7 +4,7 @@ export const previewBlob = (blob: Blob) => {
 };
 
 // Convert Buffer/ArrayBuffer to hex string for BYTEA
-export const bytesToHex = (buffer: Buffer) => "\\x" + buffer.toString("hex");
+export const bufferToHex = (buffer: Buffer) => "\\x" + buffer.toString("hex");
 
 export const hexToBuffer = (hex: string): Uint8Array => {
   if (!hex.startsWith("\\x")) {

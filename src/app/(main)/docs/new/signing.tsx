@@ -180,8 +180,8 @@ export function DocumentSigning() {
         }}
       >
         <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-bold">New Document</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-2xl md:text-3xl font-bold">New Document</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
             Sign your document with your signature.
           </p>
         </div>
