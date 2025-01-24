@@ -61,7 +61,7 @@ export async function POST(request: Request) {
           { status: 401 }
         );
       } else if (password !== document.password) {
-        return Response.json({ error: "Invalid password" }, { status: 401 });
+        return Response.json({ error: "Invalid password" }, { status: 403 });
       }
     }
 

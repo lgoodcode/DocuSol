@@ -7,6 +7,14 @@ import z from "zod";
 import { useForm } from "react-hook-form";
 import { captureException } from "@sentry/nextjs";
 import { Search } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 import type { Document } from "@/lib/supabase/types";
 import { isTransactionSignature } from "@/lib/utils/solana";
@@ -42,10 +50,44 @@ const searchSchema = z.object({
 export function ExploreContent() {
   const { toast } = useToast();
   const [document, setDocument] = useState<Document | null>(null);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [password, setPassword] = useState("");
+  const [pendingHash, setPendingHash] = useState("");
   const form = useForm<z.infer<typeof searchSchema>>({
     resolver: zodResolver(searchSchema),
     mode: "onSubmit",
   });
+
+  const handlePasswordSubmit = async () => {
+    try {
+      const response = await fetch("/api/docs/search", {
+        method: "POST",
+        body: JSON.stringify({ value: pendingHash, password }),
+      });
+
+      if (response.status === 403) {
+        toast({
+          title: "Error",
+          description: "Invalid password",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const data = (await response.json()) as Document;
+      setDocument(data);
+      setShowPasswordDialog(false);
+      setPassword("");
+      setPendingHash("");
+    } catch (error) {
+      captureException(error);
+      toast({
+        title: "Error",
+        description: "An error occurred while accessing the document",
+        variant: "destructive",
+      });
+    }
+  };
 
   const onSubmit = async ({
     hashOrSignature,
@@ -55,10 +97,16 @@ export function ExploreContent() {
         method: "POST",
         body: JSON.stringify({ value: hashOrSignature }),
       });
+
+      if (response.status === 401) {
+        setPendingHash(hashOrSignature);
+        setShowPasswordDialog(true);
+        return;
+      }
+
       const data = (await response.json()) as Document;
       setDocument(data);
     } catch (error) {
-      console.error(error);
       captureException(error);
       toast({
         title: "Error",
@@ -139,6 +187,50 @@ export function ExploreContent() {
           </motion.div>
         </form>
       </Form>
+
+      <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Password Required</DialogTitle>
+            <DialogDescription>
+              This document is password protected. Please enter the password to
+              view it.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <FormLabel htmlFor="password">Password</FormLabel>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter document password"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setShowPasswordDialog(false);
+                setPassword("");
+                setPendingHash("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handlePasswordSubmit}
+              disabled={!password}
+            >
+              Submit
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {document && (
         <motion.div

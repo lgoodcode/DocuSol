@@ -10,7 +10,7 @@ import {
 import { UserProvider } from "@/components/providers/user-provider";
 import { ToastProvider } from "@/components/ui/toast";
 import { Toaster } from "@/components/ui/toaster";
-import { cn } from "@/lib/utils/cn";
+import { cn } from "@/lib/utils";
 
 import "./globals.css";
 

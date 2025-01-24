@@ -1,3 +1,11 @@
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+
 export const previewBlob = (blob: Blob) => {
   const url = URL.createObjectURL(blob);
   window.open(url, "_blank");
