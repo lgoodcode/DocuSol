@@ -19,7 +19,9 @@ export function getTransactionUrl(signature: string) {
 
 export const isTransactionSignature = (val: string) => {
   try {
-    return val.length === 88 && bs58.decode(val).length === 64;
+    return (
+      (val.length === 88 || val.length === 87) && bs58.decode(val).length === 64
+    );
   } catch {
     return false;
   }
