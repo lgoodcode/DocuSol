@@ -1,7 +1,4 @@
-// import { supabase } from "@/lib/supabase/client";
-// import { type Database } from "@/lib/supabase/database";
-
-import { supabase } from "../supabase/client";
+import { supabase } from "@/lib/supabase/client";
 
 // type Document = Database["public"]["Tables"]["documents"]["Row"];
 
