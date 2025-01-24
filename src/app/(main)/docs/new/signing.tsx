@@ -137,7 +137,7 @@ export function DocumentSigning() {
       toast({
         title: "Document signed",
         description: (
-          <>
+          <div className="space-y-2">
             Your document has been signed and saved. You can view the
             transaction on{" "}
             <a
@@ -148,8 +148,12 @@ export function DocumentSigning() {
             >
               Solana Explorer
             </a>
-            . Refer to the memo for the document hash.
-          </>
+            .
+            <p>
+              Refer to the memo for the document hash. If there are no details,
+              please wait a few seconds and refresh the page.
+            </p>
+          </div>
         ),
         variant: "success",
       });
@@ -208,6 +212,7 @@ export function DocumentSigning() {
                     <Button
                       variant="outline"
                       className="w-full md:w-auto"
+                      disabled={form.formState.isSubmitting}
                       onClick={(e) => {
                         e.preventDefault();
                         fileInputRef.current?.click();
@@ -221,6 +226,7 @@ export function DocumentSigning() {
                       ref={fileInputRef}
                       onChange={handleFileChange}
                       accept={ACCEPTED_FILE_TYPES.join(",")}
+                      disabled={form.formState.isSubmitting}
                       className="hidden"
                     />
                     {file && (
@@ -229,6 +235,7 @@ export function DocumentSigning() {
                         variant="destructive"
                         size="icon"
                         onClick={clearFile}
+                        disabled={form.formState.isSubmitting}
                       >
                         <Trash2 className="h-4 w-4" />
                         <span className="sr-only">Remove file</span>
@@ -275,7 +282,11 @@ export function DocumentSigning() {
                     <FormItem>
                       <FormLabel>Document Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter document name" {...field} />
+                        <Input
+                          placeholder="Enter document name"
+                          {...field}
+                          disabled={form.formState.isSubmitting}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -295,6 +306,7 @@ export function DocumentSigning() {
                             type="password"
                             placeholder="Enter password"
                             {...field}
+                            disabled={form.formState.isSubmitting}
                           />
                         </FormControl>
                         <FormMessage />
@@ -317,6 +329,7 @@ export function DocumentSigning() {
                               type="password"
                               placeholder="Enter password"
                               {...field}
+                              disabled={form.formState.isSubmitting}
                             />
                           </FormControl>
                           <FormMessage />
@@ -366,6 +379,7 @@ export function DocumentSigning() {
                   <Select
                     value={signatureType}
                     onValueChange={setSignatureType}
+                    disabled={form.formState.isSubmitting}
                   >
                     <SelectTrigger className="w-32">
                       <SelectValue placeholder="Signature type" />
@@ -375,18 +389,20 @@ export function DocumentSigning() {
                       <SelectItem value="type">Type</SelectItem>
                     </SelectContent>
                   </Select>
-                  {signatureType === "draw" && hasDrawn && (
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      disabled={!hasDrawn}
-                      onClick={clearCanvas}
-                    >
-                      <Trash2 className="h-5 w-5" />
-                      <span className="sr-only">Clear signature</span>
-                    </Button>
-                  )}
+                  {signatureType === "draw" &&
+                    hasDrawn &&
+                    !form.formState.isSubmitting && (
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        disabled={!hasDrawn}
+                        onClick={clearCanvas}
+                      >
+                        <Trash2 className="h-5 w-5" />
+                        <span className="sr-only">Clear signature</span>
+                      </Button>
+                    )}
                 </div>
               </CardHeader>
               <CardContent>
@@ -424,6 +440,7 @@ export function DocumentSigning() {
                       value={typedSignature}
                       onChange={(e) => setTypedSignature(e.target.value)}
                       placeholder="Type your signature here"
+                      disabled={form.formState.isSubmitting}
                     />
                   </motion.div>
                 )}
