@@ -1,55 +1,70 @@
 "use client";
 
-import bs58 from "bs58";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import z from "zod";
 import { useForm } from "react-hook-form";
 import { captureException } from "@sentry/nextjs";
 import { Search } from "lucide-react";
 
-import { hexToBuffer } from "@/lib/utils";
-import { Card, CardContent } from "@/components/ui/card";
+import type { Document } from "@/lib/supabase/types";
+import { isTransactionSignature } from "@/lib/utils/solana";
+import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardTitle, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { FilePreview } from "@/components/file-preview";
+
+import { DocumentDetails } from "./details";
 
 const searchSchema = z.object({
-  txSignature: z
+  hashOrSignature: z
     .string({
-      required_error: "Transaction signature is required",
+      required_error: "File hash or transaction signature is required",
     })
-    .refine((tx) => bs58.decode(tx).length === 88, {
-      message: "Invalid transaction signature",
-    }),
+    .refine(
+      (val) => isTransactionSignature(val) || /^[a-f0-9]{64}$/i.test(val),
+      {
+        message: "Must be a valid hash or transaction signature",
+      }
+    ),
 });
 
 export function ExploreContent() {
+  const { toast } = useToast();
+  const [document, setDocument] = useState<Document | null>(null);
   const form = useForm<z.infer<typeof searchSchema>>({
     resolver: zodResolver(searchSchema),
+    mode: "onSubmit",
   });
 
-  const onSubmit = async ({ txSignature }: z.infer<typeof searchSchema>) => {
+  const onSubmit = async ({
+    hashOrSignature,
+  }: z.infer<typeof searchSchema>) => {
     try {
-      // Here you would typically make an API call to fetch the document
-      // const { error, data } = await supabase.from("documents")...
-
-      // For demonstration, assuming we get back a hex string
-      const hexString = ""; // Retrieved hex string
-      const buffer = hexToBuffer(hexString);
-      const blob = new Blob([buffer], { type: "application/pdf" });
-      // Handle the blob with FilePreview component
+      const response = await fetch("/api/docs/search", {
+        method: "POST",
+        body: JSON.stringify({ value: hashOrSignature }),
+      });
+      const data = (await response.json()) as Document;
+      setDocument(data);
     } catch (error) {
       console.error(error);
       captureException(error);
+      toast({
+        title: "Error",
+        description: "An error occurred while searching for the document",
+        variant: "destructive",
+      });
     }
   };
 
@@ -78,44 +93,72 @@ export function ExploreContent() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <Card className="px-2 py-4 md:p-6">
-              <CardContent className="px-2">
-                <form onSubmit={form.handleSubmit(onSubmit)} className="mt-4">
-                  <div className="relative w-full flex flex-1 flex-col sm:flex-row gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+                  <Search className="h-5 w-5" />
+                  Search for Document
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid w-full gap-2">
+                  <div className="flex w-full flex-1 flex-col md:flex-row gap-4">
                     <FormField
                       control={form.control}
-                      name="txSignature"
+                      name="hashOrSignature"
                       render={({ field }) => (
-                        <FormItem className="flex-1">
-                          <FormLabel className="flex items-center gap-2 mb-1">
-                            <Search className="h-4 w-4 text-muted-foreground" />
-                            Transaction Signature
-                          </FormLabel>
+                        <FormItem className="w-full">
+                          <FormLabel>Hash or Transaction Signature</FormLabel>
                           <FormControl>
-                            <Input
-                              {...field}
-                              type="search"
-                              placeholder="Enter transaction signature"
-                              className="w-full pl-8"
-                            />
+                            <div className="flex flex-col md:flex-row gap-4">
+                              <Input
+                                {...field}
+                                type="search"
+                                placeholder="Enter hash ortransaction signature"
+                                className="w-full pl-4"
+                              />
+                              <Button
+                                className="hidden md:flex"
+                                type="submit"
+                                isLoading={!form.formState.isSubmitting}
+                              >
+                                Search
+                              </Button>
+                            </div>
                           </FormControl>
-                          <FormMessage />
+                          <FormDescription className="text-sm">
+                            Enter the file hash of a signed document or the
+                            transaction signature of a signed the document.
+                          </FormDescription>
+                          <FormMessage className="text-sm" />
                         </FormItem>
                       )}
                     />
-                    <div className="flex items-end">
-                      <Button className="w-full md:w-fit" type="submit">
-                        Search
-                      </Button>
-                    </div>
+                    <Button
+                      className="flex md:hidden"
+                      type="submit"
+                      isLoading={!form.formState.isSubmitting}
+                    >
+                      Search
+                    </Button>
                   </div>
-                </form>
+                </div>
               </CardContent>
             </Card>
           </motion.div>
         </form>
       </Form>
-      {/* Add FilePreview component here when blob is available */}
+
+      {document && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="mt-8"
+        >
+          <DocumentDetails document={document} />
+        </motion.div>
+      )}
     </>
   );
 }
