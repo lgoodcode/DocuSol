@@ -126,3 +126,13 @@ export async function getUnsignedDocument(
     throw new Error(`Failed to get unsigned document: ${error.message}`);
   return data;
 }
+
+export async function removeDocument(id: string): Promise<number> {
+  const { error, count } = await supabase
+    .from("documents")
+    .delete()
+    .eq("id", id);
+
+  if (error) throw new Error(`Failed to remove document: ${error.message}`);
+  return count ?? 0;
+}

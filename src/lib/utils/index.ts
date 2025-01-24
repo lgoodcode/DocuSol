@@ -3,12 +3,16 @@ export const previewBlob = (blob: Blob) => {
   window.open(url, "_blank");
 };
 
-// Store the file buffer as a hex string for BYTEA in the database
+// Convert Buffer/ArrayBuffer to hex string for BYTEA
 export const bytesToHex = (buffer: Buffer) => "\\x" + buffer.toString("hex");
 
-// Convert a hex string to a buffer from the databases
-export const convertToBuffer = (hex: string) =>
-  Buffer.from(hex.slice(2), "hex");
+export const hexToBuffer = (hex: string): Uint8Array => {
+  if (!hex.startsWith("\\x")) {
+    throw new Error("Invalid hex string format - must start with \\x");
+  }
+  // @ts-expect-error - It's fine
+  return new Uint8Array(Buffer.from(hex.slice(2), "hex"));
+};
 
 const openDB = (): Promise<IDBDatabase> => {
   return new Promise((resolve, reject) => {

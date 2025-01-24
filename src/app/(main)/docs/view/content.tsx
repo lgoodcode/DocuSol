@@ -6,7 +6,6 @@ import { motion } from "framer-motion";
 import type { ViewDocument } from "@/lib/supabase/types";
 import { getAllStoredDocuments } from "@/lib/utils";
 
-import { columns } from "./columns";
 import { DataTable } from "./data-table";
 import { supabase } from "@/lib/supabase/client";
 
@@ -46,7 +45,7 @@ const getDocuments = async (): Promise<ViewDocument[]> => {
   );
   const { data, error } = await supabase
     .from("documents")
-    .select("id,name,password,is_signed,created_at")
+    .select("id,name,password,is_signed,mime_type,created_at")
     .in("id", ids);
 
   if (error) {
@@ -60,6 +59,7 @@ const getDocuments = async (): Promise<ViewDocument[]> => {
     name: doc.name,
     password: doc.password,
     status: doc.is_signed ? "signed" : "pending",
+    mimeType: doc.mime_type,
     createdAt: doc.created_at,
   }));
 
@@ -85,10 +85,7 @@ export function ViewContent() {
           Manage and track your document signatures
         </p>
       </motion.div>
-      <DataTable<ViewDocument, ViewDocument>
-        columns={columns}
-        data={documents}
-      />
+      <DataTable data={documents} setData={setDocuments} />
     </>
   );
 }

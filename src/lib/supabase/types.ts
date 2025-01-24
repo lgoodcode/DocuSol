@@ -7,5 +7,6 @@ export type ViewDocument = {
   name: string;
   password: string | null;
   status: "signed" | "pending";
+  mimeType: string;
   createdAt: string;
 };
