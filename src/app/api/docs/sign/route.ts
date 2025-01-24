@@ -2,7 +2,7 @@ import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { captureException } from "@sentry/nextjs";
 
-import { supabase } from "@/lib/supabase/client";
+import { createServerClient } from "@/lib/supabase/server";
 import { sendMemoTransaction, getTransactionUrl } from "@/lib/utils/solana";
 
 export async function POST(request: Request) {
@@ -17,6 +17,7 @@ export async function POST(request: Request) {
     }
 
     // Check if document exists
+    const supabase = await createServerClient();
     const { error: fetchError, data: document } = await supabase
       .from("documents")
       .select("*")

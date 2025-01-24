@@ -1,7 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
-export async function middleware() {
-  return NextResponse.next();
+import { supabaseResponse } from "@/lib/supabase/middleware";
+
+export async function middleware(request: NextRequest) {
+  const supabase = supabaseResponse(request);
+  return supabase;
 }
 
 export const config = {

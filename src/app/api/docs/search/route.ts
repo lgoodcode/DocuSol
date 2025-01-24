@@ -1,6 +1,6 @@
 import { captureException } from "@sentry/nextjs";
 
-import { supabase } from "@/lib/supabase/client";
+import { createServerClient } from "@/lib/supabase/server";
 import {
   isTransactionSignature,
   getHashFromTransactionSignature,
@@ -41,6 +41,7 @@ export async function POST(request: Request) {
     }
 
     // Get full document details
+    const supabase = await createServerClient();
     const { error, data } = await supabase
       .from("documents")
       .select("*")

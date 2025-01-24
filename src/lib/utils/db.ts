@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 
 // type Document = Database["public"]["Tables"]["documents"]["Row"];
 
@@ -128,6 +128,7 @@ import { supabase } from "@/lib/supabase/client";
 // }
 
 export async function removeDocument(id: string): Promise<number> {
+  const supabase = createClient();
   const { error, count } = await supabase
     .from("documents")
     .delete()
