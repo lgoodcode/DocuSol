@@ -47,7 +47,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-import { uploadFile, overlaySignature } from "./utils";
+import { uploadFile, sign } from "./utils";
+import { storeDocument } from "@/lib/utils";
+import { getTransactionUrl } from "@/lib/utils/solana";
 
 const ACCEPTED_FILE_TYPES = [".pdf", ".jpeg", ".png", ".jpg"];
 
@@ -82,19 +84,6 @@ export function DocumentSigning() {
     resolver: zodResolver(documentSchema),
   });
 
-  const previewBlob = async () => {
-    if (!file) return;
-
-    const signedDoc = await overlaySignature(
-      file,
-      signatureType === "draw" ? getSignatureAsBlack() : null,
-      signatureType === "type" ? typedSignature : undefined
-    );
-
-    const url = URL.createObjectURL(signedDoc as Blob);
-    window.open(url, "_blank");
-  };
-
   const onSubmit = async ({
     name,
     password,
@@ -108,27 +97,17 @@ export function DocumentSigning() {
     }
 
     try {
-      const signedDoc = await overlaySignature(
+      const signedDoc = await sign(
         file,
         signatureType === "draw" ? getSignatureAsBlack() : null,
         signatureType === "type" ? typedSignature : undefined
       );
 
-      previewBlob();
+      if (!signedDoc) {
+        throw new Error("Failed to sign document");
+      }
 
-      // await uploadFile({
-      //   name,
-      //   password: password || "",
-      //   original_filename: file.name,
-      //   mime_type: file.type,
-      //   unsigned_document: file,
-      //   signed_document:
-      //     signatureType === "draw"
-      //       ? canvasRef.current?.toDataURL()
-      //       : typedSignature,
-      // });
-
-      console.log({
+      const { error, id, txSignature, unsignedHash } = await uploadFile({
         name,
         password: password || "",
         original_filename: file.name,
@@ -137,13 +116,45 @@ export function DocumentSigning() {
         signed_document: signedDoc,
       });
 
+      if (error) {
+        throw new Error(error);
+      } else if (!id || !txSignature || !unsignedHash) {
+        throw new Error("Failed to upload document");
+      }
+
+      storeDocument({ id, txSignature, unsignedHash }).catch((error) => {
+        console.error("Error storing document:", error);
+        captureException(error, {
+          extra: {
+            id,
+            txSignature,
+            unsignedHash,
+          },
+        });
+      });
+
+      const txUrl = getTransactionUrl(txSignature!);
       toast({
         title: "Document signed",
-        description: "Your document has been signed and saved",
+        description: (
+          <>
+            Your document has been signed and saved. You can view the
+            transaction on{" "}
+            <a
+              href={txUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium underline underline-offset-4"
+            >
+              Solana Explorer
+            </a>
+            . Refer to the memo for the document hash.
+          </>
+        ),
         variant: "success",
       });
 
-      // form.reset({ name: "", password: "", confirmPassword: "" });
+      form.reset({ name: "", password: "", confirmPassword: "" });
       clearFile();
       clearCanvas();
       setTypedSignature("");
@@ -279,7 +290,11 @@ export function DocumentSigning() {
                       <FormItem>
                         <FormLabel>Password Protection (Optional)</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter password" {...field} />
+                          <Input
+                            type="password"
+                            placeholder="Enter password"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                         <FormDescription>
@@ -297,7 +312,11 @@ export function DocumentSigning() {
                         <FormItem>
                           <FormLabel>Confirm Password</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter password" {...field} />
+                            <Input
+                              type="password"
+                              placeholder="Enter password"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                           <FormDescription>

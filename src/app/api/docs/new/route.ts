@@ -2,8 +2,9 @@ import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { captureException } from "@sentry/nextjs";
 
-import { sendMemoTransaction, getTransactionUrl } from "@/lib/utils/solana";
-import { checkDocumentExists, insertDocument } from "@/lib/utils/db";
+import { sendMemoTransaction } from "@/lib/utils/solana";
+import { insertDocument } from "@/lib/utils/db";
+import { bytesToHex } from "@/lib/utils";
 
 const allowedMimeTypes = [
   "application/pdf",
@@ -24,8 +25,8 @@ export async function POST(request: Request) {
     const form = await request.formData();
     const name = form.get("name") as string | null;
     const password = form.get("password") as string | null;
-    const originalFilename = form.get("originalFilename") as string | null;
-    const mimeType = form.get("mimeType") as string | null;
+    const originalFilename = form.get("original_filename") as string | null;
+    const mimeType = form.get("mime_type") as string | null;
     const unsignedDocument = form.get("unsigned_document") as File | null;
     const signedDocument = form.get("signed_document") as File | null;
 
@@ -44,38 +45,36 @@ export async function POST(request: Request) {
     }
 
     // Get file data and hash
-    const unsignedDocumentBuffer = Buffer.from(
+    const originalDocumentBuffer = Buffer.from(
       await unsignedDocument.arrayBuffer()
+    );
+    const unsignedDocumentBuffer = Buffer.from(
+      await signedDocument.arrayBuffer()
     );
     const unsignedDocumentHash = crypto
       .createHash("sha256")
       .update(unsignedDocumentBuffer)
       .digest("hex");
 
-    // Check if document already exists
-    const existingDoc = await checkDocumentExists(unsignedDocumentHash);
-    if (existingDoc) {
-      throw new Error("Document already exists in the database");
-    }
-
     // Create memo message and send transaction
     const memoMessage = `FILE_HASH=${unsignedDocumentHash}`;
-    const transactionSignature = await sendMemoTransaction(memoMessage);
+    const txSignature = await sendMemoTransaction(memoMessage);
 
     // Store document in database
-    await insertDocument(
-      unsignedDocumentHash,
-      password,
-      transactionSignature,
-      unsignedDocumentBuffer,
-      originalFilename,
-      mimeType
-    );
+    const id = await insertDocument({
+      name,
+      password: password || "",
+      original_filename: originalFilename,
+      mime_type: mimeType,
+      unsigned_document: bytesToHex(originalDocumentBuffer),
+      unsigned_transaction_signature: txSignature,
+      unsigned_hash: unsignedDocumentHash,
+    });
 
     return NextResponse.json({
-      success: true,
-      transactionUrl: getTransactionUrl(transactionSignature),
-      hash: unsignedDocumentHash,
+      id,
+      txSignature,
+      unsignedHash: unsignedDocumentHash,
     });
   } catch (error) {
     console.error("Error processing request:", error);

@@ -11,4 +11,33 @@ export declare global {
       PRIVATE_KEY: string;
     }
   }
+
+  interface NewDocument {
+    name: string;
+    password: string;
+    original_filename: string;
+    mime_type: string;
+    unsigned_document: File;
+    signed_document: Blob;
+  }
+
+  interface InsertNewDocument
+    extends Omit<NewDocument, "unsigned_document" | "signed_document"> {
+    unsigned_document: string;
+    unsigned_transaction_signature: string;
+    unsigned_hash: string;
+  }
+
+  interface NewDocumentResponse {
+    error?: string;
+    id?: string;
+    txSignature?: string;
+    unsignedHash?: string;
+  }
+
+  interface StoredDocument {
+    id: string;
+    txSignature?: string;
+    unsignedHash?: string;
+  }
 }

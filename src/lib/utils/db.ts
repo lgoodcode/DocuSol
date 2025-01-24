@@ -10,17 +10,15 @@ type Document = Database["public"]["Tables"]["documents"]["Row"];
  * @returns Promise resolving to the document if found, null otherwise
  * @throws {Error} If database query fails
  */
-export async function checkDocumentExists(
-  hash: string
-): Promise<Document | null> {
+export async function checkDocumentExists(hash: string): Promise<boolean> {
   const { error, data } = await supabase
     .from("documents")
-    .select("*")
+    .select("id")
     .or(`unsigned_hash.eq.${hash},signed_hash.eq.${hash}`)
     .single();
 
   if (error) throw new Error(`Failed to check document: ${error.message}`);
-  return data;
+  return !!data;
 }
 
 /**
@@ -35,23 +33,19 @@ export async function checkDocumentExists(
  * @throws {Error} If document insertion fails
  */
 export async function insertDocument(
-  hash: string,
-  password: string | null,
-  transactionSignature: string,
-  documentBuffer: Buffer,
-  originalFilename: string,
-  mimeType: string
+  newDocument: InsertNewDocument
 ): Promise<string> {
   const { error, data } = await supabase
     .from("documents")
     .insert({
-      unsigned_hash: hash,
-      password,
-      unsigned_transaction_signature: transactionSignature,
-      unsigned_document: documentBuffer.toString("base64"),
-      original_filename: originalFilename,
-      mime_type: mimeType,
-      created_at: new Date().toISOString(),
+      name: newDocument.name,
+      password: newDocument.password,
+      unsigned_hash: newDocument.unsigned_hash,
+      unsigned_transaction_signature:
+        newDocument.unsigned_transaction_signature,
+      unsigned_document: newDocument.unsigned_document,
+      original_filename: newDocument.original_filename,
+      mime_type: newDocument.mime_type,
     })
     .select("id")
     .single();
