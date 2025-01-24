@@ -47,18 +47,28 @@ const searchSchema = z.object({
     ),
 });
 
+const passwordSchema = z.object({
+  password: z.string().min(1, { message: "Password is required" }),
+});
+
 export function ExploreContent() {
   const { toast } = useToast();
   const [document, setDocument] = useState<Document | null>(null);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
-  const [password, setPassword] = useState("");
   const [pendingHash, setPendingHash] = useState("");
   const form = useForm<z.infer<typeof searchSchema>>({
     resolver: zodResolver(searchSchema),
     mode: "onSubmit",
   });
+  const passwordForm = useForm<z.infer<typeof passwordSchema>>({
+    resolver: zodResolver(passwordSchema),
+    mode: "onSubmit",
+  });
 
-  const handlePasswordSubmit = async () => {
+  const handlePasswordSubmit = async ({
+    password,
+  }: z.infer<typeof passwordSchema>) => {
+    debugger;
     try {
       const response = await fetch("/api/docs/search", {
         method: "POST",
@@ -66,10 +76,8 @@ export function ExploreContent() {
       });
 
       if (response.status === 403) {
-        toast({
-          title: "Error",
-          description: "Invalid password",
-          variant: "destructive",
+        passwordForm.setError("password", {
+          message: "Invalid password",
         });
         return;
       }
@@ -77,8 +85,8 @@ export function ExploreContent() {
       const data = (await response.json()) as Document;
       setDocument(data);
       setShowPasswordDialog(false);
-      setPassword("");
       setPendingHash("");
+      passwordForm.reset();
     } catch (error) {
       captureException(error);
       toast({
@@ -188,49 +196,70 @@ export function ExploreContent() {
         </form>
       </Form>
 
-      <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Password Required</DialogTitle>
-            <DialogDescription>
-              This document is password protected. Please enter the password to
-              view it.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <FormLabel htmlFor="password">Password</FormLabel>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter document password"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setShowPasswordDialog(false);
-                setPassword("");
-                setPendingHash("");
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={handlePasswordSubmit}
-              disabled={!password}
-            >
-              Submit
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <Form {...passwordForm}>
+        <form onSubmit={passwordForm.handleSubmit(handlePasswordSubmit)}>
+          <Dialog
+            open={showPasswordDialog}
+            onOpenChange={setShowPasswordDialog}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Password Required</DialogTitle>
+                <DialogDescription>
+                  This document is password protected. Please enter the password
+                  to view it.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="space-y-2">
+                  <FormField
+                    control={passwordForm.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem className="w-full">
+                        <FormLabel>Password</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            id="password"
+                            type="password"
+                            placeholder="Enter document password"
+                          />
+                        </FormControl>
+                        <FormMessage className="text-sm" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+              <DialogFooter className="flex flex-col gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowPasswordDialog(false);
+                    setPendingHash("");
+                    passwordForm.reset();
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={!passwordForm.formState.isValid}
+                  isLoading={passwordForm.formState.isSubmitting}
+                  // I don't know why this is needed but it is to submit the form
+                  onClick={() => {
+                    passwordForm.handleSubmit(handlePasswordSubmit)();
+                  }}
+                >
+                  Submit
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </form>
+      </Form>
 
       {document && (
         <motion.div

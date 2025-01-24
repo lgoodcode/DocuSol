@@ -51,16 +51,18 @@ export async function POST(request: Request) {
     } else if (!data || !data[0]) {
       return Response.json({ error: "Document not found" }, { status: 404 });
     }
-
+    console.log("data", data[0].password);
     // Verify password if required
     const document = data[0];
     if (document.password) {
       if (!password) {
+        console.log("password required");
         return Response.json(
           { error: "Password required for this document" },
           { status: 401 }
         );
       } else if (password !== document.password) {
+        console.log("invalid password");
         return Response.json({ error: "Invalid password" }, { status: 403 });
       }
     }
