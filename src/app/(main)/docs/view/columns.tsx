@@ -10,7 +10,7 @@ import {
   Globe,
 } from "lucide-react";
 
-import type { Document } from "@/types/document";
+import type { ViewDocument } from "@/lib/supabase/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -22,7 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export const columns: ColumnDef<Document>[] = [
+export const columns: ColumnDef<ViewDocument>[] = [
   {
     accessorKey: "name",
     header: "Name",
@@ -70,14 +70,14 @@ export const columns: ColumnDef<Document>[] = [
       return new Date(row.getValue("createdAt")).toLocaleDateString();
     },
   },
-  {
-    accessorKey: "expiresAt",
-    header: "Expires",
-    cell: ({ row }) => {
-      const date = row.getValue("expiresAt") as string;
-      return date ? new Date(date).toLocaleDateString() : "Never";
-    },
-  },
+  // {
+  //   accessorKey: "expiresAt",
+  //   header: "Expires",
+  //   cell: ({ row }) => {
+  //     const date = row.getValue("expiresAt") as string;
+  //     return date ? new Date(date).toLocaleDateString() : "Never";
+  //   },
+  // },
   {
     id: "actions",
     enableHiding: false,
