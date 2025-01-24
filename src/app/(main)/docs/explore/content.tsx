@@ -56,7 +56,7 @@ export function ExploreContent() {
   const [document, setDocument] = useState<Document | null>(null);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [pendingHash, setPendingHash] = useState("");
-  const form = useForm<z.infer<typeof searchSchema>>({
+  const searchForm = useForm<z.infer<typeof searchSchema>>({
     resolver: zodResolver(searchSchema),
     mode: "onSubmit",
   });
@@ -68,7 +68,6 @@ export function ExploreContent() {
   const handlePasswordSubmit = async ({
     password,
   }: z.infer<typeof passwordSchema>) => {
-    debugger;
     try {
       const response = await fetch("/api/docs/search", {
         method: "POST",
@@ -97,7 +96,7 @@ export function ExploreContent() {
     }
   };
 
-  const onSubmit = async ({
+  const onSearchSubmit = async ({
     hashOrSignature,
   }: z.infer<typeof searchSchema>) => {
     try {
@@ -142,8 +141,11 @@ export function ExploreContent() {
         </div>
       </motion.div>
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <Form {...searchForm}>
+        <form
+          onSubmit={searchForm.handleSubmit(onSearchSubmit)}
+          className="space-y-8"
+        >
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -160,7 +162,7 @@ export function ExploreContent() {
                 <div className="grid w-full gap-2">
                   <div className="flex w-full flex-1 flex-col gap-4">
                     <FormField
-                      control={form.control}
+                      control={searchForm.control}
                       name="hashOrSignature"
                       render={({ field }) => (
                         <FormItem className="w-full">
@@ -184,7 +186,7 @@ export function ExploreContent() {
                     <Button
                       type="submit"
                       className="w-full"
-                      isLoading={form.formState.isSubmitting}
+                      isLoading={searchForm.formState.isSubmitting}
                     >
                       Search
                     </Button>
@@ -224,6 +226,14 @@ export function ExploreContent() {
                             id="password"
                             type="password"
                             placeholder="Enter document password"
+                            // Dumb form won't submit so we manually submit on enter
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                passwordForm.handleSubmit(
+                                  handlePasswordSubmit
+                                )();
+                              }
+                            }}
                           />
                         </FormControl>
                         <FormMessage className="text-sm" />
@@ -248,10 +258,6 @@ export function ExploreContent() {
                   type="submit"
                   disabled={!passwordForm.formState.isValid}
                   isLoading={passwordForm.formState.isSubmitting}
-                  // I don't know why this is needed but it is to submit the form
-                  onClick={() => {
-                    passwordForm.handleSubmit(handlePasswordSubmit)();
-                  }}
                 >
                   Submit
                 </Button>
