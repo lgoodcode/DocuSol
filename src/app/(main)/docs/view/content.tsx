@@ -68,7 +68,7 @@ const getDocuments = async (): Promise<ViewDocument[]> => {
 
 export function ViewContent() {
   const [documents, setDocuments] = useState<ViewDocument[]>([]);
-  ``
+
   useEffect(() => {
     getDocuments().then((docs) => setDocuments(docs));
   }, []);
