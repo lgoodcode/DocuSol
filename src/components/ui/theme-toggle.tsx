@@ -37,7 +37,7 @@ export function ThemeToggle({
   const { theme = "dark", setTheme } = useTheme();
 
   return withTooltip ? (
-    <NavTooltip content={theme === "dark" ? "Light" : "Dark"}>
+    <NavTooltip content={theme === "dark" ? "Light Mode" : "Dark Mode"}>
       <ThemeToggleButton theme={theme} setTheme={setTheme} />
     </NavTooltip>
   ) : (
