@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { useRef } from "react";
-import { Github, Pill } from "lucide-react";
+import { Github } from "lucide-react";
 
 import {
   GITHUB_URL,
   CONTRACT_ADDRESS,
   X_URL,
-  PUMPFUN_URL,
   DEXSCREENER_URL,
 } from "@/constants";
 import { CopyButton } from "@/components/ui/copy-button";
@@ -158,16 +157,7 @@ export function Footer() {
                 <span className="sr-only">GitHub</span>
               </Link>
             )}
-            {PUMPFUN_URL && (
-              <Link
-                href={PUMPFUN_URL}
-                target="_blank"
-                className="text-gray-400 hover:text-white transition-colors"
-              >
-                <Pill size={24} />
-                <span className="sr-only">PumpFun</span>
-              </Link>
-            )}
+
             {DEXSCREENER_URL && (
               <Link
                 href={DEXSCREENER_URL}

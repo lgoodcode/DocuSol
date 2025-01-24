@@ -9,7 +9,6 @@ import { useTheme } from "next-themes";
 import {
   GITHUB_URL,
   X_URL,
-  PUMPFUN_URL,
   DEXSCREENER_URL,
   CONTRACT_ADDRESS,
 } from "@/constants";
@@ -126,13 +125,7 @@ function Docker() {
           </DockItem>
         </StaticDockIcon>
       )}
-      {PUMPFUN_URL && (
-        <StaticDockIcon>
-          <DockItem href={PUMPFUN_URL} content="PumpFun">
-            <Pill className="size-5" />
-          </DockItem>
-        </StaticDockIcon>
-      )}
+
       {DEXSCREENER_URL && (
         <StaticDockIcon>
           <DockItem href={DEXSCREENER_URL} content="DexScreener">
@@ -153,7 +146,11 @@ function Docker() {
       {CONTRACT_ADDRESS && (
         <StaticDockIcon>
           <DockItem content="Contract Address">
-            <CopyButton value={CONTRACT_ADDRESS} noStyle />
+            <CopyButton
+              value={CONTRACT_ADDRESS}
+              icon={<Pill className="size-5" />}
+              noStyle
+            />
           </DockItem>
         </StaticDockIcon>
       )}

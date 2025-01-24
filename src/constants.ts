@@ -17,5 +17,4 @@ export const GITHUB_URL = "https://github.com/DocuSol";
 
 export const CONTRACT_ADDRESS = "75kZbiQ5TyXLNrmyPTkCpLhP9Jxs8vWr1DwjVcLhpump";
 export const X_URL = "https://x.com/DocuSol";
-export const PUMPFUN_URL = "https://pumpfun.xyz";
 export const DEXSCREENER_URL = "https://dexscreener.com";

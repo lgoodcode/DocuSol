@@ -5,7 +5,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Check, Copy } from "lucide-react";
 
 export const CopyButton = forwardRef(
-  ({ value, noStyle }: { value: string; noStyle?: boolean }, ref) => {
+  (
+    {
+      value,
+      icon,
+      noStyle,
+    }: { value: string; icon?: React.ReactNode; noStyle?: boolean },
+    ref
+  ) => {
     const [copied, setCopied] = useState(false);
 
     const handleCopy = async () => {
@@ -34,7 +41,7 @@ export const CopyButton = forwardRef(
             {copied ? (
               <Check className="h-4 w-4 text-green-500" />
             ) : (
-              <Copy className="h-4 w-4" />
+              icon || <Copy className="h-4 w-4" />
             )}
           </motion.div>
         </AnimatePresence>
