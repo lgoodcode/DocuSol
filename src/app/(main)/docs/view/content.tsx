@@ -5,8 +5,10 @@ import { motion } from "framer-motion";
 
 import { getAllStoredDocuments, hexToBuffer } from "@/lib/utils";
 
-import { DataTable } from "./data-table";
 import { supabase } from "@/lib/supabase/client";
+import { Card, CardContent } from "@/components/ui/card";
+
+import { DataTable } from "./data-table";
 
 // const documents: Document[] = [
 //   {
@@ -107,7 +109,17 @@ export function ViewContent() {
           Manage and track your document signatures
         </p>
       </motion.div>
-      <DataTable data={documents} setData={setDocuments} />
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+      >
+        <Card>
+          <CardContent>
+            <DataTable data={documents} setData={setDocuments} />
+          </CardContent>
+        </Card>
+      </motion.div>
     </>
   );
 }
