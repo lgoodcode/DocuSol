@@ -16,7 +16,7 @@ export function Footer() {
 
   return (
     <footer className="bg-black/95 border-t border-border z-100 text-white">
-      <div className="container mx-auto px-6 py-12">
+      <div className="mx-auto max-w-screen-xl px-6 md:px-8 lg:px-12 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-white">DocuSol</h3>
@@ -102,27 +102,28 @@ export function Footer() {
               </li>
             </ul>
           </div>
-          {CONTRACT_ADDRESS && (
-            <div>
-              <h4 className="text-sm font-semibold mb-4 text-white">
-                Contract Address
-              </h4>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <div className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors group">
-                    <button
-                      onClick={() => copyButtonRef.current?.click()}
-                      className="hover:text-white transition-colors"
-                    >
-                      {CONTRACT_ADDRESS}
-                    </button>
-                    <CopyButton ref={copyButtonRef} value={CONTRACT_ADDRESS} />
-                  </div>
-                </li>
-              </ul>
-            </div>
-          )}
         </div>
+
+        {CONTRACT_ADDRESS && (
+          <div className="mt-12 flex flex-col justify-between items-center">
+            <h4 className="text-lg font-semibold mb-4 text-white">
+              Contract Address
+            </h4>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <div className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors group">
+                  <button
+                    onClick={() => copyButtonRef.current?.click()}
+                    className="hover:text-white transition-colors break-all"
+                  >
+                    {CONTRACT_ADDRESS}
+                  </button>
+                  <CopyButton ref={copyButtonRef} value={CONTRACT_ADDRESS} />
+                </div>
+              </li>
+            </ul>
+          </div>
+        )}
 
         <div className="mt-12 pt-8 border-t border-gray-800 dark:border-border flex flex-col md:flex-row justify-between items-center">
           <p className="text-sm text-gray-400">

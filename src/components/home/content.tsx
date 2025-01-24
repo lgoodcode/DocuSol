@@ -65,6 +65,22 @@ const loadingScreenVariants = {
   },
 };
 
+const sectionVariants = {
+  hidden: {
+    opacity: 0,
+    y: 20,
+    transition: { duration: 0 },
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.8,
+      ease: [0.4, 0, 0.2, 1],
+    },
+  },
+};
+
 export function HomeContent() {
   const { theme = "dark" } = useTheme();
   const [isLoading, setIsLoading] = useState(true);
@@ -147,7 +163,7 @@ export function HomeContent() {
           >
             <motion.div
               variants={childVariants}
-              className="relative max-w-screen overflow-x-hidden"
+              className="relative max-w-screen overflow-hidden"
             >
               {/* Hero Section */}
               <section className="relative max-w-[1720px] mx-auto grid grid-cols-1 xl:grid-cols-2 min-h-[100vh]">
@@ -204,7 +220,13 @@ export function HomeContent() {
               </section>
 
               {/* What is DocuSol? */}
-              <section className="relative my-24 lg:top-16 border-t border-border">
+              <motion.section
+                className="relative my-24 lg:top-16 border-t border-border"
+                variants={sectionVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-100px" }}
+              >
                 <h2 className="text-center p-4 text-4xl font-semibold border-b border-border">
                   What is DocuSol?
                 </h2>
@@ -215,10 +237,17 @@ export function HomeContent() {
                     capabilities.
                   </h3>
                 </div>
-              </section>
+              </motion.section>
 
               {/* Features */}
-              <section id="features" className="border-t border-border my-24">
+              <motion.section
+                id="features"
+                className="border-t border-border my-24 lg:my-64"
+                variants={sectionVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-100px" }}
+              >
                 <h2 className="text-center p-4 text-2xl md:text-4xl font-semibold border-b border-border">
                   Key Features
                 </h2>
@@ -283,7 +312,7 @@ export function HomeContent() {
                     </div>
                   </div>
                 </div>
-              </section>
+              </motion.section>
 
               {/* Marquee */}
               <section className="mt-24 mb-12">
@@ -314,7 +343,13 @@ export function HomeContent() {
               </section>
 
               {/* Call To Action */}
-              <section className="py-12">
+              <motion.section
+                className="py-12"
+                variants={sectionVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-100px" }}
+              >
                 <div className="min-h-[50vh] flex items-center justify-center p-8">
                   <div className="text-center">
                     <h2 className="max-w-md mx-auto mb-2 md:mb-10 h-32 sm:h-24 xl:h-16 xl:max-w-none text-4xl md:text-5xl font-bold bg-gradient-to-br from-primary to-black/45 dark:to-primary-foreground bg-clip-text text-transparent">
@@ -334,10 +369,17 @@ export function HomeContent() {
                     </div>
                   </div>
                 </div>
-              </section>
+              </motion.section>
 
               {/* Footer */}
-              <Footer />
+              <motion.footer
+                variants={sectionVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-100px" }}
+              >
+                <Footer />
+              </motion.footer>
             </motion.div>
           </motion.div>
         </motion.div>
