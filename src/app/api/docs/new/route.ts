@@ -2,8 +2,8 @@ import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { captureException } from "@sentry/nextjs";
 
+import { createServerClient } from "@/lib/supabase/server";
 import { sendMemoTransaction } from "@/lib/utils/solana";
-import { insertDocument } from "@/lib/utils/db";
 import { bufferToHex } from "@/lib/utils";
 
 const allowedMimeTypes = [
@@ -61,16 +61,25 @@ export async function POST(request: Request) {
     const txSignature = await sendMemoTransaction(memoMessage);
 
     // Store document in database
-    const id = await insertDocument({
-      name,
-      password,
-      original_filename: originalFilename,
-      mime_type: mimeType,
-      original_document: bufferToHex(originalDocumentBuffer),
-      unsigned_document: bufferToHex(unsignedDocumentBuffer),
-      unsigned_transaction_signature: txSignature,
-      unsigned_hash: unsignedDocumentHash,
-    });
+    const supabase = await createServerClient();
+    const { error: insertError, data: insertData } = await supabase
+      .from("documents")
+      .insert({
+        name,
+        password,
+        unsigned_hash: unsignedDocumentHash,
+        unsigned_transaction_signature: txSignature,
+        original_document: bufferToHex(originalDocumentBuffer),
+        unsigned_document: bufferToHex(unsignedDocumentBuffer),
+        original_filename: originalFilename,
+        mime_type: mimeType,
+      })
+      .select("id")
+      .single();
+
+    if (insertError)
+      throw new Error(`Failed to insert document: ${insertError.message}`);
+    const id = insertData.id;
 
     return NextResponse.json({
       id,

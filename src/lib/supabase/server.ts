@@ -1,12 +1,21 @@
-import { createServerClient } from "@supabase/ssr";
+import { createServerClient as _createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { type Database } from "./database";
 
-export async function createClient() {
+export async function createServerClient() {
   const cookieStore = await cookies();
 
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    throw new Error("Missing env.NEXT_PUBLIC_SUPABASE_URL");
+  } else if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    throw new Error("Missing env.NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  }
+
+  // Create a server's supabase client with newly configured cookie,
+  // which could be used to maintain user's session
+  return _createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
       cookies: {
         getAll() {
