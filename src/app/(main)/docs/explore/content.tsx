@@ -118,6 +118,13 @@ export function ExploreContent() {
             message: data.error,
           });
           return;
+        } else if (data.error === "Document not found") {
+          toast({
+            title: "Document not found",
+            description: "The document you are looking for does not exist",
+            variant: "destructive",
+          });
+          return;
         }
         throw new Error(data.error);
       }
