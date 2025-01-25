@@ -236,6 +236,7 @@ export function ExploreContent() {
                             id="password"
                             type="password"
                             placeholder="Enter document password"
+                            autoComplete="off"
                             // Dumb form won't submit so we manually submit on enter
                             onKeyDown={(e) => {
                               if (e.key === "Enter") {
