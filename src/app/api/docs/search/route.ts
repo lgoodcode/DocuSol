@@ -1,6 +1,6 @@
 import { captureException } from "@sentry/nextjs";
 
-import { supabase } from "@/lib/supabase/client";
+import { createServerClient } from "@/lib/supabase/server";
 import {
   isTransactionSignature,
   getHashFromTransactionSignature,
@@ -41,6 +41,7 @@ export async function POST(request: Request) {
     }
 
     // Get full document details
+    const supabase = await createServerClient();
     const { error, data } = await supabase
       .from("documents")
       .select("*")
@@ -51,7 +52,6 @@ export async function POST(request: Request) {
     } else if (!data || !data[0]) {
       return Response.json({ error: "Document not found" }, { status: 404 });
     }
-    console.log("data", data[0].password);
     // Verify password if required
     const document = data[0];
     if (document.password) {

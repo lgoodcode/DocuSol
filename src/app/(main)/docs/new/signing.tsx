@@ -321,6 +321,7 @@ export function DocumentSigning() {
                           <Input
                             type="password"
                             placeholder="Enter password"
+                            autoComplete="off"
                             {...field}
                             disabled={form.formState.isSubmitting}
                           />
@@ -344,6 +345,7 @@ export function DocumentSigning() {
                             <Input
                               type="password"
                               placeholder="Enter password"
+                              autoComplete="off"
                               {...field}
                               disabled={form.formState.isSubmitting}
                             />
@@ -405,20 +407,18 @@ export function DocumentSigning() {
                       <SelectItem value="type">Type</SelectItem>
                     </SelectContent>
                   </Select>
-                  {signatureType === "draw" &&
-                    hasDrawn &&
-                    !form.formState.isSubmitting && (
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        disabled={!hasDrawn}
-                        onClick={clearCanvas}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        <span className="sr-only">Clear signature</span>
-                      </Button>
-                    )}
+                  {signatureType === "draw" && hasDrawn && (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      disabled={!hasDrawn || form.formState.isSubmitting}
+                      onClick={clearCanvas}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span className="sr-only">Clear signature</span>
+                    </Button>
+                  )}
                 </div>
               </CardHeader>
               <CardContent>

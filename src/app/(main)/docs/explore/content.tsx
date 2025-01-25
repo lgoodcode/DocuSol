@@ -111,8 +111,25 @@ export function ExploreContent() {
         return;
       }
 
-      const data = (await response.json()) as Document;
-      setDocument(data);
+      const data = await response.json();
+      if (data.error) {
+        if (data.error === "Invalid transaction signature: no hash found") {
+          searchForm.setError("hashOrSignature", {
+            message: data.error,
+          });
+          return;
+        } else if (data.error === "Document not found") {
+          toast({
+            title: "Document not found",
+            description: "The document you are looking for does not exist",
+            variant: "destructive",
+          });
+          return;
+        }
+        throw new Error(data.error);
+      }
+
+      setDocument(data as Document);
     } catch (error) {
       captureException(error);
       toast({
@@ -226,6 +243,7 @@ export function ExploreContent() {
                             id="password"
                             type="password"
                             placeholder="Enter document password"
+                            autoComplete="off"
                             // Dumb form won't submit so we manually submit on enter
                             onKeyDown={(e) => {
                               if (e.key === "Enter") {

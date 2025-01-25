@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 
 import { getAllStoredDocuments, hexToBuffer } from "@/lib/utils";
 
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 
 import { DataTable } from "./data-table";
@@ -44,6 +44,7 @@ const getDocuments = async (): Promise<ViewDocument[]> => {
   const ids = await getAllStoredDocuments().then((docs) =>
     docs.map((doc) => doc.id)
   );
+  const supabase = createClient();
   const { data, error } = await supabase
     .from("documents")
     .select(

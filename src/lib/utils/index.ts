@@ -5,7 +5,6 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-
 export const previewBlob = (blob: Blob) => {
   const url = URL.createObjectURL(blob);
   window.open(url, "_blank");

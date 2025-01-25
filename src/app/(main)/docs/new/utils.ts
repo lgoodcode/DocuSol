@@ -15,7 +15,7 @@ export async function uploadFile(newDocument: NewDocument) {
   });
 
   if (!response.ok) {
-    throw new Error(`Upload failed: ${response.statusText}`);
+    throw new Error(`Upload failed: ${await response.text()}`);
   }
 
   return response.json() as Promise<NewDocumentResponse>;

@@ -1,8 +1,9 @@
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 import { hexToBuffer, previewBlob } from "@/lib/utils";
 import { getTransactionUrl } from "@/lib/utils/solana";
 
 const getDocument = async (id: string): Promise<Blob> => {
+  const supabase = createClient();
   const { error, data } = await supabase
     .from("documents")
     .select("unsigned_document,signed_document,mime_type,name")
@@ -43,6 +44,7 @@ export const copyTxSignature = async (txSignature: string): Promise<void> => {
 };
 
 export const downloadDocument = async (id: string): Promise<void> => {
+  const supabase = createClient();
   const { data } = await supabase
     .from("documents")
     .select("name")
@@ -61,6 +63,7 @@ export const downloadDocument = async (id: string): Promise<void> => {
 };
 
 export const deleteDocument = async (id: string): Promise<void> => {
+  const supabase = createClient();
   const { error } = await supabase.from("documents").delete().eq("id", id);
 
   if (error) {
