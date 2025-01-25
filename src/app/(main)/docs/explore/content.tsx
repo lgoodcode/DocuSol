@@ -111,8 +111,18 @@ export function ExploreContent() {
         return;
       }
 
-      const data = (await response.json()) as Document;
-      setDocument(data);
+      const data = await response.json();
+      if (data.error) {
+        if (data.error === "Invalid transaction signature: no hash found") {
+          searchForm.setError("hashOrSignature", {
+            message: data.error,
+          });
+          return;
+        }
+        throw new Error(data.error);
+      }
+
+      setDocument(data as Document);
     } catch (error) {
       captureException(error);
       toast({
