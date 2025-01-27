@@ -183,18 +183,18 @@ export function ExploreContent() {
                       name="hashOrSignature"
                       render={({ field }) => (
                         <FormItem className="w-full">
-                          <FormLabel>Hash or Transaction Signature</FormLabel>
+                          <FormLabel>Transaction Signature</FormLabel>
                           <FormControl>
                             <Input
                               {...field}
                               type="search"
-                              placeholder="Enter hash ortransaction signature"
+                              placeholder="Enter transaction signature"
                               className="w-full pl-4"
                             />
                           </FormControl>
                           <FormDescription className="text-sm">
-                            Enter the file hash of a signed document or the
-                            transaction signature of a signed the document.
+                            Enter the transaction signature of a signed
+                            document.
                           </FormDescription>
                           <FormMessage className="text-sm" />
                         </FormItem>

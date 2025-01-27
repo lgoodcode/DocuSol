@@ -1,6 +1,6 @@
 "use client";
 
-import { Moon, Sun, Pill, FileText, Github, PenTool } from "lucide-react";
+import { Moon, Sun, Pill, FileText, Github, Rocket } from "lucide-react";
 import Link from "next/link";
 import React, { memo } from "react";
 import { motion } from "framer-motion";
@@ -99,7 +99,7 @@ function Docker() {
     <StaticDock direction="middle">
       <StaticDockIcon>
         <DockItem href="/docs/new" newTab={false} content="Get Started">
-          <PenTool className="size-5" />
+          <Rocket className="size-5" />
         </DockItem>
       </StaticDockIcon>
       <StaticDockIcon>
