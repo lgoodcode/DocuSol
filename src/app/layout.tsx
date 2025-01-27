@@ -7,7 +7,7 @@ import {
   metadata as siteMetadata,
   viewport as siteViewport,
 } from "@/config/site";
-import {PrivyProvider} from "@/components/providers/privy-provider";
+import { PrivyProvider } from "@/components/providers/privy-provider";
 import { UserProvider } from "@/components/providers/user-provider";
 import { ToastProvider } from "@/components/ui/toast";
 import { Toaster } from "@/components/ui/toaster";

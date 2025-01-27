@@ -156,7 +156,7 @@ function Docker() {
       )}
       <StaticDockIcon>
         <DockItem
-          content={theme === "dark" ? "Light Mode" : "Dark Mode"}
+          content={theme === "dark" ? "Light theme" : "Dark theme"}
           onClick={() => {
             setTheme(theme === "dark" ? "light" : "dark");
           }}
