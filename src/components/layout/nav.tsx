@@ -34,7 +34,7 @@ export function Nav() {
 
   return (
     <>
-      <MobileMenu />
+      <MobileMenu authenticated={authenticated} onAuthClick={handleAuthClick} />
       <aside className="w-[60px] py-4 hidden md:flex flex-col border-r border-stone-800 dark:border-border sticky top-0 h-screen z-50">
         <div className="flex flex-col flex-1">
           <Link href="/" className="p-3 w-full h-12 mb-3">

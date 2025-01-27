@@ -16,10 +16,7 @@ export function PrivyProvider({ children }: { children: React.ReactNode }) {
           theme: "dark",
           accentColor: "#101012",
           walletChainType: "solana-only",
-          logo:
-            process.env.NODE_ENV === "production"
-              ? "https://docusol.app/img/docusol_logo_full.webp"
-              : "https://localhost:3000/img/docusol_logo_full.webp",
+          logo: "/img/docusol_logo_full.webp",
         },
         loginMethods: ["email", "wallet", "google"],
         externalWallets: {

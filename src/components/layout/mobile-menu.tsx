@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { Menu, X, Sun, Moon } from "lucide-react";
+import { Menu, X, Sun, Moon, LogOut, User } from "lucide-react";
 
 import { navRoutes } from "@/config/routes";
 import { cn } from "@/lib/utils";
@@ -14,7 +14,13 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
-export function MobileMenu() {
+export function MobileMenu({
+  authenticated,
+  onAuthClick,
+}: {
+  authenticated: boolean;
+  onAuthClick: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
@@ -38,7 +44,7 @@ export function MobileMenu() {
             <Button
               variant="ghost"
               size="icon"
-              className="bg-transparent hover:bg-transparent hover:text-primary"
+              className="bg-transparent hover:bg-transparent active:bg-transparent hover:text-primary"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             >
               {theme === "dark" ? (
@@ -46,12 +52,16 @@ export function MobileMenu() {
               ) : (
                 <Moon className="h-5 w-5" />
               )}
+              <span className="sr-only">
+                {theme === "dark" ? "Light theme" : "Dark theme"}
+              </span>
             </Button>
+
             <SheetTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className="hover:bg-transparent"
+                className="bg-transparent hover:bg-transparent active:bg-transparent"
               >
                 <Menu className="h-6 w-6" />
                 <span className="sr-only">Toggle menu</span>
@@ -104,7 +114,7 @@ export function MobileMenu() {
                             : "text-muted-foreground"
                         )}
                       >
-                        <route.Icon className="h-5 w-5" />
+                        <route.Icon className="h-6 w-6" />
                         <div className="flex flex-col gap-1">
                           <span>{route.name}</span>
                           <span className="text-xs font-normal">
@@ -116,6 +126,43 @@ export function MobileMenu() {
                   ))}
                 </div>
               </ScrollArea>
+              <div className="mt-auto border-t border-border p-4">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <button
+                    onClick={() => {
+                      setOpen(false);
+                      onAuthClick();
+                    }}
+                    className="flex w-full items-center gap-4 rounded-none px-4 py-3 text-sm font-medium transition-colors hover:bg-accent"
+                  >
+                    {authenticated ? (
+                      <>
+                        <LogOut className="h-6 w-6" />
+                        <div className="flex flex-col gap-1 w-full text-left">
+                          <span>Logout</span>
+                          <span className="text-xs font-normal text-muted-foreground">
+                            Sign out of your account
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <User className="h-6 w-6" />
+                        <div className="flex flex-col gap-1 w-full text-left">
+                          <span>Login</span>
+                          <span className="text-xs font-normal text-muted-foreground">
+                            Sign in to your account
+                          </span>
+                        </div>
+                      </>
+                    )}
+                  </button>
+                </motion.div>
+              </div>
             </div>
           </SheetContent>
         </Sheet>
