@@ -34,7 +34,9 @@ export function ThemeToggle({
 }: {
   withTooltip?: boolean;
 }) {
-  const { theme = "dark", setTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
+
+  if (!theme) return null;
 
   return withTooltip ? (
     <NavTooltip content={theme === "dark" ? "Light theme" : "Dark theme"}>

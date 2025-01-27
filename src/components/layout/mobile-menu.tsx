@@ -38,7 +38,7 @@ export function MobileMenu({
   const themeButtonRef = useRef<HTMLButtonElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
-  const { theme = "dark", setTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
 
   const handleSheetOpenChange = (newOpen: boolean) => {
     const event = (window.event as CustomEvent).detail
@@ -117,14 +117,18 @@ export function MobileMenu({
                 setTheme(theme === "dark" ? "light" : "dark");
               }}
             >
-              {theme === "dark" ? (
-                <Sun className="h-5 w-5" />
-              ) : (
-                <Moon className="h-5 w-5" />
-              )}
-              <span className="sr-only">
-                {theme === "dark" ? "Light theme" : "Dark theme"}
-              </span>
+              {!!theme ? (
+                <>
+                  {theme === "dark" ? (
+                    <Sun className="h-5 w-5" />
+                  ) : (
+                    <Moon className="h-5 w-5" />
+                  )}
+                  <span className="sr-only">
+                    {theme === "dark" ? "Light theme" : "Dark theme"}
+                  </span>
+                </>
+              ) : null}
             </Button>
 
             <SheetTrigger asChild>
