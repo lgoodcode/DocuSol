@@ -166,7 +166,7 @@ export function HomeContent() {
               className="relative max-w-screen overflow-hidden"
             >
               {/* Hero Section */}
-              <section className="relative max-w-[1720px] mx-auto grid grid-cols-1 xl:grid-cols-2 min-h-[100vh]">
+              <section className="relative max-w-[1720px] mx-auto grid grid-cols-1 xl:grid-cols-2 min-h-dvh">
                 {/* Left Column */}
                 <div className="px-8 md:px-16 py-12 pt-28 md:pt-20 lg:px-32 !pb-28 xl:p-36 xl:pt-24 xl:pr-16 2xl:p-24 flex flex-col relative z-10">
                   <div className="flex items-center mb-6">
@@ -376,7 +376,7 @@ export function HomeContent() {
                 variants={sectionVariants}
                 initial="hidden"
                 whileInView="visible"
-                viewport={{ once: true, margin: "-100px" }}
+                viewport={{ once: true, margin: "-50px" }}
               >
                 <Footer />
               </motion.footer>

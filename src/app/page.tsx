@@ -1,6 +1,4 @@
-import {HomeContent} from "@/components/home/content";
-
-export const runtime = "edge";
+import { HomeContent } from "@/components/home/content";
 
 export default function HomePage() {
   return <HomeContent />;

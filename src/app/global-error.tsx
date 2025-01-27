@@ -18,7 +18,7 @@ export default function GlobalError({
   return (
     <html>
       <body>
-        <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="min-h-dvh flex items-center justify-center bg-background">
           <div className="max-w-md w-full px-6 py-8 bg-card rounded-lg shadow-lg">
             <div className="flex flex-col items-center text-center space-y-4">
               <div className="rounded-full bg-destructive/10 p-3">

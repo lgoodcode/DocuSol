@@ -24,7 +24,7 @@ export default function NotFound() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 text-center">
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-dvh px-4 text-center">
         <h1 className="text-4xl font-bold mb-4">Page not found</h1>
         <p className="text-muted-foreground mb-8 max-w-sm font-medium">
           We can&apos;t find the page that you&apos;re looking for. Probably the

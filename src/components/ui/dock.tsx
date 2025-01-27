@@ -28,7 +28,7 @@ const DEFAULT_MAGNIFICATION = 60;
 const DEFAULT_DISTANCE = 140;
 
 export const dockVariants = cva(
-  "supports-backdrop-blur:bg-gray-500/90 dark:supports-backdrop-blur:bg-gray-900/60 mx-auto mt-8 flex h-[58px] w-max items-center justify-center gap-2 rounded-2xl border border-gray-300/50 dark:border-gray-700/50 p-2 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)] bg-gradient-to-b from-gray-300/90 to-gray-200/80 dark:from-gray-800/30 dark:to-gray-900/20"
+  "supports-backdrop-blur:bg-gray-500/90 dark:supports-backdrop-blur:bg-gray-900/60 mx-auto mt-6 flex h-[58px] w-max items-center justify-center gap-2 rounded-2xl border border-gray-300/50 dark:border-gray-700/50 p-2 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)] bg-gradient-to-b from-gray-300/90 to-gray-200/80 dark:from-gray-800/30 dark:to-gray-900/20"
 );
 
 // Static (Disabled) Components

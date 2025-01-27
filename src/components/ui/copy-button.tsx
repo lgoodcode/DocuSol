@@ -22,8 +22,8 @@ export const CopyButton = forwardRef(
     };
 
     return (
-      <button
-        ref={ref as React.RefObject<HTMLButtonElement>}
+      <div
+        ref={ref as React.RefObject<HTMLDivElement>}
         onClick={handleCopy}
         className={
           noStyle ? "" : "p-2 bg-transparent hover:bg-transparent rounded-md"
@@ -45,7 +45,7 @@ export const CopyButton = forwardRef(
             )}
           </motion.div>
         </AnimatePresence>
-      </button>
+      </div>
     );
   }
 );
