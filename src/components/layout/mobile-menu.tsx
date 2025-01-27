@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Sun, Moon, LogOut, User } from "lucide-react";
@@ -14,6 +14,16 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
+function useIsFirstRender() {
+  const isFirst = useRef(true);
+
+  useEffect(() => {
+    isFirst.current = false;
+  }, []);
+
+  return isFirst.current;
+}
+
 export function MobileMenu({
   authenticated,
   onAuthClick,
@@ -22,6 +32,7 @@ export function MobileMenu({
   onAuthClick: () => void;
 }) {
   const pathname = usePathname();
+  const isFirstRender = useIsFirstRender();
   const headerRef = useRef<HTMLDivElement>(null);
   const logoRef = useRef<HTMLAnchorElement>(null);
   const themeButtonRef = useRef<HTMLButtonElement>(null);
@@ -126,7 +137,7 @@ export function MobileMenu({
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={open ? "close" : "menu"}
-                    initial={{ opacity: 0, rotate: 90 }}
+                    initial={isFirstRender ? false : { opacity: 0, rotate: 90 }}
                     animate={{ opacity: 1, rotate: 0 }}
                     exit={{ opacity: 0, rotate: -90 }}
                     transition={{ duration: 0.2 }}
