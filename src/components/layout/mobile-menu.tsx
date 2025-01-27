@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { usePathname } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Sun, Moon, LogOut, User } from "lucide-react";
 
 import { navRoutes } from "@/config/routes";
@@ -21,12 +21,34 @@ export function MobileMenu({
   authenticated: boolean;
   onAuthClick: () => void;
 }) {
-  const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
   const { theme, setTheme } = useTheme();
 
+  // Manually override the Sheet open state handling. We need to handle closing the
+  // sheet and toggling the theme.
+  const handleSheetOpenChange = (newOpen: boolean) => {
+    const event = (window.event as CustomEvent).detail
+      ?.originalEvent as PointerEvent;
+    if (!newOpen && event) {
+      const { clientX: x, clientY: y } = event;
+      if (x >= 498 && x <= 534 && y >= 14 && y <= 50) {
+        setOpen(newOpen);
+        return;
+      }
+      if (x >= 454 && x <= 490 && y >= 14 && y <= 50) {
+        setTheme(theme === "dark" ? "light" : "dark");
+      }
+    }
+    setOpen(true);
+  };
+
   return (
-    <div className="fixed top-0 right-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 md:hidden">
+    <div
+      ref={headerRef}
+      className="fixed top-0 right-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 md:hidden"
+    >
       <div className="flex h-16 items-center justify-between px-4">
         <Link href="/" className="p-2 w-12 h-12 flex items-center gap-2">
           <Image
@@ -39,13 +61,16 @@ export function MobileMenu({
           <h1 className="text-xl font-bold">DocuSol</h1>
         </Link>
 
-        <Sheet open={open} onOpenChange={setOpen}>
+        <Sheet open={open} onOpenChange={handleSheetOpenChange}>
           <div className="flex items-center justify-between gap-2">
             <Button
               variant="ghost"
               size="icon"
               className="bg-transparent hover:bg-transparent active:bg-transparent hover:text-primary"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              onClick={(e) => {
+                e.stopPropagation();
+                setTheme(theme === "dark" ? "light" : "dark");
+              }}
             >
               {theme === "dark" ? (
                 <Sun className="h-5 w-5" />
@@ -63,18 +88,34 @@ export function MobileMenu({
                 size="icon"
                 className="bg-transparent hover:bg-transparent active:bg-transparent"
               >
-                <Menu className="h-6 w-6" />
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={open ? "close" : "menu"}
+                    initial={{ opacity: 0, rotate: 90 }}
+                    animate={{ opacity: 1, rotate: 0 }}
+                    exit={{ opacity: 0, rotate: -90 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    {open ? (
+                      <X className="h-6 w-6" />
+                    ) : (
+                      <Menu className="h-6 w-6" />
+                    )}
+                  </motion.div>
+                </AnimatePresence>
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
           </div>
-          {/* Disabled the default close button for custom styling */}
           <SheetContent
+            ref={headerRef}
             side="right"
-            className="w-full border-l-0 [&>button]:hidden bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+            className="w-full py-2 border-l-0 [&>button]:hidden h-[calc(100vh-64px)] mt-[65px] bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+            // Full sheet with top section that is commented out below
+            // className="w-full border-l-0 [&>button]:hidden bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
           >
             <div className="flex h-full flex-col">
-              <div className="flex items-center justify-between border-b border-border pb-4">
+              {/* <div className="flex items-center justify-between border-b border-border pb-4">
                 <div className="p-2 w-12 h-12 flex items-center gap-2">
                   <Image
                     src="/img/docusol_icon.webp"
@@ -94,7 +135,7 @@ export function MobileMenu({
                   <X className="h-6 w-6" />
                   <span className="sr-only">Close menu</span>
                 </Button>
-              </div>
+              </div> */}
               <ScrollArea className="flex-1">
                 <div className="space-y-2 p-4">
                   {navRoutes.map((route, i) => (
