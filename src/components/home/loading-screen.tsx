@@ -10,7 +10,7 @@ interface LoadingScreenProps {
 export function LoadingScreen({ onAnimationComplete }: LoadingScreenProps) {
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-background"
+      className="fixed inset-0 z-50 -top-16 flex items-center justify-center bg-background"
       initial={{ opacity: 1 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}

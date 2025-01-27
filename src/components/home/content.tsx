@@ -87,25 +87,25 @@ export function HomeContent() {
   const [showContent, setShowContent] = useState(false);
   const contentControls = useAnimationControls();
 
-  useEffect(() => {
-    // Initial loading screen duration
-    const loadingTimer = setTimeout(() => {
-      setIsLoading(false);
-    }, 2000);
+  // useEffect(() => {
+  //   // Initial loading screen duration
+  //   const loadingTimer = setTimeout(() => {
+  //     setIsLoading(false);
+  //   }, 2000);
 
-    return () => clearTimeout(loadingTimer);
-  }, []);
+  //   return () => clearTimeout(loadingTimer);
+  // }, []);
 
-  useEffect(() => {
-    if (!isLoading) {
-      // Start showing content AFTER loading screen exit animation completes
-      const startContentTimer = setTimeout(() => {
-        setShowContent(true);
-      }, 100); // Match loading screen exit duration
+  // useEffect(() => {
+  //   if (!isLoading) {
+  //     // Start showing content AFTER loading screen exit animation completes
+  //     const startContentTimer = setTimeout(() => {
+  //       setShowContent(true);
+  //     }, 100); // Match loading screen exit duration
 
-      return () => clearTimeout(startContentTimer);
-    }
-  }, [isLoading]);
+  //     return () => clearTimeout(startContentTimer);
+  //   }
+  // }, [isLoading]);
 
   return (
     <>
