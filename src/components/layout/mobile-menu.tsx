@@ -115,6 +115,8 @@ export function MobileMenu({
             // className="w-full border-l-0 [&>button]:hidden bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
           >
             <div className="flex h-full flex-col">
+              {/* If not using the same header to display but instead a separate header on
+              the sheet, uncomment this section and restore the commented changes above. */}
               {/* <div className="flex items-center justify-between border-b border-border pb-4">
                 <div className="p-2 w-12 h-12 flex items-center gap-2">
                   <Image
