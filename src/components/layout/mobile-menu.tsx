@@ -64,7 +64,7 @@ export function MobileMenu({
         event.clientY >= logoRect.top &&
         event.clientY <= logoRect.bottom
       ) {
-        setOpen(false);
+        logoRef.current?.click();
       }
     }
     setOpen(true);
@@ -79,16 +79,19 @@ export function MobileMenu({
         <Link
           ref={logoRef}
           href="/"
-          className="p-2 w-12 h-12 flex items-center gap-2"
+          className="p-2 flex items-center gap-2 min-w-fit"
         >
-          <Image
-            src="/img/docusol_icon.webp"
-            alt="DocuSol"
-            width={318}
-            height={85}
-          />
-          <span className="sr-only">DocuSol</span>
-          <h1 className="text-xl font-bold">DocuSol</h1>
+          <div className="flex items-center gap-2">
+            <Image
+              src="/img/docusol_icon.webp"
+              alt="DocuSol"
+              width={32}
+              height={32}
+              className="w-8 h-8"
+            />
+            <span className="sr-only">DocuSol</span>
+            <h1 className="text-xl font-bold">DocuSol</h1>
+          </div>
         </Link>
 
         <Sheet open={open} onOpenChange={handleSheetOpenChange}>
@@ -142,7 +145,7 @@ export function MobileMenu({
           <SheetContent
             ref={headerRef}
             side="right"
-            className="w-full py-2 border-l-0 [&>button]:hidden h-[calc(100dvh-64px)] mt-[65px] bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+            className="w-full py-2 px-2 border-l-0 [&>button]:hidden h-[calc(100dvh-64px)] mt-[65px] bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
             // Full sheet with top section that is commented out below
             // className="w-full border-l-0 [&>button]:hidden bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
           >
