@@ -23,22 +23,48 @@ export function MobileMenu({
 }) {
   const pathname = usePathname();
   const headerRef = useRef<HTMLDivElement>(null);
+  const logoRef = useRef<HTMLAnchorElement>(null);
+  const themeButtonRef = useRef<HTMLButtonElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   const { theme, setTheme } = useTheme();
 
-  // Manually override the Sheet open state handling. We need to handle closing the
-  // sheet and toggling the theme.
   const handleSheetOpenChange = (newOpen: boolean) => {
     const event = (window.event as CustomEvent).detail
       ?.originalEvent as PointerEvent;
     if (!newOpen && event) {
-      const { clientX: x, clientY: y } = event;
-      if (x >= 498 && x <= 534 && y >= 14 && y <= 50) {
+      const menuRect = menuButtonRef.current?.getBoundingClientRect();
+      const themeRect = themeButtonRef.current?.getBoundingClientRect();
+      const logoRect = logoRef.current?.getBoundingClientRect();
+
+      if (
+        menuRect &&
+        event.clientX >= menuRect.left &&
+        event.clientX <= menuRect.right &&
+        event.clientY >= menuRect.top &&
+        event.clientY <= menuRect.bottom
+      ) {
         setOpen(newOpen);
         return;
       }
-      if (x >= 454 && x <= 490 && y >= 14 && y <= 50) {
+      if (
+        themeRect &&
+        event.clientX >= themeRect.left &&
+        event.clientX <= themeRect.right &&
+        event.clientY >= themeRect.top &&
+        event.clientY <= themeRect.bottom
+      ) {
         setTheme(theme === "dark" ? "light" : "dark");
+        return;
+      }
+      if (
+        logoRect &&
+        event.clientX >= logoRect.left &&
+        event.clientX <= logoRect.right &&
+        event.clientY >= logoRect.top &&
+        event.clientY <= logoRect.bottom
+      ) {
+        setOpen(false);
       }
     }
     setOpen(true);
@@ -50,7 +76,11 @@ export function MobileMenu({
       className="fixed top-0 right-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 md:hidden"
     >
       <div className="flex h-16 items-center justify-between px-4">
-        <Link href="/" className="p-2 w-12 h-12 flex items-center gap-2">
+        <Link
+          ref={logoRef}
+          href="/"
+          className="p-2 w-12 h-12 flex items-center gap-2"
+        >
           <Image
             src="/img/docusol_icon.webp"
             alt="DocuSol"
@@ -64,6 +94,7 @@ export function MobileMenu({
         <Sheet open={open} onOpenChange={handleSheetOpenChange}>
           <div className="flex items-center justify-between gap-2">
             <Button
+              ref={themeButtonRef}
               variant="ghost"
               size="icon"
               className="bg-transparent hover:bg-transparent active:bg-transparent hover:text-primary"
@@ -84,6 +115,7 @@ export function MobileMenu({
 
             <SheetTrigger asChild>
               <Button
+                ref={menuButtonRef}
                 variant="ghost"
                 size="icon"
                 className="bg-transparent hover:bg-transparent active:bg-transparent"
@@ -110,7 +142,7 @@ export function MobileMenu({
           <SheetContent
             ref={headerRef}
             side="right"
-            className="w-full py-2 border-l-0 [&>button]:hidden h-[calc(100vh-64px)] mt-[65px] bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+            className="w-full py-2 border-l-0 [&>button]:hidden h-[calc(100dvh-64px)] mt-[65px] bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
             // Full sheet with top section that is commented out below
             // className="w-full border-l-0 [&>button]:hidden bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
           >
