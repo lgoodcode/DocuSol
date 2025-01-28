@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 import { storeDocument } from "@/lib/utils";
+import { uploadFile, sign } from "@/lib/utils/sign";
 import { formatFileSize } from "@/lib/utils/format-file-size";
 import { useDrawing } from "@/hooks/use-drawing";
 import { useFileUpload } from "@/hooks/use-file-upload";
@@ -49,8 +50,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-import { uploadFile, sign } from "./utils";
-import { NewDocumentDialog } from "./dialog";
+import { NewDocumentDialog } from "./new-doc-dialog";
 
 const ACCEPTED_FILE_TYPES = [".pdf", ".jpeg", ".png", ".jpg"];
 
@@ -67,7 +67,7 @@ const documentSchema = z
     path: ["confirmPassword"],
   });
 
-export function DocumentSigning() {
+export function NewDocumentContent() {
   const { toast } = useToast();
   const { file, preview, handleFileChange, clearFile, fileInputRef } =
     useFileUpload();
