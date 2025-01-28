@@ -28,10 +28,17 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-
+    console.log({
+      value,
+      isTxSig,
+      isHash,
+    });
     let hash = value;
     if (isTxSig) {
       hash = await getHashFromTransactionSignature(value);
+      console.log({
+        hash,
+      });
       if (!hash) {
         return Response.json(
           { error: "Invalid transaction signature: no hash found" },
