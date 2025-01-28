@@ -207,7 +207,7 @@ export function HomeContent() {
 
                     <div className="flex flex-col sm:flex-row gap-4">
                       <Link href="/docs/new">
-                        <InteractiveHoverButton className="w-full sm:w-auto rounded-none text-base lg:text-lg py-3 lg:py-4 px-4 lg:px-6">
+                        <InteractiveHoverButton className="rounded-none text-lg py-4 px-6">
                           Get Started Now
                         </InteractiveHoverButton>
                       </Link>
