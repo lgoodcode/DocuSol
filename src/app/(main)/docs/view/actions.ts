@@ -1,3 +1,5 @@
+'use client'
+
 import { createClient } from "@/lib/supabase/client";
 import { hexToBuffer, previewBlob } from "@/lib/utils";
 import { getTransactionUrl } from "@/lib/utils/solana";
@@ -41,6 +43,10 @@ export const viewTransaction = async (txSignature: string): Promise<void> => {
 
 export const copyTxSignature = async (txSignature: string): Promise<void> => {
   navigator.clipboard.writeText(txSignature);
+};
+
+export const copyDocumentSignUrl = async (id: string): Promise<void> => {
+  navigator.clipboard.writeText(`${window.location.origin}/docs/sign/${id}`);
 };
 
 export const downloadDocument = async (id: string): Promise<void> => {
