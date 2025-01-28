@@ -26,6 +26,7 @@ import { FilePreview } from "@/components/file-preview";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -55,7 +56,9 @@ const ACCEPTED_FILE_TYPES = [".pdf", ".jpeg", ".png", ".jpg"];
 
 const documentSchema = z
   .object({
-    name: z.string().min(1, "Document name is required"),
+    name: z.string({
+      required_error: "Document name is required",
+    }),
     password: z.string().optional(),
     confirmPassword: z.string().optional(),
   })
@@ -389,10 +392,16 @@ export function DocumentSigning() {
             {/* Signature Card */}
             <Card>
               <CardHeader className="flex flex-col sm:flex-row items-start gap-4 sm:gap-0 sm:items-center justify-between">
-                <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
-                  <Pencil className="h-5 w-5" />
-                  Sign Document
-                </CardTitle>
+                <div className="flex flex-col gap-1 max-w-sm">
+                  <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+                    <Pencil className="h-5 w-5" />
+                    Sign Document
+                  </CardTitle>
+                  <CardDescription>
+                    This is optional and will be applied to the unsigned
+                    document.
+                  </CardDescription>
+                </div>
                 <div className="flex items-center gap-2">
                   <Select
                     value={signatureType}
@@ -466,10 +475,7 @@ export function DocumentSigning() {
                   type="submit"
                   className="ml-auto"
                   isLoading={form.formState.isSubmitting}
-                  disabled={
-                    !file ||
-                    (signatureType === "draw" ? !hasDrawn : !typedSignature)
-                  }
+                  disabled={!file}
                 >
                   <Save className="h-4 w-4" />
                   Save Document
