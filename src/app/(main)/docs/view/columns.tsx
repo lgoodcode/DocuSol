@@ -12,6 +12,7 @@ import {
   Globe,
   Compass,
   Copy,
+  Link,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ import {
   viewDocument,
   viewTransaction,
   copyTxSignature,
+  copyDocumentSignUrl,
   downloadDocument,
   deleteDocument,
 } from "./actions";
@@ -39,6 +41,7 @@ type ActionType =
   | "view"
   | "viewTransaction"
   | "copyTxSignature"
+  | "copyDocumentSignUrl"
   | "download"
   | "delete";
 
@@ -46,6 +49,7 @@ const actionMap = {
   view: viewDocument,
   viewTransaction,
   copyTxSignature,
+  copyDocumentSignUrl,
   download: downloadDocument,
   delete: deleteDocument,
 } as const;
@@ -56,7 +60,7 @@ export function useColumns(handleDelete: (id: string) => void) {
   const createActionHandler = useCallback((actionType: ActionType) => {
     return async (id: string) => {
       try {
-        await actionMap[actionType](id);
+        const result = await actionMap[actionType](id);
 
         if (actionType === "delete") {
           handleDelete(id);
@@ -65,13 +69,16 @@ export function useColumns(handleDelete: (id: string) => void) {
             console.error(error);
             captureException(error);
           });
-        } else if (actionType === "copyTxSignature") {
+        } else if (
+          actionType === "copyTxSignature" ||
+          actionType === "copyDocumentSignUrl"
+        ) {
           toast({
-            title: "Transaction Signature Copied",
+            title: "Copied to Clipboard",
             description: (
               <span>
-                <span className="font-bold font-mono break-all">{id}</span> has
-                been copied to your clipboard
+                <span className="font-bold font-mono break-all">{result!}</span>{" "}
+                has been copied to your clipboard
               </span>
             ),
           });
@@ -93,6 +100,7 @@ export function useColumns(handleDelete: (id: string) => void) {
     handleViewDocument: createActionHandler("view"),
     handleViewTransaction: createActionHandler("viewTransaction"),
     handleCopyTxSignature: createActionHandler("copyTxSignature"),
+    handleCopyDocumentSignUrl: createActionHandler("copyDocumentSignUrl"),
     handleDownloadDocument: createActionHandler("download"),
     handleDeleteDocument: createActionHandler("delete"),
   };
@@ -193,7 +201,7 @@ export function useColumns(handleDelete: (id: string) => void) {
                     wrappedActions.handleViewDocument(row.original.id)
                   }
                 >
-                  <Eye className="mr-2 h-4 w-4" />
+                  <Eye className="mr-1 h-4 w-4" />
                   View
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -204,7 +212,7 @@ export function useColumns(handleDelete: (id: string) => void) {
                     )
                   }
                 >
-                  <Compass className="mr-2 h-4 w-4" />
+                  <Compass className="mr-1 h-4 w-4" />
                   View Transaction
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -215,15 +223,25 @@ export function useColumns(handleDelete: (id: string) => void) {
                     )
                   }
                 >
-                  <Copy className="mr-2 h-4 w-4" />
+                  <Copy className="mr-1 h-4 w-4" />
                   Copy Tx Signature
                 </DropdownMenuItem>
+                {!row.original.is_signed && (
+                  <DropdownMenuItem
+                    onClick={() =>
+                      wrappedActions.handleCopyDocumentSignUrl(row.original.id)
+                    }
+                  >
+                    <Link className="mr-1 h-4 w-4" />
+                    Share Sign Link
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem
                   onClick={() =>
                     wrappedActions.handleDownloadDocument(row.original.id)
                   }
                 >
-                  <Download className="mr-2 h-4 w-4" />
+                  <Download className="mr-1 h-4 w-4" />
                   Download
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -233,7 +251,7 @@ export function useColumns(handleDelete: (id: string) => void) {
                   }
                   className="text-destructive"
                 >
-                  <Trash className="mr-2 h-4 w-4" />
+                  <Trash className="mr-1 h-4 w-4" />
                   Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>

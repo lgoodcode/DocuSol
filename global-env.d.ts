@@ -30,6 +30,7 @@ export declare global {
     mimeType: string;
     unsignedTxSignature: string;
     signedTxSignature: string | null;
+    is_signed: boolean;
     unsignedDocument: Uint8Array;
     signedDocument: Uint8Array | null;
     createdAt: string;

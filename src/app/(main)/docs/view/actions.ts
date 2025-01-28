@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import { createClient } from "@/lib/supabase/client";
 import { hexToBuffer, previewBlob } from "@/lib/utils";
@@ -41,12 +41,15 @@ export const viewTransaction = async (txSignature: string): Promise<void> => {
   window.open(url, "_blank");
 };
 
-export const copyTxSignature = async (txSignature: string): Promise<void> => {
+export const copyTxSignature = async (txSignature: string): Promise<string> => {
   navigator.clipboard.writeText(txSignature);
+  return txSignature;
 };
 
-export const copyDocumentSignUrl = async (id: string): Promise<void> => {
-  navigator.clipboard.writeText(`${window.location.origin}/docs/sign/${id}`);
+export const copyDocumentSignUrl = async (id: string): Promise<string> => {
+  const url = window.location.origin;
+  navigator.clipboard.writeText(`${url}/docs/sign/${id}`);
+  return `${url}/docs/sign/${id}`;
 };
 
 export const downloadDocument = async (id: string): Promise<void> => {

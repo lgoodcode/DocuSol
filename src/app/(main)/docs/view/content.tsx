@@ -76,6 +76,7 @@ const getDocuments = async (): Promise<ViewDocument[]> => {
     password: doc.password,
     status: doc.is_signed ? "signed" : "pending",
     mimeType: doc.mime_type,
+    is_signed: doc.is_signed,
     unsignedTxSignature: doc.unsigned_transaction_signature,
     signedTxSignature: doc.signed_transaction_signature,
     unsignedDocument: hexToBuffer(doc.unsigned_document),

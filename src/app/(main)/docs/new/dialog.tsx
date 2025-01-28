@@ -53,63 +53,69 @@ export function NewDocumentDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-6">
-          {/* Transaction Link */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">
-              View transaction:
-            </span>
-            <a
-              href={getTransactionUrl(results?.txSignature || "")}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-sm hover:text-primary underline underline-offset-4"
-            >
-              <span>Solana Explorer</span>
-              <ExternalLink className="h-4 w-4" />
-            </a>
-          </div>
+          {/* Content */}
+          <div className="grid gap-4">
+            {/* Warning Alert */}
+            <Alert variant="warning">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Warning</AlertTitle>
+              <AlertDescription className="text-sm">
+                The hash is stored in the blockchain and can be used to verify
+                the document&apos;s integrity. For privacy, you can delete this
+                and create a new document with a password.
+              </AlertDescription>
+            </Alert>
 
-          {/* Warning Alert */}
-          <Alert variant="warning">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Important</AlertTitle>
-            <AlertDescription className="text-sm">
-              The hash is stored in the blockchain and can be used to verify the
-              document&apos;s integrity. For privacy, you can delete this and
-              create a new document with a password.
-            </AlertDescription>
-          </Alert>
+            {/* Transaction Link */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                View transaction:
+              </span>
+              <a
+                href={getTransactionUrl(results?.txSignature || "")}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-sm hover:text-primary underline underline-offset-4"
+              >
+                <span>Solana Explorer</span>
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            </div>
 
-          {/* File Hash */}
-          <div className="space-y-1.5">
-            <Label className="text-sm text-muted-foreground">File Hash</Label>
-            <div className="flex items-center gap-2 p-2 rounded-md bg-muted-foreground/20 dark:bg-muted/50">
-              <code className="text-xs sm:text-sm font-mono break-all flex-1">
-                {results?.unsignedHash}
-              </code>
-              <CopyButton value={results?.unsignedHash || ""} />
+            {/* File Hash */}
+            <div className="space-y-1">
+              <Label className="text-sm text-muted-foreground">File Hash</Label>
+              <div className="flex items-center gap-2 p-2 rounded-md bg-muted-foreground/20 dark:bg-muted/50">
+                <code className="text-xs sm:text-sm font-mono break-all flex-1">
+                  {results?.unsignedHash}
+                </code>
+                <CopyButton value={results?.unsignedHash || ""} />
+              </div>
+            </div>
+
+            {/* Share Link */}
+            <div className="space-y-1">
+              <Label className="text-sm text-muted-foreground">
+                Share Link
+              </Label>
+              <div className="flex items-center gap-2 p-2 rounded-md bg-muted-foreground/20 dark:bg-muted/50">
+                <code className="text-xs sm:text-sm font-mono break-all flex-1">
+                  {`${url}/docs/sign/${results?.id}`}
+                </code>
+                <CopyButton value={`${url}/docs/sign/${results?.id}`} />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Share this link with the recipient to view and sign the document
+              </p>
             </div>
           </div>
 
-          {/* Share Link */}
-          <div className="space-y-1.5">
-            <Label className="text-sm text-muted-foreground">Share Link</Label>
-            <div className="flex items-center gap-2 p-2 rounded-md bg-muted-foreground/20 dark:bg-muted/50">
-              <code className="text-xs sm:text-sm font-mono break-all flex-1">
-                {`${url}/docs/sign/${results?.id}`}
-              </code>
-              <CopyButton value={`${url}/docs/sign/${results?.id}`} />
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Share this link with the recipient to view and sign the document
-            </p>
-          </div>
+          <DialogFooter>
+            <Button type="button" onClick={handleCloseDialog}>
+              Close
+            </Button>
+          </DialogFooter>
         </div>
-        <DialogFooter>
-          <Button type="button" onClick={handleCloseDialog}>
-            Close
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
