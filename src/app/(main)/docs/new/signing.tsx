@@ -13,7 +13,6 @@ import {
   Trash2,
   Lock,
   FileText,
-
 } from "lucide-react";
 
 import { storeDocument } from "@/lib/utils";
@@ -49,7 +48,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-
 
 import { uploadFile, sign } from "./utils";
 import { NewDocumentDialog } from "./dialog";
@@ -207,14 +205,12 @@ export function DocumentSigning() {
         </div>
       </motion.div>
 
-      {results && (
-        <NewDocumentDialog
-          showDialog={showDialog}
-          setShowDialog={setShowDialog}
-          handleCloseDialog={handleCloseDialog}
-          results={results}
-        />
-      )}
+      <NewDocumentDialog
+        showDialog={showDialog}
+        setShowDialog={setShowDialog}
+        handleCloseDialog={handleCloseDialog}
+        results={results}
+      />
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -496,8 +492,6 @@ export function DocumentSigning() {
           </motion.div>
         </form>
       </Form>
-
-
     </>
   );
 }
