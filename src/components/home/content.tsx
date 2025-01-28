@@ -232,9 +232,12 @@ export function HomeContent() {
                 </h2>
                 <div className="max-w-2xl mx-auto my-24 pb-24 text-center px-8">
                   <h3 className="text-2xl font-semibold">
-                    A revolutionary platform that combines AI-powered document
-                    generation with secure blockchain-based signing and sharing
-                    capabilities.
+                    A powerful platform that seamlessly integrates
+                    DeepSeek-R1&apos;s advanced AI document generation with
+                    secure blockchain-based signing and sharing. Create, edit,
+                    and manage documents with state-of-the-art AI assistance,
+                    while ensuring tamper-proof security and streamlined
+                    collaboration through distributed ledger technology.
                   </h3>
                 </div>
               </motion.section>
