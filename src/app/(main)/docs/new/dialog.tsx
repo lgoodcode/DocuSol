@@ -56,7 +56,7 @@ export function NewDocumentDialog({
               className="inline-flex items-center gap-1 text-sm hover:text-primary underline underline-offset-4"
             >
               <span>Solana Explorer</span>
-              <ExternalLink className="h-3 w-3" />
+              <ExternalLink className="h-4 w-4" />
             </a>
           </div>
 
@@ -78,7 +78,7 @@ export function NewDocumentDialog({
               <code className="text-xs sm:text-sm font-mono break-all flex-1">
                 {results.unsignedHash}
               </code>
-              <CopyButton value={results.unsignedHash } />
+              <CopyButton value={results.unsignedHash} />
             </div>
           </div>
 
