@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { CopyButton } from "@/components/ui/copy-button";
 import { getTransactionUrl } from "@/lib/utils/solana";
 
-export function NewDocumentDialog({
+export function SignDocumentDialog({
   showDialog,
   setShowDialog,
   handleCloseDialog,
@@ -85,7 +85,7 @@ export function NewDocumentDialog({
             {/* File Hash */}
             <div className="space-y-1">
               <Label className="text-sm text-muted-foreground">File Hash</Label>
-              <div className="flex items-center gap-2 p-2 rounded-md bg-muted-foreground/10 dark:bg-muted/50">
+              <div className="flex items-center gap-2 p-2 rounded-md bg-muted-foreground/20 dark:bg-muted/50">
                 <code className="text-xs sm:text-sm font-mono break-all flex-1">
                   {results?.unsignedHash}
                 </code>
@@ -98,7 +98,7 @@ export function NewDocumentDialog({
               <Label className="text-sm text-muted-foreground">
                 Share Link
               </Label>
-              <div className="flex items-center gap-2 p-2 rounded-md bg-muted-foreground/10 dark:bg-muted/50">
+              <div className="flex items-center gap-2 p-2 rounded-md bg-muted-foreground/20 dark:bg-muted/50">
                 <code className="text-xs sm:text-sm font-mono break-all flex-1">
                   {`${url}/docs/sign/${results?.id}`}
                 </code>
