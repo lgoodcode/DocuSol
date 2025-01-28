@@ -74,7 +74,7 @@ export function NewDocumentDialog({
           {/* File Hash */}
           <div className="space-y-1.5">
             <Label className="text-sm text-muted-foreground">File Hash</Label>
-            <div className="flex items-center gap-2 p-2 rounded-md bg-muted dark:bg-muted/50">
+            <div className="flex items-center gap-2 p-2 rounded-md bg-muted-foreground/20 dark:bg-muted/50">
               <code className="text-xs sm:text-sm font-mono break-all flex-1">
                 {results.unsignedHash}
               </code>
@@ -85,7 +85,7 @@ export function NewDocumentDialog({
           {/* Share Link */}
           <div className="space-y-1.5">
             <Label className="text-sm text-muted-foreground">Share Link</Label>
-            <div className="flex items-center gap-2 p-2 rounded-md bg-muted dark:bg-muted/50">
+            <div className="flex items-center gap-2 p-2 rounded-md bg-muted-foreground/20 dark:bg-muted/50">
               <code className="text-xs sm:text-sm font-mono break-all flex-1">
                 {`${window.location.origin}/docs/sign/${results.id}`}
               </code>
