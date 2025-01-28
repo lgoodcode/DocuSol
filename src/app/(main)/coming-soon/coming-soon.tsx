@@ -24,7 +24,7 @@ export function ComingSoon() {
         >
           <p className="sm:text-lg md:text-xl text-muted-foreground mx-auto">
             We are working hard to bring you the future of decentralized
-            document signing powered by Solana and AI.
+            document signing powered by Solana and DeepSeek-R1.
           </p>
         </motion.div>
       </div>

@@ -16,7 +16,7 @@ export function Footer() {
   return (
     <footer className="bg-black/95 border-t border-border z-100 text-white">
       <div className="mx-auto max-w-screen-xl px-6 md:px-8 lg:px-12 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-white">DocuSol</h3>
             <p className="text-sm text-gray-400">
@@ -84,6 +84,20 @@ export function Footer() {
                   className="text-gray-400 hover:text-white transition-colors"
                 >
                   Blockchain
+                </Link>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="text-sm font-semibold mb-4 text-white">DeepSeek</h4>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link
+                  href="https://github.com/deepseek-ai/DeepSeek-R1"
+                  target="_blank"
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  DeepSeek-R1 Github
                 </Link>
               </li>
             </ul>

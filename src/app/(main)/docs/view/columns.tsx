@@ -67,9 +67,14 @@ export function useColumns(handleDelete: (id: string) => void) {
           });
         } else if (actionType === "copyTxSignature") {
           toast({
-            title: "Tx Signature Copied",
-            description:
-              "The transaction signature has been copied to your clipboard",
+            title: "Transaction Signature Copied",
+            description: (
+              <span>
+                The transaction signature{" "}
+                <span className="font-bold font-mono break-all">{id}</span> has
+                been copied to your clipboard
+              </span>
+            ),
           });
         }
       } catch (error) {
