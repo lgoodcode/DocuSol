@@ -10,11 +10,11 @@ export const IS_MOBILE = () => {
 
 export const GITHUB_URL = "https://github.com/DocuSol";
 
-// export const CONTRACT_ADDRESS = "";
-// export const X_URL = "";
-// export const PUMPFUN_URL = "";
-// export const DEXSCREENER_URL = "";
+export const CONTRACT_ADDRESS = "";
+export const X_URL = "";
+export const PUMPFUN_URL = "";
+export const DEXSCREENER_URL = "";
 
-export const CONTRACT_ADDRESS = "75kZbiQ5TyXLNrmyPTkCpLhP9Jxs8vWr1DwjVcLhpump";
-export const X_URL = "https://x.com/DocuSol";
-export const DEXSCREENER_URL = "https://dexscreener.com";
+// export const CONTRACT_ADDRESS = "75kZbiQ5TyXLNrmyPTkCpLhP9Jxs8vWr1DwjVcLhpump";
+// export const X_URL = "https://x.com/DocuSol";
+// export const DEXSCREENER_URL = "https://dexscreener.com";
