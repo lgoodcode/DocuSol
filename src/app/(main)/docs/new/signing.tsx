@@ -13,6 +13,8 @@ import {
   Trash2,
   Lock,
   FileText,
+  AlertCircle,
+  ExternalLink,
 } from "lucide-react";
 
 import { storeDocument } from "@/lib/utils";
@@ -49,8 +51,18 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 import { uploadFile, sign } from "./utils";
+import { CopyButton } from "@/components/ui/copy-button";
 
 const ACCEPTED_FILE_TYPES = [".pdf", ".jpeg", ".png", ".jpg"];
 
@@ -80,49 +92,67 @@ export function DocumentSigning() {
     stopDrawing,
     clearCanvas,
   } = useDrawing();
-
   const [signatureType, setSignatureType] = useState("draw"); // "draw" or "type"
   const [typedSignature, setTypedSignature] = useState("");
+  const [showDialog, setShowDialog] = useState(true);
+  const [results, setResults] = useState<{
+    id: string;
+    txSignature: string;
+    unsignedHash: string;
+  } | null>({
+    id: "6371048f-7aba-4d41-bfb8-73435458b881",
+    txSignature:
+      "TiwrWVwVYkFWQF16ZsM622NAUJAcTJGw66iYcxvpRTnQDoZakUtsQbEnZewt6jJUKm8XsNmpZ2HpV56288dEUwH",
+    unsignedHash:
+      "df1af2ed785db434e9f1e7f16e8342e9621b0f8a9aa14e40ceee9953c6eb9b7a",
+  });
   const form = useForm<z.infer<typeof documentSchema>>({
     resolver: zodResolver(documentSchema),
     mode: "onSubmit",
   });
 
+  const handleCloseDialog = () => {
+    setShowDialog(false);
+    setResults(null);
+  };
+
   const onSubmit = async ({
     name,
     password,
   }: z.infer<typeof documentSchema>) => {
-    if (
-      !file ||
-      (!hasDrawn && signatureType === "draw") ||
-      (!typedSignature && signatureType === "type")
-    ) {
+    if (!file) {
       return;
     }
 
+    const isSigned =
+      (signatureType === "draw" && hasDrawn) ||
+      (signatureType === "type" && typedSignature);
+
     try {
       let signedDoc: Blob | null = null;
-      try {
-        signedDoc = await sign(
-          file,
-          signatureType === "draw" ? getSignatureAsBlack() : null,
-          signatureType === "type" ? typedSignature : undefined
-        );
-      } catch (err) {
-        const error = err as Error;
-        console.error(error);
-        if (error.message.includes("encrypted")) {
-          toast({
-            title: "Error",
-            description: "The document is encrypted and cannot be modified",
-            variant: "destructive",
-          });
-          return;
+      if (isSigned) {
+        try {
+          signedDoc = await sign(
+            file,
+            signatureType === "draw" ? getSignatureAsBlack() : null,
+            signatureType === "type" ? typedSignature : undefined
+          );
+        } catch (err) {
+          const error = err as Error;
+          console.error(error);
+          if (error.message.includes("encrypted")) {
+            toast({
+              title: "Error",
+              description: "The document is encrypted and cannot be modified",
+              variant: "destructive",
+            });
+            return;
+          }
+          throw error;
         }
-        throw error;
       }
 
-      if (!signedDoc) {
+      if (isSigned && !signedDoc) {
         throw new Error("Failed to sign document");
       }
 
@@ -131,8 +161,8 @@ export function DocumentSigning() {
         password: password || "",
         original_filename: file.name,
         mime_type: file.type,
-        unsigned_document: file,
-        signed_document: signedDoc,
+        original_document: file,
+        unsigned_document: signedDoc || file,
       });
 
       if (error) {
@@ -152,30 +182,7 @@ export function DocumentSigning() {
         });
       });
 
-      const txUrl = getTransactionUrl(txSignature!);
-      toast({
-        title: "Document signed",
-        description: (
-          <div className="space-y-2">
-            Your document has been signed and saved. You can view the
-            transaction on{" "}
-            <a
-              href={txUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-medium underline underline-offset-4"
-            >
-              Solana Explorer
-            </a>
-            .
-            <p>
-              Refer to the memo for the document hash. If there are no details,
-              please wait a few seconds and refresh the page.
-            </p>
-          </div>
-        ),
-        variant: "success",
-      });
+      setResults({ id, txSignature, unsignedHash });
 
       form.reset({ name: "", password: "", confirmPassword: "" });
       clearFile();
@@ -192,6 +199,7 @@ export function DocumentSigning() {
     }
   };
 
+  console.log(results);
   return (
     <>
       <motion.div
@@ -305,6 +313,11 @@ export function DocumentSigning() {
                           placeholder="Enter document name"
                           {...field}
                           disabled={form.formState.isSubmitting}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              form.handleSubmit(onSubmit)(e);
+                            }
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -399,7 +412,7 @@ export function DocumentSigning() {
                   </CardTitle>
                   <CardDescription>
                     This is optional and will be applied to the unsigned
-                    document.
+                    document that gets hashed for verification.
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
@@ -485,6 +498,80 @@ export function DocumentSigning() {
           </motion.div>
         </form>
       </Form>
+
+      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Document Signed</DialogTitle>
+            <DialogDescription>
+              Your document has been saved, and the hash stored in the
+              blockchain.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-6">
+            {/* Transaction Link */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                View transaction:
+              </span>
+              <a
+                href={getTransactionUrl(results?.txSignature || "")}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-sm hover:text-primary underline underline-offset-4"
+              >
+                <span>Solana Explorer</span>
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+
+            {/* Warning Alert */}
+            <Alert variant="warning">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Important</AlertTitle>
+              <AlertDescription className="text-sm">
+                The hash is stored in the blockchain and can be used to verify
+                the document&apos;s integrity. For privacy, you can delete this
+                and create a new document with a password.
+              </AlertDescription>
+            </Alert>
+
+            {/* File Hash */}
+            <div className="space-y-1.5">
+              <Label className="text-sm text-muted-foreground">File Hash</Label>
+              <div className="flex items-center gap-2 p-2 rounded-md bg-muted dark:bg-muted/50">
+                <code className="text-xs sm:text-sm font-mono break-all flex-1">
+                  {results?.unsignedHash}
+                </code>
+                <CopyButton value={results?.unsignedHash || ""} />
+              </div>
+            </div>
+
+            {/* Share Link */}
+            <div className="space-y-1.5">
+              <Label className="text-sm text-muted-foreground">
+                Share Link
+              </Label>
+              <div className="flex items-center gap-2 p-2 rounded-md bg-muted dark:bg-muted/50">
+                <code className="text-xs sm:text-sm font-mono break-all flex-1">
+                  {`${window.location.origin}/docs/sign/${results?.id}`}
+                </code>
+                <CopyButton
+                  value={`${window.location.origin}/docs/sign/${results?.id}`}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Share this link with the recipient to view and sign the document
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" onClick={handleCloseDialog}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

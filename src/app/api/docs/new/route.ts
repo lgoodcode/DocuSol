@@ -27,8 +27,8 @@ export async function POST(request: Request) {
     const password = (form.get("password") as string) || "";
     const originalFilename = form.get("original_filename") as string | null;
     const mimeType = form.get("mime_type") as string | null;
+    const originalDocument = form.get("original_document") as File | null;
     const unsignedDocument = form.get("unsigned_document") as File | null;
-    const signedDocument = form.get("signed_document") as File | null;
 
     if (!name) {
       throw new Error("No name provided");
@@ -36,24 +36,27 @@ export async function POST(request: Request) {
       throw new Error("No original filename provided");
     } else if (!mimeType) {
       throw new Error("No mime type provided");
+    } else if (!originalDocument) {
+      throw new Error("No original document provided");
     } else if (!unsignedDocument) {
       throw new Error("No unsigned document provided");
-    } else if (!signedDocument) {
-      throw new Error("No signed document provided");
     } else if (!allowedMimeTypes.includes(mimeType)) {
       throw new Error("Invalid file type");
     }
 
+    // Add unique timestamp to the document to prevent duplicate hashes
+    // in the event of a hash collision
+    const timestamp = new Date().toISOString();
     // Get file data and hash
     const originalDocumentBuffer = Buffer.from(
-      await unsignedDocument.arrayBuffer()
+      await originalDocument.arrayBuffer()
     );
     const unsignedDocumentBuffer = Buffer.from(
-      await signedDocument.arrayBuffer()
+      await unsignedDocument.arrayBuffer()
     );
     const unsignedDocumentHash = crypto
       .createHash("sha256")
-      .update(unsignedDocumentBuffer + password)
+      .update(unsignedDocumentBuffer + timestamp + password)
       .digest("hex");
 
     // Create memo message and send transaction
@@ -67,12 +70,13 @@ export async function POST(request: Request) {
       .insert({
         name,
         password,
+        mime_type: mimeType,
         unsigned_hash: unsignedDocumentHash,
         unsigned_transaction_signature: txSignature,
+        original_filename: originalFilename,
         original_document: bufferToHex(originalDocumentBuffer),
         unsigned_document: bufferToHex(unsignedDocumentBuffer),
-        original_filename: originalFilename,
-        mime_type: mimeType,
+        created_at: timestamp,
       })
       .select("id")
       .single();

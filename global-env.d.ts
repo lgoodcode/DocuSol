@@ -18,8 +18,8 @@ export declare global {
     password: string;
     original_filename: string;
     mime_type: string;
-    unsigned_document: File; // Is original file
-    signed_document: Blob;
+    original_document: File;
+    unsigned_document: Blob;
   }
 
   interface ViewDocument {

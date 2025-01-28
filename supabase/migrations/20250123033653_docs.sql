@@ -13,9 +13,10 @@ CREATE TABLE documents (
     signed_document BYTEA,
     is_signed BOOLEAN NOT NULL DEFAULT FALSE,
     signed_at TIMESTAMPTZ,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+-- created_at must be passed in since it is appended to the document when hashing
 
 ALTER TABLE documents OWNER TO postgres;
 

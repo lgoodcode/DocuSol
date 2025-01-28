@@ -26,7 +26,9 @@ export const CopyButton = forwardRef(
         ref={ref as React.RefObject<HTMLDivElement>}
         onClick={handleCopy}
         className={
-          noStyle ? "" : "p-2 bg-transparent hover:bg-transparent rounded-md"
+          noStyle
+            ? ""
+            : "p-2 inline-flex bg-transparent hover:bg-transparent rounded-md"
         }
         aria-label={copied ? "Copied!" : "Copy to clipboard"}
       >

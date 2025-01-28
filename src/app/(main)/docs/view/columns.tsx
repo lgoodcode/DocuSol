@@ -70,7 +70,6 @@ export function useColumns(handleDelete: (id: string) => void) {
             title: "Transaction Signature Copied",
             description: (
               <span>
-                The transaction signature{" "}
                 <span className="font-bold font-mono break-all">{id}</span> has
                 been copied to your clipboard
               </span>
