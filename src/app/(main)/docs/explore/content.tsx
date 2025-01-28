@@ -276,6 +276,9 @@ export function ExploreContent() {
                   type="submit"
                   disabled={!passwordForm.formState.isValid}
                   isLoading={passwordForm.formState.isSubmitting}
+                  onClick={() => {
+                    passwordForm.handleSubmit(handlePasswordSubmit)();
+                  }}
                 >
                   Submit
                 </Button>
