@@ -1,3 +1,5 @@
+"use client";
+
 import { AlertCircle, ExternalLink } from "lucide-react";
 
 import {
@@ -74,9 +76,9 @@ export function NewDocumentDialog({
             <Label className="text-sm text-muted-foreground">File Hash</Label>
             <div className="flex items-center gap-2 p-2 rounded-md bg-muted dark:bg-muted/50">
               <code className="text-xs sm:text-sm font-mono break-all flex-1">
-                {results?.unsignedHash}
+                {results.unsignedHash}
               </code>
-              <CopyButton value={results?.unsignedHash || ""} />
+              <CopyButton value={results.unsignedHash } />
             </div>
           </div>
 
@@ -85,10 +87,10 @@ export function NewDocumentDialog({
             <Label className="text-sm text-muted-foreground">Share Link</Label>
             <div className="flex items-center gap-2 p-2 rounded-md bg-muted dark:bg-muted/50">
               <code className="text-xs sm:text-sm font-mono break-all flex-1">
-                {`${window.location.origin}/docs/sign/${results?.id}`}
+                {`${window.location.origin}/docs/sign/${results.id}`}
               </code>
               <CopyButton
-                value={`${window.location.origin}/docs/sign/${results?.id}`}
+                value={`${window.location.origin}/docs/sign/${results.id}`}
               />
             </div>
             <p className="text-xs text-muted-foreground">
