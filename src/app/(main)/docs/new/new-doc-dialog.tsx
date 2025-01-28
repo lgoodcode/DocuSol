@@ -45,6 +45,8 @@ export function NewDocumentDialog({
       <DialogContent
         className="max-w-2xl"
         onInteractOutside={(e) => e.preventDefault()}
+        autoFocus={false}
+        tabIndex={-1}
       >
         <DialogHeader>
           <DialogTitle>Document Signed</DialogTitle>
@@ -111,7 +113,12 @@ export function NewDocumentDialog({
           </div>
 
           <DialogFooter>
-            <Button type="button" onClick={handleCloseDialog}>
+            <Button
+              type="button"
+              onClick={handleCloseDialog}
+              autoFocus={false}
+              tabIndex={-1}
+            >
               Close
             </Button>
           </DialogFooter>
