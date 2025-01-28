@@ -65,37 +65,6 @@ export function ExploreContent() {
     mode: "onSubmit",
   });
 
-  const handlePasswordSubmit = async ({
-    password,
-  }: z.infer<typeof passwordSchema>) => {
-    try {
-      const response = await fetch("/api/docs/search", {
-        method: "POST",
-        body: JSON.stringify({ value: pendingHash, password }),
-      });
-
-      if (response.status === 403) {
-        passwordForm.setError("password", {
-          message: "Invalid password",
-        });
-        return;
-      }
-
-      const data = (await response.json()) as Document;
-      setDocument(data);
-      setShowPasswordDialog(false);
-      setPendingHash("");
-      passwordForm.reset();
-    } catch (error) {
-      captureException(error);
-      toast({
-        title: "Error",
-        description: "An error occurred while accessing the document",
-        variant: "destructive",
-      });
-    }
-  };
-
   const onSearchSubmit = async ({
     hashOrSignature,
   }: z.infer<typeof searchSchema>) => {
@@ -140,6 +109,37 @@ export function ExploreContent() {
     }
   };
 
+  const handlePasswordSubmit = async ({
+    password,
+  }: z.infer<typeof passwordSchema>) => {
+    try {
+      const response = await fetch("/api/docs/search", {
+        method: "POST",
+        body: JSON.stringify({ value: pendingHash, password }),
+      });
+
+      if (response.status === 403) {
+        passwordForm.setError("password", {
+          message: "Invalid password",
+        });
+        return;
+      }
+
+      const data = (await response.json()) as Document;
+      setDocument(data);
+      setShowPasswordDialog(false);
+      setPendingHash("");
+      passwordForm.reset();
+    } catch (error) {
+      captureException(error);
+      toast({
+        title: "Error",
+        description: "An error occurred while accessing the document",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <>
       <motion.div
@@ -158,24 +158,24 @@ export function ExploreContent() {
         </div>
       </motion.div>
 
-      <Form {...searchForm}>
-        <form
-          onSubmit={searchForm.handleSubmit(onSearchSubmit)}
-          className="space-y-8"
-        >
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
-                  <Search className="h-5 w-5" />
-                  Search for Document
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+              <Search className="h-5 w-5" />
+              Search for Document
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <Form {...searchForm}>
+              <form
+                onSubmit={searchForm.handleSubmit(onSearchSubmit)}
+                className="space-y-8"
+              >
                 <div className="grid w-full gap-2">
                   <div className="flex w-full flex-1 flex-col gap-4">
                     <FormField
@@ -209,19 +209,16 @@ export function ExploreContent() {
                     </Button>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </form>
-      </Form>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      </motion.div>
 
-      <Form {...passwordForm}>
-        <form onSubmit={passwordForm.handleSubmit(handlePasswordSubmit)}>
-          <Dialog
-            open={showPasswordDialog}
-            onOpenChange={setShowPasswordDialog}
-          >
-            <DialogContent>
+      <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+        <DialogContent>
+          <Form {...passwordForm}>
+            <form onSubmit={passwordForm.handleSubmit(handlePasswordSubmit)}>
               <DialogHeader>
                 <DialogTitle>Password Required</DialogTitle>
                 <DialogDescription>
@@ -244,14 +241,6 @@ export function ExploreContent() {
                             type="password"
                             placeholder="Enter document password"
                             autoComplete="off"
-                            // Dumb form won't submit so we manually submit on enter
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                passwordForm.handleSubmit(
-                                  handlePasswordSubmit
-                                )();
-                              }
-                            }}
                           />
                         </FormControl>
                         <FormMessage className="text-sm" />
@@ -276,17 +265,14 @@ export function ExploreContent() {
                   type="submit"
                   disabled={!passwordForm.formState.isValid}
                   isLoading={passwordForm.formState.isSubmitting}
-                  onClick={() => {
-                    passwordForm.handleSubmit(handlePasswordSubmit)();
-                  }}
                 >
                   Submit
                 </Button>
               </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </form>
-      </Form>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
 
       {document && (
         <motion.div
