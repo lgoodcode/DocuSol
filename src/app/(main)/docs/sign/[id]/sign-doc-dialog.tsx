@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+// import { useState, useEffect } from "react";
 import { ExternalLink } from "lucide-react";
 
 import {
@@ -27,13 +27,13 @@ export function SignDocumentDialog({
   handleCloseDialog: () => void;
   results: SignedDocumentResult | null;
 }) {
-  const [url, setUrl] = useState<string>("");
+  // const [url, setUrl] = useState<string>("");
 
-  useEffect(() => {
-    if (window) {
-      setUrl(window.location.origin);
-    }
-  }, []);
+  // useEffect(() => {
+  //   if (window) {
+  //     setUrl(window.location.origin);
+  //   }
+  // }, []);
 
   if (!results) {
     return null;
@@ -85,7 +85,7 @@ export function SignDocumentDialog({
             </div>
 
             {/* View Link */}
-            <div className="space-y-1">
+            {/* <div className="space-y-1">
               <Label className="text-sm text-muted-foreground">View Link</Label>
               <div className="flex items-center gap-2 p-2 rounded-md bg-muted-foreground/10 dark:bg-muted/50">
                 <code className="text-xs sm:text-sm font-mono break-all flex-1">
@@ -96,7 +96,7 @@ export function SignDocumentDialog({
               <p className="text-xs text-muted-foreground">
                 This link can be used to view the signed document.
               </p>
-            </div>
+            </div> */}
           </div>
 
           <DialogFooter>
