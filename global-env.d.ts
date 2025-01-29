@@ -67,6 +67,8 @@ export declare global {
     mimeType: string;
     unsignedTxSignature: string;
     signedTxSignature: string | null;
+    unsignedHash: string;
+    signedHash: string | null;
     is_signed: boolean;
     unsignedDocumentHex: string;
     signedDocumentHex: string | null;

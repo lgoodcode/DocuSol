@@ -33,6 +33,7 @@ import {
   viewTransaction,
   copyTxSignature,
   copyDocumentSignUrl,
+  copyViewUrl,
   downloadDocument,
   deleteDocument,
 } from "./actions";
@@ -42,6 +43,7 @@ type ActionType =
   | "viewTransaction"
   | "copyTxSignature"
   | "copyDocumentSignUrl"
+  | "copyViewUrl"
   | "download"
   | "delete";
 
@@ -50,6 +52,7 @@ const actionMap = {
   viewTransaction,
   copyTxSignature,
   copyDocumentSignUrl,
+  copyViewUrl,
   download: downloadDocument,
   delete: deleteDocument,
 } as const;
@@ -71,7 +74,8 @@ export function useColumns(handleDelete: (id: string) => void) {
           });
         } else if (
           actionType === "copyTxSignature" ||
-          actionType === "copyDocumentSignUrl"
+          actionType === "copyDocumentSignUrl" ||
+          actionType === "copyViewUrl"
         ) {
           toast({
             title: "Copied to Clipboard",
@@ -101,6 +105,7 @@ export function useColumns(handleDelete: (id: string) => void) {
     handleViewTransaction: createActionHandler("viewTransaction"),
     handleCopyTxSignature: createActionHandler("copyTxSignature"),
     handleCopyDocumentSignUrl: createActionHandler("copyDocumentSignUrl"),
+    handleCopyViewUrl: createActionHandler("copyViewUrl"),
     handleDownloadDocument: createActionHandler("download"),
     handleDeleteDocument: createActionHandler("delete"),
   };
@@ -236,6 +241,16 @@ export function useColumns(handleDelete: (id: string) => void) {
                     Share Sign Link
                   </DropdownMenuItem>
                 )}
+                <DropdownMenuItem
+                  onClick={() =>
+                    wrappedActions.handleCopyViewUrl(
+                      row.original.signedHash || row.original.unsignedHash
+                    )
+                  }
+                >
+                  <Link className="mr-1 h-4 w-4" />
+                  Copy View Link
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() =>
                     wrappedActions.handleDownloadDocument(row.original.id)
