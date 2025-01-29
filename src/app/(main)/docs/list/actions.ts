@@ -52,6 +52,12 @@ export const copyDocumentSignUrl = async (id: string): Promise<string> => {
   return `${url}/docs/sign/${id}`;
 };
 
+export const copyViewUrl = async (hash: string): Promise<string> => {
+  const url = window.location.origin;
+  navigator.clipboard.writeText(`${url}/docs/view/${hash}`);
+  return `${url}/docs/view/${hash}`;
+};
+
 export const downloadDocument = async (id: string): Promise<void> => {
   const supabase = createClient();
   const { data } = await supabase
