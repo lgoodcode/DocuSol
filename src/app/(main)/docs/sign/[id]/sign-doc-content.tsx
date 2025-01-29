@@ -15,8 +15,9 @@ import {
   FileText,
 } from "lucide-react";
 
+import type { Document } from "@/lib/supabase/types";
 import { storeDocument } from "@/lib/utils";
-import { uploadFile, sign } from "@/lib/utils/sign";
+import { uploadFile, sign, ACCEPTED_FILE_TYPES } from "@/lib/utils/sign";
 import { formatFileSize } from "@/lib/utils/format-file-size";
 import { useDrawing } from "@/hooks/use-drawing";
 import { useFileUpload } from "@/hooks/use-file-upload";
@@ -52,8 +53,6 @@ import {
 
 import { SignDocumentDialog } from "./sign-doc-dialog";
 
-const ACCEPTED_FILE_TYPES = [".pdf", ".jpeg", ".png", ".jpg"];
-
 const documentSchema = z
   .object({
     name: z.string({
@@ -67,7 +66,21 @@ const documentSchema = z
     path: ["confirmPassword"],
   });
 
-export function NewDocumentContent() {
+const testResults = {
+  id: "6371048f-7aba-4d41-bfb8-73435458b881",
+  txSignature:
+    "TiwrWVwVYkFWQF16ZsM622NAUJAcTJGw66iYcxvpRTnQDoZakUtsQbEnZewt6jJUKm8XsNmpZ2HpV56288dEUwH",
+  signedHash:
+    "df1af2ed785db434e9f1e7f16e8342e9621b0f8a9aa14e40ceee9953c6eb9b7a",
+};
+
+export function SignDocumentContent({
+  id,
+  document,
+}: {
+  id: string;
+  document: Document;
+}) {
   const { toast } = useToast();
   const { file, preview, handleFileChange, clearFile, fileInputRef } =
     useFileUpload();
@@ -82,18 +95,8 @@ export function NewDocumentContent() {
   } = useDrawing();
   const [signatureType, setSignatureType] = useState("draw"); // "draw" or "type"
   const [typedSignature, setTypedSignature] = useState("");
-  const [showDialog, setShowDialog] = useState(true);
-  const [results, setResults] = useState<{
-    id: string;
-    txSignature: string;
-    unsignedHash: string;
-  } | null>({
-    id: "6371048f-7aba-4d41-bfb8-73435458b881",
-    txSignature:
-      "TiwrWVwVYkFWQF16ZsM622NAUJAcTJGw66iYcxvpRTnQDoZakUtsQbEnZewt6jJUKm8XsNmpZ2HpV56288dEUwH",
-    unsignedHash:
-      "df1af2ed785db434e9f1e7f16e8342e9621b0f8a9aa14e40ceee9953c6eb9b7a",
-  });
+  const [showDialog, setShowDialog] = useState(false);
+  const [results, setResults] = useState<SignDocumentResult | null>(null);
   const form = useForm<z.infer<typeof documentSchema>>({
     resolver: zodResolver(documentSchema),
     mode: "onSubmit",
@@ -144,7 +147,7 @@ export function NewDocumentContent() {
         throw new Error("Failed to sign document");
       }
 
-      const { error, id, txSignature, unsignedHash } = await uploadFile({
+      const { error, id, txSignature, signedHash } = await uploadFile({
         name,
         password: password || "",
         original_filename: file.name,
@@ -155,7 +158,7 @@ export function NewDocumentContent() {
 
       if (error) {
         throw new Error(error);
-      } else if (!id || !txSignature || !unsignedHash) {
+      } else if (!id || !txSignature || !signedHash) {
         throw new Error("Failed to upload document");
       }
 
@@ -165,12 +168,12 @@ export function NewDocumentContent() {
           extra: {
             id,
             txSignature,
-            unsignedHash,
+            signedHash,
           },
         });
       });
 
-      setResults({ id, txSignature, unsignedHash });
+      setResults({ id, txSignature, signedHash });
 
       form.reset({ name: "", password: "", confirmPassword: "" });
       clearFile();
@@ -278,115 +281,6 @@ export function NewDocumentContent() {
                 </div>
 
                 {preview && <FilePreview file={file} preview={preview} />}
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
-          >
-            {/* Document Options Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
-                  <Lock className="h-5 w-5" />
-                  Document Options
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Document Name</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Enter document name"
-                          {...field}
-                          disabled={form.formState.isSubmitting}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              form.handleSubmit(onSubmit)(e);
-                            }
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Password Protection */}
-                <div className="grid w-full gap-2">
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Password Protection (Optional)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="password"
-                            placeholder="Enter password"
-                            autoComplete="off"
-                            {...field}
-                            disabled={form.formState.isSubmitting}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                        <FormDescription>
-                          Will be used to protect your document. If not set, the
-                          document will be public.
-                        </FormDescription>
-                      </FormItem>
-                    )}
-                  />
-                  {form.getValues("password") && (
-                    <FormField
-                      control={form.control}
-                      name="confirmPassword"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Confirm Password</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="password"
-                              placeholder="Enter password"
-                              autoComplete="off"
-                              {...field}
-                              disabled={form.formState.isSubmitting}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                          <FormDescription>
-                            Please enter the password again to confirm.
-                          </FormDescription>
-                        </FormItem>
-                      )}
-                    />
-                  )}
-                </div>
-
-                {/* Expiry Setting */}
-                {/* <div className="grid w-full gap-1.5">
-              <Label htmlFor="expiry" className="mb-1">
-                Document Expiry
-              </Label>
-              <Select value={expiryDays} onValueChange={setExpiryDays}>
-                <SelectTrigger id="expiry">
-                  <SelectValue placeholder="Select expiry period" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">24 hours</SelectItem>
-                  <SelectItem value="7">7 days</SelectItem>
-                  <SelectItem value="30">30 days</SelectItem>
-                  <SelectItem value="never">Never</SelectItem>
-                </SelectContent>
-              </Select>
-            </div> */}
               </CardContent>
             </Card>
           </motion.div>
