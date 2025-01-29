@@ -8,7 +8,7 @@ export const IS_MOBILE = () => {
   );
 };
 
-// export const GITHUB_URL = "https://github.com/DocuSol";
+export const GITHUB_URL = "";
 
 export const CONTRACT_ADDRESS = "2thfFEH6nR7Qbqd315Dt9BjSJRau9YQ4mmBhkAuepump";
 export const X_URL = "https://x.com/docusol_";
