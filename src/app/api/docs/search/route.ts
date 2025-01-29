@@ -28,17 +28,10 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    console.log({
-      value,
-      isTxSig,
-      isHash,
-    });
+
     let hash = value;
     if (isTxSig) {
       hash = await getHashFromTransactionSignature(value);
-      console.log({
-        hash,
-      });
       if (!hash) {
         return Response.json(
           { error: "Invalid transaction signature: no hash found" },
@@ -63,13 +56,11 @@ export async function POST(request: Request) {
     const document = data[0];
     if (document.password) {
       if (!password) {
-        console.log("password required");
         return Response.json(
           { error: "Password required for this document" },
           { status: 401 }
         );
       } else if (password !== document.password) {
-        console.log("invalid password");
         return Response.json({ error: "Invalid password" }, { status: 403 });
       }
     }

@@ -1,6 +1,8 @@
 import { PDFDocument, rgb } from "pdf-lib";
 
-export async function uploadFile(newDocument: NewDocument) {
+export const ACCEPTED_FILE_TYPES = [".pdf", ".jpeg", ".png", ".jpg"];
+
+export async function uploadNewDocument(newDocument: NewDocument) {
   const formData = new FormData();
   Object.entries(newDocument).forEach(([key, value]) => {
     formData.append(key, value || "");
@@ -21,8 +23,29 @@ export async function uploadFile(newDocument: NewDocument) {
   return response.json() as Promise<NewDocumentResponse>;
 }
 
+export async function uploadSignedDocument(signedDocument: SignedDocument) {
+  const formData = new FormData();
+  Object.entries(signedDocument).forEach(([key, value]) => {
+    formData.append(key, value || "");
+  });
+
+  const response = await fetch("/api/docs/sign", {
+    method: "POST",
+    body: formData,
+    headers: {
+      "Cache-Control": "no-cache",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Sign failed: ${await response.text()}`);
+  }
+
+  return response.json() as Promise<SignedDocumentResponse>;
+}
+
 export async function sign(
-  file: File,
+  file: File | Blob,
   signatureCanvas: HTMLCanvasElement | null,
   typedSignature?: string,
   position?: { x: number; y: number }
@@ -96,7 +119,7 @@ const getFont = (fontSize: number) => {
 };
 
 async function overlayImageSignature(
-  file: File,
+  file: File | Blob,
   signatureCanvas: HTMLCanvasElement | null,
   typedSignature?: string,
   position?: { x: number; y: number }
@@ -212,7 +235,7 @@ async function getSignatureAsImage(
 }
 
 async function signPdf(
-  file: File,
+  file: File | Blob,
   signatureCanvas: HTMLCanvasElement | null,
   typedSignature?: string,
   position?: { x: number; y: number }

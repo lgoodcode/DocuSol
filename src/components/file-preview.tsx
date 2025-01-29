@@ -8,15 +8,22 @@ import { ExternalLink } from "lucide-react";
 import { hexToBuffer } from "@/lib/utils";
 
 interface PreviewProps {
-  file: File | Blob | null;
-  preview: string | null;
+  file?: File | Blob | null;
 }
 
-export function FilePreview({ file, preview }: PreviewProps) {
+export function FilePreview({ file }: PreviewProps) {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(
     window.innerWidth < 768 || IS_MOBILE
   );
+
+  useEffect(() => {
+    if (file) {
+      const preview = URL.createObjectURL(file);
+      setPreviewUrl(preview);
+    }
+  }, [file]);
 
   useEffect(() => {
     const checkMobileWidth = () => {
@@ -30,9 +37,9 @@ export function FilePreview({ file, preview }: PreviewProps) {
   }, []);
 
   useEffect(() => {
-    if (file && file.type.startsWith("image/")) {
+    if (file && file.type?.startsWith("image/")) {
       const img = new window.Image();
-      img.src = preview || "";
+      img.src = previewUrl || "";
       img.onload = () => {
         const { naturalWidth, naturalHeight } = img;
         const maxWidth = 384;
@@ -59,28 +66,28 @@ export function FilePreview({ file, preview }: PreviewProps) {
         });
       };
     }
-  }, [file, preview]);
+  }, [file, previewUrl]);
 
-  if (!preview || !file) return null;
+  if (!file || !previewUrl) return null;
 
   if (isMobile && file.type === "application/pdf") {
     return (
       <div className="w-full max-w-sm mx-auto p-4 rounded-md border bg-background dark:bg-muted">
         <div className="text-center space-y-3">
           <p className="font-medium">
-            PDF Preview not available on mobile devices
+            PDF Preview is currently not yet available on mobile devices
           </p>
           <p className="text-sm text-muted-foreground">
             Please use a desktop browser to preview or click below to open
           </p>
           <a
-            href={preview}
+            href={previewUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-sm text-primary hover:text-primary/80 underline underline-offset-4"
           >
-            <ExternalLink className="h-4 w-4" />
-            Open in new tab
+            View in new tab
+            <ExternalLink className="mr-1 h-4 w-4" />
           </a>
         </div>
       </div>
@@ -91,11 +98,11 @@ export function FilePreview({ file, preview }: PreviewProps) {
     dimensions.height > 0 ? Math.max(dimensions.height + 16, 100) : 300;
 
   return (
-    <div className="flex items-center justify-center w-full">
+    <div className="flex items-center flex-col gap-4 justify-center w-full">
       <div className="w-full max-w-sm overflow-hidden rounded-md border">
         {file.type === "application/pdf" ? (
           <embed
-            src={`${preview}#toolbar=0`}
+            src={`${previewUrl}#toolbar=0`}
             type="application/pdf"
             className="w-full h-[400px]"
           />
@@ -106,7 +113,7 @@ export function FilePreview({ file, preview }: PreviewProps) {
           >
             {dimensions.width > 0 && (
               <Image
-                src={preview}
+                src={previewUrl}
                 alt="Document preview"
                 width={dimensions.width}
                 height={dimensions.height}
@@ -118,6 +125,16 @@ export function FilePreview({ file, preview }: PreviewProps) {
           </div>
         )}
       </div>
+
+      <a
+        href={previewUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-1 text-sm text-primary hover:text-primary/80 underline underline-offset-4"
+      >
+        View in new tab
+        <ExternalLink className="mr-1 h-4 w-4" />
+      </a>
     </div>
   );
 }
@@ -131,6 +148,5 @@ export const BlobPreview = ({
 }) => {
   const rawData = hexToBuffer(hexValue);
   const file = new Blob([rawData], { type: mimeType });
-  const preview = URL.createObjectURL(file);
-  return <FilePreview file={file} preview={preview} />;
+  return <FilePreview file={file} />;
 };

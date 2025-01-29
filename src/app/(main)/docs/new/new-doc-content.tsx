@@ -15,8 +15,8 @@ import {
   FileText,
 } from "lucide-react";
 
-import { storeDocument } from "@/lib/utils";
-import { getTransactionUrl } from "@/lib/utils/solana";
+import { storeNewDocument } from "@/lib/utils";
+import { uploadNewDocument, sign, ACCEPTED_FILE_TYPES } from "@/lib/utils/sign";
 import { formatFileSize } from "@/lib/utils/format-file-size";
 import { useDrawing } from "@/hooks/use-drawing";
 import { useFileUpload } from "@/hooks/use-file-upload";
@@ -26,6 +26,7 @@ import { FilePreview } from "@/components/file-preview";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -49,13 +50,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-import { uploadFile, sign } from "./utils";
-
-const ACCEPTED_FILE_TYPES = [".pdf", ".jpeg", ".png", ".jpg"];
+import { NewDocumentDialog } from "./new-doc-dialog";
 
 const documentSchema = z
   .object({
-    name: z.string().min(1, "Document name is required"),
+    name: z.string({
+      required_error: "Document name is required",
+    }),
     password: z.string().optional(),
     confirmPassword: z.string().optional(),
   })
@@ -64,10 +65,17 @@ const documentSchema = z
     path: ["confirmPassword"],
   });
 
-export function DocumentSigning() {
+// const TEST_RESULTS = {
+//   id: "6371048f-7aba-4d41-bfb8-73435458b881",
+//   txSignature:
+//     "TiwrWVwVYkFWQF16ZsM622NAUJAcTJGw66iYcxvpRTnQDoZakUtsQbEnZewt6jJUKm8XsNmpZ2HpV56288dEUwH",
+//   unsignedHash:
+//     "df1af2ed785db434e9f1e7f16e8342e9621b0f8a9aa14e40ceee9953c6eb9b7a",
+// };
+
+export function NewDocumentContent() {
   const { toast } = useToast();
-  const { file, preview, handleFileChange, clearFile, fileInputRef } =
-    useFileUpload();
+  const { file, handleFileChange, clearFile, fileInputRef } = useFileUpload();
   const {
     canvasRef,
     startDrawing,
@@ -77,59 +85,70 @@ export function DocumentSigning() {
     stopDrawing,
     clearCanvas,
   } = useDrawing();
-
   const [signatureType, setSignatureType] = useState("draw"); // "draw" or "type"
   const [typedSignature, setTypedSignature] = useState("");
+  const [showDialog, setShowDialog] = useState(false);
+  const [results, setResults] = useState<NewDocumentResult | null>(null);
   const form = useForm<z.infer<typeof documentSchema>>({
     resolver: zodResolver(documentSchema),
     mode: "onSubmit",
   });
 
+  const handleCloseDialog = () => {
+    setShowDialog(false);
+    setResults(null);
+  };
+
   const onSubmit = async ({
     name,
     password,
   }: z.infer<typeof documentSchema>) => {
-    if (
-      !file ||
-      (!hasDrawn && signatureType === "draw") ||
-      (!typedSignature && signatureType === "type")
-    ) {
+    if (!file) {
       return;
     }
 
-    try {
+    const isSigned =
+      (signatureType === "draw" && hasDrawn) ||
+      (signatureType === "type" && typedSignature);
+
       let signedDoc: Blob | null = null;
-      try {
-        signedDoc = await sign(
-          file,
-          signatureType === "draw" ? getSignatureAsBlack() : null,
-          signatureType === "type" ? typedSignature : undefined
-        );
-      } catch (err) {
-        const error = err as Error;
-        console.error(error);
-        if (error.message.includes("encrypted")) {
+      if (isSigned) {
+        try {
+          signedDoc = await sign(
+            file,
+            signatureType === "draw" ? getSignatureAsBlack() : null,
+            signatureType === "type" ? typedSignature : undefined
+          );
+        } catch (err) {
+          const error = err as Error;
+          console.error(error);
+          if (error.message.includes("encrypted")) {
+            toast({
+              title: "Error",
+              description: "The document is encrypted and cannot be modified",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          captureException(error);
           toast({
             title: "Error",
-            description: "The document is encrypted and cannot be modified",
+            description: "An error occurred while signing the document",
             variant: "destructive",
           });
           return;
         }
-        throw error;
       }
 
-      if (!signedDoc) {
-        throw new Error("Failed to sign document");
-      }
-
-      const { error, id, txSignature, unsignedHash } = await uploadFile({
+    try {
+      const { error, id, txSignature, unsignedHash } = await uploadNewDocument({
         name,
         password: password || "",
         original_filename: file.name,
         mime_type: file.type,
-        unsigned_document: file,
-        signed_document: signedDoc,
+        original_document: file,
+        unsigned_document: signedDoc || file,
       });
 
       if (error) {
@@ -138,7 +157,7 @@ export function DocumentSigning() {
         throw new Error("Failed to upload document");
       }
 
-      storeDocument({ id, txSignature, unsignedHash }).catch((error) => {
+      storeNewDocument({ id, txSignature, unsignedHash }).catch((error) => {
         console.error("Error storing document:", error);
         captureException(error, {
           extra: {
@@ -149,30 +168,8 @@ export function DocumentSigning() {
         });
       });
 
-      const txUrl = getTransactionUrl(txSignature!);
-      toast({
-        title: "Document signed",
-        description: (
-          <div className="space-y-2">
-            Your document has been signed and saved. You can view the
-            transaction on{" "}
-            <a
-              href={txUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-medium underline underline-offset-4"
-            >
-              Solana Explorer
-            </a>
-            .
-            <p>
-              Refer to the memo for the document hash. If there are no details,
-              please wait a few seconds and refresh the page.
-            </p>
-          </div>
-        ),
-        variant: "success",
-      });
+      setResults({ id, txSignature, unsignedHash });
+      setShowDialog(true);
 
       form.reset({ name: "", password: "", confirmPassword: "" });
       clearFile();
@@ -183,7 +180,7 @@ export function DocumentSigning() {
       captureException(error);
       toast({
         title: "Error",
-        description: "An error occurred while signing the document",
+        description: "An error occurred while uploading the document",
         variant: "destructive",
       });
     }
@@ -206,6 +203,13 @@ export function DocumentSigning() {
           </p>
         </div>
       </motion.div>
+
+      <NewDocumentDialog
+        showDialog={showDialog}
+        setShowDialog={setShowDialog}
+        handleCloseDialog={handleCloseDialog}
+        results={results}
+      />
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -272,7 +276,7 @@ export function DocumentSigning() {
                   )}
                 </div>
 
-                {preview && <FilePreview file={file} preview={preview} />}
+                {file && <FilePreview file={file} />}
               </CardContent>
             </Card>
           </motion.div>
@@ -302,6 +306,11 @@ export function DocumentSigning() {
                           placeholder="Enter document name"
                           {...field}
                           disabled={form.formState.isSubmitting}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              form.handleSubmit(onSubmit)(e);
+                            }
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -389,10 +398,16 @@ export function DocumentSigning() {
             {/* Signature Card */}
             <Card>
               <CardHeader className="flex flex-col sm:flex-row items-start gap-4 sm:gap-0 sm:items-center justify-between">
-                <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
-                  <Pencil className="h-5 w-5" />
-                  Sign Document
-                </CardTitle>
+                <div className="flex flex-col gap-1 max-w-sm">
+                  <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+                    <Pencil className="h-5 w-5" />
+                    Sign Document
+                  </CardTitle>
+                  <CardDescription>
+                    This is optional and will be applied to the unsigned
+                    document that gets hashed for verification.
+                  </CardDescription>
+                </div>
                 <div className="flex items-center gap-2">
                   <Select
                     value={signatureType}
@@ -466,10 +481,7 @@ export function DocumentSigning() {
                   type="submit"
                   className="ml-auto"
                   isLoading={form.formState.isSubmitting}
-                  disabled={
-                    !file ||
-                    (signatureType === "draw" ? !hasDrawn : !typedSignature)
-                  }
+                  disabled={!file}
                 >
                   <Save className="h-4 w-4" />
                   Save Document

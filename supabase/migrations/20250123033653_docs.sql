@@ -13,9 +13,10 @@ CREATE TABLE documents (
     signed_document BYTEA,
     is_signed BOOLEAN NOT NULL DEFAULT FALSE,
     signed_at TIMESTAMPTZ,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+-- created_at must be passed in since it is appended to the document when hashing
 
 ALTER TABLE documents OWNER TO postgres;
 
@@ -28,7 +29,16 @@ ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
 -- Simplified policies without user authentication
 CREATE POLICY "Allow read access" ON documents FOR SELECT USING (true);
 CREATE POLICY "Allow insert" ON documents FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow update of unsigned documents" ON documents FOR UPDATE USING (signed_hash IS NULL);
+CREATE POLICY "Allow update of unsigned documents" ON documents
+FOR UPDATE USING (
+    signed_hash IS NULL
+    OR
+    (
+        signed_hash IS NULL
+        AND NEW.signed_hash IS NOT NULL
+        AND NEW.is_signed = true
+    )
+);
 CREATE POLICY "Allow delete of unsigned documents" ON documents FOR DELETE USING (signed_hash IS NULL);
 
 -- Create function to update updated_at timestamp

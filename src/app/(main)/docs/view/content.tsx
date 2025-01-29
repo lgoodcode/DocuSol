@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
-import { getAllStoredDocuments, hexToBuffer } from "@/lib/utils";
+import { getAllStoredDocuments } from "@/lib/utils";
 
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -76,12 +76,11 @@ const getDocuments = async (): Promise<ViewDocument[]> => {
     password: doc.password,
     status: doc.is_signed ? "signed" : "pending",
     mimeType: doc.mime_type,
+    is_signed: doc.is_signed,
     unsignedTxSignature: doc.unsigned_transaction_signature,
     signedTxSignature: doc.signed_transaction_signature,
-    unsignedDocument: hexToBuffer(doc.unsigned_document),
-    signedDocument: doc.signed_document
-      ? hexToBuffer(doc.signed_document)
-      : null,
+    unsignedDocumentHex: doc.unsigned_document,
+    signedDocumentHex: doc.signed_document,
     createdAt: doc.created_at,
     updatedAt: doc.updated_at,
   }));

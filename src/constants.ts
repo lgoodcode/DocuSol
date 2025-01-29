@@ -10,8 +10,8 @@ export const IS_MOBILE = () => {
 
 export const GITHUB_URL = "https://github.com/DocuSol";
 
-export const CONTRACT_ADDRESS = "";
-export const X_URL = "";
+export const CONTRACT_ADDRESS = "asda";
+export const X_URL = "https://x.com/docusol_";
 export const PUMPFUN_URL = "";
 export const DEXSCREENER_URL = "";
 

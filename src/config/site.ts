@@ -2,10 +2,11 @@ import type { Metadata, Viewport } from "next";
 
 export const siteName = "DocuSol";
 
-export const heroDescription = "Share documents securely on the blockchain.";
+export const heroDescription =
+  "A secure document signing and sharing app built on Solana and powered by AI.";
 
 const seoDescription =
-  "The ultimate platform for sharing documents securely on the blockchain.";
+  "A secure document signing and sharing app built on Solana and powered by AI.";
 const keywords = [
   "DocuSol",
   "Blockchain",

@@ -3,25 +3,37 @@ import { NextResponse } from "next/server";
 import { captureException } from "@sentry/nextjs";
 
 import { createServerClient } from "@/lib/supabase/server";
-import { sendMemoTransaction, getTransactionUrl } from "@/lib/utils/solana";
+import { sendMemoTransaction } from "@/lib/utils/solana";
+import { bufferToHex } from "@/lib/utils";
 
 export async function POST(request: Request) {
   try {
-    const form = await request.formData();
-    const unsignedDocument = form.get("unsigned_document") as File | null;
-    const unsignedHash = form.get("hash") as string | null;
-    const password = form.get("password") as string | null;
-
-    if (!unsignedDocument || !unsignedHash) {
-      throw new Error("Missing required fields: file and/or hash");
+    // Check content type
+    const contentType = request.headers.get("content-type") || "";
+    if (!contentType.includes("multipart/form-data")) {
+      throw new Error("Invalid content type. Expected multipart/form-data");
     }
+
+    const form = await request.formData();
+    const id = form.get("id") as string | null;
+    const signedDocument = form.get("signed_document") as File | null;
+    // const password = form.get("password") as string | null;
+
+    if (!id) {
+      throw new Error("No id provided");
+    } else if (!signedDocument) {
+      throw new Error("No signed document provided");
+    }
+    // else if (!password) {
+    //   throw new Error("No password provided");
+    // }
 
     // Check if document exists
     const supabase = await createServerClient();
     const { error: fetchError, data: document } = await supabase
       .from("documents")
       .select("*")
-      .eq("unsigned_hash", unsignedHash)
+      .eq("id", id)
       .single();
 
     if (fetchError || !document) {
@@ -34,19 +46,22 @@ export async function POST(request: Request) {
         },
         { status: 409 }
       );
-    } else if (document.password) {
-      if (!password) {
-        throw new Error("Password required for this document");
-      } else if (password !== document.password) {
-        throw new Error("Invalid password");
-      }
     }
+    // else if (document.password) {
+    //   if (!password) {
+    //     throw new Error("Password required for this document");
+    //   } else if (password !== document.password) {
+    //     throw new Error("Invalid password");
+    //   }
+    // }
 
     // Process signed document
-    const fileBuffer = Buffer.from(await unsignedDocument.arrayBuffer());
+    const signedDocumentBuffer = Buffer.from(
+      await signedDocument.arrayBuffer()
+    );
     const signedHash = crypto
       .createHash("sha256")
-      .update(fileBuffer)
+      .update(signedDocumentBuffer)
       .digest("hex");
 
     // Send memo transaction for signed document
@@ -59,23 +74,19 @@ export async function POST(request: Request) {
       .update({
         is_signed: true,
         signed_hash: signedHash,
-        transaction_signature: transactionSignature,
-        signed_file: fileBuffer,
+        signed_transaction_signature: transactionSignature,
+        signed_document: bufferToHex(signedDocumentBuffer),
         signed_at: new Date().toISOString(),
       })
-      .eq("unsigned_hash", unsignedHash);
+      .eq("id", id);
 
     if (updateError) {
-      throw updateError;
+      throw new Error(`Failed to update document: ${updateError.message}`);
     }
 
     return NextResponse.json({
-      success: true,
-      message: "Document signed successfully",
-      unsignedHash,
+      txSignature: transactionSignature,
       signedHash,
-      transactionUrl: getTransactionUrl(transactionSignature),
-      signedAt: Math.floor(Date.now() / 1000),
     });
   } catch (error) {
     console.error("Error processing sign request:", error);

@@ -37,7 +37,7 @@ const openDB = (): Promise<IDBDatabase> => {
   });
 };
 
-export const storeDocument = async (
+export const storeNewDocument = async (
   document: StoredDocument
 ): Promise<void> => {
   const db = await openDB();

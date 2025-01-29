@@ -2,19 +2,14 @@
 
 import { useState, useEffect, useRef } from "react";
 
-export function useFileUpload() {
+interface UseFileUploadProps {
+  preview?: boolean;
+}
+
+export function useFileUpload({ preview = false }: UseFileUploadProps = {}) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Clean up the preview URL when file changes or component unmounts
-    return () => {
-      if (preview) {
-        URL.revokeObjectURL(preview);
-      }
-    };
-  }, [preview]);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
@@ -22,30 +17,45 @@ export function useFileUpload() {
     const selectedFile = e.target.files?.[0] || null;
 
     // Clean up previous preview
-    if (preview) {
-      URL.revokeObjectURL(preview);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
     }
 
     setFile(selectedFile);
 
-    if (selectedFile) {
+    if (selectedFile && preview) {
       const objectUrl = URL.createObjectURL(selectedFile);
-      setPreview(objectUrl);
+      setPreviewUrl(objectUrl);
     } else {
-      setPreview(null);
+      setPreviewUrl(null);
     }
   };
 
   const clearFile = () => {
-    if (preview) {
-      URL.revokeObjectURL(preview);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
     }
     if (fileInputRef.current) {
       fileInputRef.current.value = ""; // Reset the input value
     }
     setFile(null);
-    setPreview(null);
+    setPreviewUrl(null);
   };
 
-  return { file, preview, handleFileChange, clearFile, fileInputRef };
+  useEffect(() => {
+    // Clean up the preview URL when file changes or component unmounts
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
+  return {
+    file,
+    previewUrl,
+    handleFileChange,
+    clearFile,
+    fileInputRef,
+  };
 }
