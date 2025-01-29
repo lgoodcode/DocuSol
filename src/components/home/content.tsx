@@ -193,7 +193,7 @@ export function HomeContent() {
 
                     <p className="text-xl md:text-3xl text-muted-foreground font-light">
                       A secure document signing and sharing app built on Solana
-                      and powered by AI.
+                      and powered by DeepSeek-R1.
                     </p>
 
                     <p className="text-base md:text-lg text-muted-foreground">
