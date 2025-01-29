@@ -15,8 +15,8 @@ import {
   FileText,
 } from "lucide-react";
 
-import { storeDocument } from "@/lib/utils";
-import { uploadFile, sign, ACCEPTED_FILE_TYPES } from "@/lib/utils/sign";
+import { storeNewDocument } from "@/lib/utils";
+import { uploadNewDocument, sign, ACCEPTED_FILE_TYPES } from "@/lib/utils/sign";
 import { formatFileSize } from "@/lib/utils/format-file-size";
 import { useDrawing } from "@/hooks/use-drawing";
 import { useFileUpload } from "@/hooks/use-file-upload";
@@ -65,18 +65,17 @@ const documentSchema = z
     path: ["confirmPassword"],
   });
 
-// const TEST_RESULTS = {
-//   id: "6371048f-7aba-4d41-bfb8-73435458b881",
-//   txSignature:
-//     "TiwrWVwVYkFWQF16ZsM622NAUJAcTJGw66iYcxvpRTnQDoZakUtsQbEnZewt6jJUKm8XsNmpZ2HpV56288dEUwH",
-//   unsignedHash:
-//     "df1af2ed785db434e9f1e7f16e8342e9621b0f8a9aa14e40ceee9953c6eb9b7a",
-// }
+const TEST_RESULTS = {
+  id: "6371048f-7aba-4d41-bfb8-73435458b881",
+  txSignature:
+    "TiwrWVwVYkFWQF16ZsM622NAUJAcTJGw66iYcxvpRTnQDoZakUtsQbEnZewt6jJUKm8XsNmpZ2HpV56288dEUwH",
+  unsignedHash:
+    "df1af2ed785db434e9f1e7f16e8342e9621b0f8a9aa14e40ceee9953c6eb9b7a",
+};
 
 export function NewDocumentContent() {
   const { toast } = useToast();
-  const { file, preview, handleFileChange, clearFile, fileInputRef } =
-    useFileUpload();
+  const { file, handleFileChange, clearFile, fileInputRef } = useFileUpload();
   const {
     canvasRef,
     startDrawing,
@@ -89,7 +88,9 @@ export function NewDocumentContent() {
   const [signatureType, setSignatureType] = useState("draw"); // "draw" or "type"
   const [typedSignature, setTypedSignature] = useState("");
   const [showDialog, setShowDialog] = useState(true);
-  const [results, setResults] = useState<NewDocumentResult | null>(null);
+  const [results, setResults] = useState<NewDocumentResult | null>(
+    TEST_RESULTS
+  );
   const form = useForm<z.infer<typeof documentSchema>>({
     resolver: zodResolver(documentSchema),
     mode: "onSubmit",
@@ -112,7 +113,6 @@ export function NewDocumentContent() {
       (signatureType === "draw" && hasDrawn) ||
       (signatureType === "type" && typedSignature);
 
-    try {
       let signedDoc: Blob | null = null;
       if (isSigned) {
         try {
@@ -132,15 +132,19 @@ export function NewDocumentContent() {
             });
             return;
           }
-          throw error;
+
+          captureException(error);
+          toast({
+            title: "Error",
+            description: "An error occurred while signing the document",
+            variant: "destructive",
+          });
+          return;
         }
       }
 
-      if (isSigned && !signedDoc) {
-        throw new Error("Failed to sign document");
-      }
-
-      const { error, id, txSignature, unsignedHash } = await uploadFile({
+    try {
+      const { error, id, txSignature, unsignedHash } = await uploadNewDocument({
         name,
         password: password || "",
         original_filename: file.name,
@@ -155,7 +159,7 @@ export function NewDocumentContent() {
         throw new Error("Failed to upload document");
       }
 
-      storeDocument({ id, txSignature, unsignedHash }).catch((error) => {
+      storeNewDocument({ id, txSignature, unsignedHash }).catch((error) => {
         console.error("Error storing document:", error);
         captureException(error, {
           extra: {
@@ -177,7 +181,7 @@ export function NewDocumentContent() {
       captureException(error);
       toast({
         title: "Error",
-        description: "An error occurred while signing the document",
+        description: "An error occurred while uploading the document",
         variant: "destructive",
       });
     }
@@ -273,7 +277,7 @@ export function NewDocumentContent() {
                   )}
                 </div>
 
-                {preview && <FilePreview file={file} preview={preview} />}
+                {file && <FilePreview file={file} />}
               </CardContent>
             </Card>
           </motion.div>

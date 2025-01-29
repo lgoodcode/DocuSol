@@ -26,11 +26,7 @@ export function NewDocumentDialog({
   showDialog: boolean;
   setShowDialog: (showDialog: boolean) => void;
   handleCloseDialog: () => void;
-  results: {
-    id: string;
-    txSignature: string;
-    unsignedHash: string;
-  } | null;
+  results: NewDocumentResult | null;
 }) {
   const [url, setUrl] = useState<string>("");
 
@@ -39,6 +35,10 @@ export function NewDocumentDialog({
       setUrl(window.location.origin);
     }
   }, []);
+
+  if (!results) {
+    return null;
+  }
 
   return (
     <Dialog open={showDialog} onOpenChange={setShowDialog}>
@@ -49,9 +49,10 @@ export function NewDocumentDialog({
         tabIndex={-1}
       >
         <DialogHeader>
-          <DialogTitle>Document Signed</DialogTitle>
+          <DialogTitle>Document Uploaded</DialogTitle>
           <DialogDescription>
-            Your document has been saved, and the hash stored in the blockchain.
+            Your document has been uploaded, and the hash stored in the
+            blockchain.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-6">
@@ -61,10 +62,15 @@ export function NewDocumentDialog({
             <Alert variant="warning">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Warning</AlertTitle>
-              <AlertDescription className="text-sm">
-                The hash is stored in the blockchain and can be used to verify
-                the document&apos;s integrity. For privacy, you can delete this
-                and create a new document with a password.
+              <AlertDescription className="text-sm space-y-2">
+                <p>
+                  The hash is stored in the blockchain and is used to verify the
+                  document&apos;s integrity. For privacy, you can delete this
+                  and create a new document with a password.
+                </p>
+                <p className="font-bold">
+                  Please exercise caution when sharing the link below.
+                </p>
               </AlertDescription>
             </Alert>
 
@@ -74,7 +80,7 @@ export function NewDocumentDialog({
                 View transaction:
               </span>
               <a
-                href={getTransactionUrl(results?.txSignature || "")}
+                href={getTransactionUrl(results.txSignature )}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-sm hover:text-primary underline underline-offset-4"
@@ -89,9 +95,9 @@ export function NewDocumentDialog({
               <Label className="text-sm text-muted-foreground">File Hash</Label>
               <div className="flex items-center gap-2 p-2 rounded-md bg-muted-foreground/10 dark:bg-muted/50">
                 <code className="text-xs sm:text-sm font-mono break-all flex-1">
-                  {results?.unsignedHash}
+                  {results.unsignedHash}
                 </code>
-                <CopyButton value={results?.unsignedHash || ""} />
+                <CopyButton value={results.unsignedHash} />
               </div>
             </div>
 
@@ -102,9 +108,9 @@ export function NewDocumentDialog({
               </Label>
               <div className="flex items-center gap-2 p-2 rounded-md bg-muted-foreground/10 dark:bg-muted/50">
                 <code className="text-xs sm:text-sm font-mono break-all flex-1">
-                  {`${url}/docs/sign/${results?.id}`}
+                  {`${url}/docs/sign/${results.id}`}
                 </code>
-                <CopyButton value={`${url}/docs/sign/${results?.id}`} />
+                <CopyButton value={`${url}/docs/sign/${results.id}`} />
               </div>
               <p className="text-xs text-muted-foreground">
                 Share this link with the recipient to view and sign the document

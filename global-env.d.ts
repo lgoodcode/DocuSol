@@ -22,13 +22,37 @@ export declare global {
     unsigned_document: Blob;
   }
 
+  interface NewDocumentResponse {
+    error?: string;
+    id?: string;
+    txSignature?: string;
+    unsignedHash?: string;
+  }
+
   interface NewDocumentResult {
     id: string;
     txSignature: string;
     unsignedHash: string;
   }
 
-  interface SignDocumentResult {
+  interface DocumentToSign {
+    id: string;
+    mime_type: string;
+    unsigned_document: string;
+  }
+
+  interface SignedDocument {
+    id: string;
+    signed_document: Blob;
+  }
+
+  interface SignedDocumentResponse {
+    error?: string;
+    txSignature?: string;
+    signedHash?: string;
+  }
+
+  interface SignedDocumentResult {
     id: string;
     txSignature: string;
     signedHash: string;
@@ -43,8 +67,8 @@ export declare global {
     unsignedTxSignature: string;
     signedTxSignature: string | null;
     is_signed: boolean;
-    unsignedDocument: Uint8Array;
-    signedDocument: Uint8Array | null;
+    unsignedDocumentHex: string;
+    signedDocumentHex: string | null;
     createdAt: string;
     updatedAt: string;
   }
@@ -60,16 +84,10 @@ export declare global {
     unsigned_hash: string;
   }
 
-  interface NewDocumentResponse {
-    error?: string;
-    id?: string;
-    txSignature?: string;
-    unsignedHash?: string;
-  }
-
   interface StoredDocument {
     id: string;
     txSignature?: string;
     unsignedHash?: string;
+    signedHash?: string;
   }
 }

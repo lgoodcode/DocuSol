@@ -1,33 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { z } from "zod";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { captureException } from "@sentry/nextjs";
-import {
-  UploadIcon as FileUpload,
-  Pencil,
-  Save,
-  Trash2,
-  Lock,
-  FileText,
-} from "lucide-react";
+import { Pencil, Trash2, FileText } from "lucide-react";
 
-import type { Document } from "@/lib/supabase/types";
-import { storeDocument } from "@/lib/utils";
-import { uploadFile, sign, ACCEPTED_FILE_TYPES } from "@/lib/utils/sign";
-import { formatFileSize } from "@/lib/utils/format-file-size";
+import { hexToBuffer, storeNewDocument } from "@/lib/utils";
+import { uploadSignedDocument, sign } from "@/lib/utils/sign";
 import { useDrawing } from "@/hooks/use-drawing";
-import { useFileUpload } from "@/hooks/use-file-upload";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { FilePreview } from "@/components/file-preview";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -41,49 +27,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 
 import { SignDocumentDialog } from "./sign-doc-dialog";
 
-const documentSchema = z
-  .object({
-    name: z.string({
-      required_error: "Document name is required",
-    }),
-    password: z.string().optional(),
-    confirmPassword: z.string().optional(),
-  })
-  .refine((data) => !data.password || data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
-  });
-
-const testResults = {
-  id: "6371048f-7aba-4d41-bfb8-73435458b881",
-  txSignature:
-    "TiwrWVwVYkFWQF16ZsM622NAUJAcTJGw66iYcxvpRTnQDoZakUtsQbEnZewt6jJUKm8XsNmpZ2HpV56288dEUwH",
-  signedHash:
-    "df1af2ed785db434e9f1e7f16e8342e9621b0f8a9aa14e40ceee9953c6eb9b7a",
-};
+// const TEST_RESULTS = {
+//   id: "6371048f-7aba-4d41-bfb8-73435458b881",
+//   txSignature:
+//     "TiwrWVwVYkFWQF16ZsM622NAUJAcTJGw66iYcxvpRTnQDoZakUtsQbEnZewt6jJUKm8XsNmpZ2HpV56288dEUwH",
+//   signedHash:
+//     "df1af2ed785db434e9f1e7f16e8342e9621b0f8a9aa14e40ceee9953c6eb9b7a",
+// };
 
 export function SignDocumentContent({
   id,
   document,
 }: {
   id: string;
-  document: Document;
+  document: DocumentToSign;
 }) {
   const { toast } = useToast();
-  const { file, preview, handleFileChange, clearFile, fileInputRef } =
-    useFileUpload();
   const {
     canvasRef,
     startDrawing,
@@ -93,76 +55,74 @@ export function SignDocumentContent({
     stopDrawing,
     clearCanvas,
   } = useDrawing();
+  const [unsignedDoc, setUnsignedDoc] = useState<Blob | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [signatureType, setSignatureType] = useState("draw"); // "draw" or "type"
   const [typedSignature, setTypedSignature] = useState("");
   const [showDialog, setShowDialog] = useState(false);
-  const [results, setResults] = useState<SignDocumentResult | null>(null);
-  const form = useForm<z.infer<typeof documentSchema>>({
-    resolver: zodResolver(documentSchema),
-    mode: "onSubmit",
-  });
+  const [results, setResults] = useState<SignedDocumentResult | null>(
+    null
+  );
 
   const handleCloseDialog = () => {
     setShowDialog(false);
     setResults(null);
   };
 
-  const onSubmit = async ({
-    name,
-    password,
-  }: z.infer<typeof documentSchema>) => {
-    if (!file) {
+  const handleSign = async () => {
+    if (
+      !unsignedDoc ||
+      (signatureType === "draw" && hasDrawn) ||
+      (signatureType === "type" && typedSignature)
+    ) {
       return;
     }
 
-    const isSigned =
-      (signatureType === "draw" && hasDrawn) ||
-      (signatureType === "type" && typedSignature);
+    setIsSubmitting(true);
 
+    let signedDoc: Blob | null = null;
     try {
-      let signedDoc: Blob | null = null;
-      if (isSigned) {
-        try {
-          signedDoc = await sign(
-            file,
-            signatureType === "draw" ? getSignatureAsBlack() : null,
-            signatureType === "type" ? typedSignature : undefined
-          );
-        } catch (err) {
-          const error = err as Error;
-          console.error(error);
-          if (error.message.includes("encrypted")) {
-            toast({
-              title: "Error",
-              description: "The document is encrypted and cannot be modified",
-              variant: "destructive",
-            });
-            return;
-          }
-          throw error;
-        }
-      }
+      signedDoc = await sign(
+        unsignedDoc,
+        signatureType === "draw" ? getSignatureAsBlack() : null,
+        signatureType === "type" ? typedSignature : undefined
+      );
 
-      if (isSigned && !signedDoc) {
+      if (!signedDoc) {
         throw new Error("Failed to sign document");
       }
+    } catch (err) {
+      const error = err as Error;
+      let errMsg: string;
+      console.error(error);
+      if (error.message.includes("encrypted")) {
+        errMsg = "The document is encrypted and cannot be modified";
+      } else {
+        errMsg = "An error occurred while signing the document";
+        captureException(error);
+      }
+      toast({
+        title: "Error",
+        description: errMsg,
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+      return;
+    }
 
-      const { error, id, txSignature, signedHash } = await uploadFile({
-        name,
-        password: password || "",
-        original_filename: file.name,
-        mime_type: file.type,
-        original_document: file,
-        unsigned_document: signedDoc || file,
+    try {
+      const { error, txSignature, signedHash } = await uploadSignedDocument({
+        id: document.id,
+        signed_document: signedDoc,
       });
 
       if (error) {
         throw new Error(error);
-      } else if (!id || !txSignature || !signedHash) {
+      } else if (!txSignature || !signedHash) {
         throw new Error("Failed to upload document");
       }
 
-      storeDocument({ id, txSignature, unsignedHash }).catch((error) => {
+      storeNewDocument({ id, txSignature, signedHash }).catch((error) => {
         console.error("Error storing document:", error);
         captureException(error, {
           extra: {
@@ -175,8 +135,6 @@ export function SignDocumentContent({
 
       setResults({ id, txSignature, signedHash });
 
-      form.reset({ name: "", password: "", confirmPassword: "" });
-      clearFile();
       clearCanvas();
       setTypedSignature("");
     } catch (error) {
@@ -190,6 +148,15 @@ export function SignDocumentContent({
     }
   };
 
+  // Convert the unsigned document to a blob to preview it
+  useEffect(() => {
+    if (window && document) {
+      const buffer = hexToBuffer(document.unsigned_document);
+      const blob = new Blob([buffer], { type: document.mime_type });
+      setUnsignedDoc(blob);
+    }
+  }, [document]);
+
   return (
     <>
       <motion.div
@@ -201,9 +168,9 @@ export function SignDocumentContent({
         }}
       >
         <div className="flex flex-col gap-2">
-          <h1 className="text-2xl md:text-3xl font-bold">New Document</h1>
+          <h1 className="text-2xl md:text-3xl font-bold">Sign Document</h1>
           <p className="text-sm md:text-base text-muted-foreground">
-            Sign your document with your signature.
+            Sign a document with your signature.
           </p>
         </div>
       </motion.div>
@@ -215,177 +182,120 @@ export function SignDocumentContent({
         results={results}
       />
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            {/* File Upload Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
-                  <FileUpload className="h-5 w-5" />
-                  Upload Document
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid w-full gap-2">
-                  <div className="flex flex-row gap-2">
-                    <Button
-                      variant="outline"
-                      className="w-full md:w-auto"
-                      disabled={form.formState.isSubmitting}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        fileInputRef.current?.click();
-                      }}
-                    >
-                      <FileText className="h-4 w-4" />
-                      Select File
-                    </Button>
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleFileChange}
-                      accept={ACCEPTED_FILE_TYPES.join(",")}
-                      disabled={form.formState.isSubmitting}
-                      className="hidden"
-                    />
-                    {file && (
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        onClick={clearFile}
-                        disabled={form.formState.isSubmitting}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        <span className="sr-only">Remove file</span>
-                      </Button>
-                    )}
-                  </div>
-                  {file && (
-                    <div className="space-y-1">
-                      <div className="space-y-1">
-                        <p className="text-xs sm:text-sm text-muted-foreground">
-                          Selected: {file.name}
-                        </p>
-                        <p className="text-xs sm:text-sm text-muted-foreground">
-                          Size: {formatFileSize(file.size)}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        {/* File Preview Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Preview Document
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {unsignedDoc && <FilePreview file={unsignedDoc} />}
+          </CardContent>
+        </Card>
+      </motion.div>
 
-                {preview && <FilePreview file={file} preview={preview} />}
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-          >
-            {/* Signature Card */}
-            <Card>
-              <CardHeader className="flex flex-col sm:flex-row items-start gap-4 sm:gap-0 sm:items-center justify-between">
-                <div className="flex flex-col gap-1 max-w-sm">
-                  <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
-                    <Pencil className="h-5 w-5" />
-                    Sign Document
-                  </CardTitle>
-                  <CardDescription>
-                    This is optional and will be applied to the unsigned
-                    document that gets hashed for verification.
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Select
-                    value={signatureType}
-                    onValueChange={setSignatureType}
-                    disabled={form.formState.isSubmitting}
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue placeholder="Signature type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="draw">Draw</SelectItem>
-                      <SelectItem value="type">Type</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {signatureType === "draw" && hasDrawn && (
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      disabled={!hasDrawn || form.formState.isSubmitting}
-                      onClick={clearCanvas}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      <span className="sr-only">Clear signature</span>
-                    </Button>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent>
-                {signatureType === "draw" ? (
-                  <div className="relative aspect-[3/2] sm:aspect-[3/1] w-full border rounded-lg overflow-hidden bg-background dark:bg-background/60">
-                    <canvas
-                      ref={canvasRef}
-                      width={900}
-                      height={300}
-                      onMouseDown={startDrawing}
-                      onMouseMove={draw}
-                      onMouseUp={stopDrawing}
-                      onMouseLeave={stopDrawing}
-                      onTouchStart={startDrawing}
-                      onTouchMove={draw}
-                      onTouchEnd={stopDrawing}
-                      className="touch-none w-full h-full"
-                      aria-label="Signature canvas"
-                    />
-                  </div>
-                ) : (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.2 }}
-                    className="grid w-full gap-1.5"
-                  >
-                    <Label htmlFor="typed-signature" className="mb-1">
-                      Type your signature
-                    </Label>
-                    <Input
-                      id="typed-signature"
-                      autoComplete="off"
-                      value={typedSignature}
-                      onChange={(e) => setTypedSignature(e.target.value)}
-                      placeholder="Type your signature here"
-                      disabled={form.formState.isSubmitting}
-                    />
-                  </motion.div>
-                )}
-              </CardContent>
-              <CardFooter>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.2 }}
+      >
+        {/* Signature Card */}
+        <Card>
+          <CardHeader className="flex flex-col sm:flex-row items-start gap-4 sm:gap-0 sm:items-center justify-between">
+            <div className="flex flex-col gap-1 max-w-sm">
+              <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+                <Pencil className="h-5 w-5" />
+                Sign Document
+              </CardTitle>
+            </div>
+            <div className="flex items-center gap-2">
+              <Select
+                value={signatureType}
+                onValueChange={setSignatureType}
+                disabled={isSubmitting}
+              >
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="Signature type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="draw">Draw</SelectItem>
+                  <SelectItem value="type">Type</SelectItem>
+                </SelectContent>
+              </Select>
+              {signatureType === "draw" && hasDrawn && (
                 <Button
-                  type="submit"
-                  className="ml-auto"
-                  isLoading={form.formState.isSubmitting}
-                  disabled={!file}
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  disabled={!hasDrawn || isSubmitting}
+                  onClick={clearCanvas}
                 >
-                  <Save className="h-4 w-4" />
-                  Save Document
+                  <Trash2 className="h-4 w-4" />
+                  <span className="sr-only">Clear signature</span>
                 </Button>
-              </CardFooter>
-            </Card>
-          </motion.div>
-        </form>
-      </Form>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            {signatureType === "draw" ? (
+              <div className="relative aspect-[3/2] sm:aspect-[3/1] w-full border rounded-lg overflow-hidden bg-background dark:bg-background/60">
+                <canvas
+                  ref={canvasRef}
+                  width={900}
+                  height={300}
+                  onMouseDown={startDrawing}
+                  onMouseMove={draw}
+                  onMouseUp={stopDrawing}
+                  onMouseLeave={stopDrawing}
+                  onTouchStart={startDrawing}
+                  onTouchMove={draw}
+                  onTouchEnd={stopDrawing}
+                  className="touch-none w-full h-full"
+                  aria-label="Signature canvas"
+                />
+              </div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className="grid w-full gap-1.5"
+              >
+                <Label htmlFor="typed-signature" className="mb-1">
+                  Type your signature
+                </Label>
+                <Input
+                  id="typed-signature"
+                  autoComplete="off"
+                  value={typedSignature}
+                  onChange={(e) => setTypedSignature(e.target.value)}
+                  placeholder="Type your signature here"
+                  disabled={isSubmitting}
+                />
+              </motion.div>
+            )}
+          </CardContent>
+          <CardFooter>
+            <Button
+              type="submit"
+              className="ml-auto"
+              isLoading={isSubmitting}
+              disabled={!hasDrawn && !typedSignature}
+              onClick={handleSign}
+            >
+              Sign Document
+            </Button>
+          </CardFooter>
+        </Card>
+      </motion.div>
     </>
   );
 }

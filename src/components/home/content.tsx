@@ -363,12 +363,14 @@ export function HomeContent() {
                         Build your documents with AI and sign them on the
                         blockchain
                       </p>
+                      <Link href="/docs/new">
                       <Button
                         size="lg"
                         className="w-fit mx-auto bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 text-lg font-semibold shadow-lg hover:shadow-xl"
                       >
                         Try it out now
                       </Button>
+                      </Link>
                     </div>
                   </div>
                 </div>
