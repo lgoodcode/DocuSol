@@ -22,6 +22,18 @@ export declare global {
     unsigned_document: Blob;
   }
 
+  interface NewDocumentResult {
+    id: string;
+    txSignature: string;
+    unsignedHash: string;
+  }
+
+  interface SignDocumentResult {
+    id: string;
+    txSignature: string;
+    signedHash: string;
+  }
+
   interface ViewDocument {
     id: string;
     name: string;

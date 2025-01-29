@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 import { storeDocument } from "@/lib/utils";
-import { uploadFile, sign } from "@/lib/utils/sign";
+import { uploadFile, sign, ACCEPTED_FILE_TYPES } from "@/lib/utils/sign";
 import { formatFileSize } from "@/lib/utils/format-file-size";
 import { useDrawing } from "@/hooks/use-drawing";
 import { useFileUpload } from "@/hooks/use-file-upload";
@@ -52,8 +52,6 @@ import {
 
 import { NewDocumentDialog } from "./new-doc-dialog";
 
-const ACCEPTED_FILE_TYPES = [".pdf", ".jpeg", ".png", ".jpg"];
-
 const documentSchema = z
   .object({
     name: z.string({
@@ -66,6 +64,14 @@ const documentSchema = z
     message: "Passwords don't match",
     path: ["confirmPassword"],
   });
+
+// const TEST_RESULTS = {
+//   id: "6371048f-7aba-4d41-bfb8-73435458b881",
+//   txSignature:
+//     "TiwrWVwVYkFWQF16ZsM622NAUJAcTJGw66iYcxvpRTnQDoZakUtsQbEnZewt6jJUKm8XsNmpZ2HpV56288dEUwH",
+//   unsignedHash:
+//     "df1af2ed785db434e9f1e7f16e8342e9621b0f8a9aa14e40ceee9953c6eb9b7a",
+// }
 
 export function NewDocumentContent() {
   const { toast } = useToast();
@@ -83,17 +89,7 @@ export function NewDocumentContent() {
   const [signatureType, setSignatureType] = useState("draw"); // "draw" or "type"
   const [typedSignature, setTypedSignature] = useState("");
   const [showDialog, setShowDialog] = useState(true);
-  const [results, setResults] = useState<{
-    id: string;
-    txSignature: string;
-    unsignedHash: string;
-  } | null>({
-    id: "6371048f-7aba-4d41-bfb8-73435458b881",
-    txSignature:
-      "TiwrWVwVYkFWQF16ZsM622NAUJAcTJGw66iYcxvpRTnQDoZakUtsQbEnZewt6jJUKm8XsNmpZ2HpV56288dEUwH",
-    unsignedHash:
-      "df1af2ed785db434e9f1e7f16e8342e9621b0f8a9aa14e40ceee9953c6eb9b7a",
-  });
+  const [results, setResults] = useState<NewDocumentResult | null>(null);
   const form = useForm<z.infer<typeof documentSchema>>({
     resolver: zodResolver(documentSchema),
     mode: "onSubmit",
