@@ -29,9 +29,8 @@ ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
 -- Simplified policies without user authentication
 CREATE POLICY "Allow read access" ON documents FOR SELECT USING (true);
 CREATE POLICY "Allow insert" ON documents FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow update of unsigned documents" ON documents FOR UPDATE USING (signed_hash IS NULL);
-CREATE POLICY "Allow update of unsigned documents" ON documents FOR UPDATE TO authenticated USING (signed_hash IS NULL);
-CREATE POLICY "Allow delete of unsigned documents" ON documents FOR DELETE USING (signed_hash IS NULL);
+CREATE POLICY "Allow update of unsigned documents" ON documents FOR UPDATE USING (true);
+CREATE POLICY "Allow delete of unsigned documents" ON documents FOR DELETE USING (true);
 
 -- Create function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
