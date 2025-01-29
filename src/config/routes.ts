@@ -34,7 +34,7 @@ export const navRoutes: Route[] = [
   },
   {
     name: "Documents",
-    path: "/docs/view",
+    path: "/docs/list",
     Icon: Folder,
     description: "View your documents.",
   },

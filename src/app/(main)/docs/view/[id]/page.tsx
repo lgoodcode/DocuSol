@@ -1,27 +1,28 @@
 import type { Metadata } from "next";
 import { captureException } from "@sentry/nextjs";
 
+import type { Document } from "@/lib/supabase/types";
 import { createServerClient } from "@/lib/supabase/server";
 import { DocumentNotFound } from "@/components/doc-not-found";
 
-import { SignDocumentContent } from "./sign-doc-content";
+import { ViewDocumentContent } from "./content";
 
 export const metadata: Metadata = {
-  title: "Sign Document",
+  title: "View Document",
 };
 
-const getDocument = async (id: string) => {
+const getDocument = async (hash: string): Promise<Document | null> => {
   const supabase = await createServerClient();
-  const { data, error } = await supabase
+  const { error, data } = await supabase
     .from("documents")
-    .select("id,mime_type,unsigned_document")
-    .eq("id", id)
+    .select("*")
+    .or(`unsigned_hash.eq.${hash},signed_hash.eq.${hash}`)
     .single();
 
   if (error && error.code !== "PGRST116") {
     console.error(error);
     captureException(error, {
-      extra: { id },
+      extra: { hash },
     });
   }
 
@@ -31,7 +32,7 @@ const getDocument = async (id: string) => {
   return data;
 };
 
-export default async function SignDocumentPage({
+export default async function ViewDocPage({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -41,7 +42,7 @@ export default async function SignDocumentPage({
   return (
     <div className="container max-w-4xl mx-auto py-8 space-y-8">
       {document ? (
-        <SignDocumentContent id={id} document={document} />
+        <ViewDocumentContent document={document} />
       ) : (
         <DocumentNotFound />
       )}
