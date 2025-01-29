@@ -192,15 +192,13 @@ export function HomeContent() {
                     </div>
 
                     <p className="text-xl md:text-3xl text-muted-foreground font-light">
-                      A secure document signing and sharing app powered with AI
-                      to enhance your personal and business needs with the
-                      blockchain
+                      A secure document signing and sharing app built on Solana
+                      and powered by AI.
                     </p>
 
                     <p className="text-base md:text-lg text-muted-foreground">
-                      Generate, sign, and share documents securely on the
-                      blockchain. Let AI assist you in creating, reviewing, and
-                      managing your documents efficiently.
+                      Generate, sign, and share documents securely on-chain for
+                      free.
                     </p>
 
                     <PoweredByLogos />
@@ -364,12 +362,12 @@ export function HomeContent() {
                         blockchain
                       </p>
                       <Link href="/docs/new">
-                      <Button
-                        size="lg"
-                        className="w-fit mx-auto bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 text-lg font-semibold shadow-lg hover:shadow-xl"
-                      >
-                        Try it out now
-                      </Button>
+                        <Button
+                          size="lg"
+                          className="w-fit mx-auto bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 text-lg font-semibold shadow-lg hover:shadow-xl"
+                        >
+                          Try it out now
+                        </Button>
                       </Link>
                     </div>
                   </div>
