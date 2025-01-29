@@ -83,7 +83,7 @@ export function SignDocumentContent({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [signatureType, setSignatureType] = useState("draw"); // "draw" or "type"
   const [typedSignature, setTypedSignature] = useState("");
-  const [showDialog, setShowDialog] = useState(false);
+  const [showDialog, setShowDialog] = useState(true);
   // const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [results, setResults] = useState<SignedDocumentResult | null>(null);
   // const passwordForm = useForm<z.infer<typeof passwordSchema>>({
