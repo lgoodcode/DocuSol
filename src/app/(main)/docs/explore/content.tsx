@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 
 import type { Document } from "@/lib/supabase/types";
+import { DocumentDetails } from "@/components/doc-details";
 import { isTransactionSignature } from "@/lib/utils/solana";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardTitle, CardHeader } from "@/components/ui/card";
@@ -31,8 +32,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-
-import { DocumentDetails } from "./doc-details";
 
 const searchSchema = z.object({
   hashOrSignature: z
@@ -64,6 +63,12 @@ export function ExploreContent() {
     resolver: zodResolver(passwordSchema),
     mode: "onSubmit",
   });
+
+  const handleCancel = () => {
+    setShowPasswordDialog(false);
+    passwordForm.reset();
+    setPendingHash("");
+  };
 
   const onSearchSubmit = async ({
     hashOrSignature,
@@ -250,15 +255,7 @@ export function ExploreContent() {
                 </div>
               </div>
               <DialogFooter className="flex flex-col gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setShowPasswordDialog(false);
-                    setPendingHash("");
-                    passwordForm.reset();
-                  }}
-                >
+                <Button type="button" variant="outline" onClick={handleCancel}>
                   Cancel
                 </Button>
                 <Button

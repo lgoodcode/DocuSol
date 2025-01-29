@@ -45,7 +45,7 @@ export async function POST(request: Request) {
     const { error, data } = await supabase
       .from("documents")
       .select("*")
-      .eq("unsigned_hash", hash);
+      .or(`unsigned_hash.eq.${hash},signed_hash.eq.${hash}`);
 
     if (error) {
       throw error;
