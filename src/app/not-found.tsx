@@ -1,10 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 
 export default function NotFound() {
+  const router = useRouter();
+
   return (
     <div className="min-h-screen w-full relative overflow-hidden">
       {/* Grid overlay */}
@@ -34,7 +37,7 @@ export default function NotFound() {
           <Link href="/">
             <Button>Take me home</Button>
           </Link>
-          <Button onClick={() => window.history.back()}>Go back</Button>
+          <Button onClick={() => router.back()}>Go back</Button>
         </div>
       </div>
     </div>

@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 // import { zodResolver } from "@hookform/resolvers/zod";
 // import z from "zod";
 // import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
 import { captureException } from "@sentry/nextjs";
 import { Pencil, Trash2, FileText } from "lucide-react";
 
@@ -69,6 +70,7 @@ export function SignDocumentContent({
   id: string;
   document: DocumentToSign;
 }) {
+  const router = useRouter();
   const { toast } = useToast();
   const {
     canvasRef,
@@ -94,10 +96,10 @@ export function SignDocumentContent({
   const handleCloseDialog = () => {
     setShowDialog(false);
     setResults(null);
+    router.push("/dashboard");
   };
 
   const handleSign = async () => {
-    debugger;
     if (
       !unsignedDoc ||
       (signatureType === "draw" && !hasDrawn) ||

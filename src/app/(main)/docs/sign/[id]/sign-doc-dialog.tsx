@@ -84,16 +84,14 @@ export function SignDocumentDialog({
               </div>
             </div>
 
-            {/* Share Link */}
+            {/* View Link */}
             <div className="space-y-1">
-              <Label className="text-sm text-muted-foreground">
-                Share Link
-              </Label>
+              <Label className="text-sm text-muted-foreground">View Link</Label>
               <div className="flex items-center gap-2 p-2 rounded-md bg-muted-foreground/10 dark:bg-muted/50">
                 <code className="text-xs sm:text-sm font-mono break-all flex-1">
-                  {`${url}/docs/sign/${results.id}`}
+                  {`${url}/docs/view/${results.id}`}
                 </code>
-                <CopyButton value={`${url}/docs/sign/${results.id}`} />
+                <CopyButton value={`${url}/docs/view/${results.id}`} />
               </div>
               <p className="text-xs text-muted-foreground">
                 This link can be used to view the signed document.
