@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, FormEvent } from "react";
 import { motion } from "framer-motion";
-import { Bot, FileText, Send, Sparkles, User, Trash2 } from "lucide-react";
+import { Bot, FileText, Send, Sparkles, User, Trash2, Download } from "lucide-react";
+import { jsPDF } from "jspdf";
 
 import { formatFileSize } from "@/lib/utils/format-file-size";
 import { useToast } from "@/hooks/use-toast";
@@ -90,43 +91,58 @@ type RecentGeneration = {
   status: string;
 };
 
-// const templateRecentGenerations: RecentGeneration[] = [
-//   {
-//     title: "Employment Contract",
-//     timestamp: "2 hours ago",
-//     status: "Completed",
-//   },
-//   {
-//     title: "Project Proposal",
-//     timestamp: "5 hours ago",
-//     status: "Completed",
-//   },
-//   {
-//     title: "NDA Agreement",
-//     timestamp: "1 day ago",
-//     status: "Completed",
-//   },
-// ];
-
 export function DashboardContent() {
   const { toast } = useToast();
+
+  // Loading states for each type
   const [agentLoading, setAgentLoading] = useState(false);
   const [documentLoading, setDocumentLoading] = useState(false);
   const [chatLoading, setChatLoading] = useState(false);
+
+  // Recent generations (sample only)
   const [recentGenerations] = useState<RecentGeneration[]>([]);
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(
-    null
-  );
+
+  // Template selection
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+
+  // ----- Agent Tab States -----
+  // (Same states can be reused or augmented for the "Agent" form if desired)
   const [documentName, setDocumentName] = useState("");
   const [goal, setGoal] = useState("");
+
+  // ----- Document Tab States -----
+  // Keep track of the selected doc type and custom prompt
+  const [documentType, setDocumentType] = useState("contract");
+  const [documentPrompt, setDocumentPrompt] = useState("");
+
+  // ----- Chat Tab States -----
+  // Keep a list of all messages in chat
+  const [chatMessages, setChatMessages] = useState<
+    { type: "user" | "bot"; message: string }[]
+  >([
+    {
+      type: "bot",
+      message:
+        "Hello! I'm your document assistant. How can I help improve your documents today?",
+    },
+  ]);
+  // Current input in the chat
+  const [chatInput, setChatInput] = useState("");
+
+  // Uploaded file
   const { file, handleFileChange, clearFile, fileInputRef } = useFileUpload();
 
-  const handleSubmit =
-    (type: "document" | "chat" | "agent") => async (e: React.FormEvent) => {
-      e.preventDefault();
-      // Random between 5-10 seconds
-      const delay = Math.floor(Math.random() * (10000 - 5000 + 1)) + 5000;
+  // The final document generated (Agent or Document tab)
+  const [generatedDocument, setGeneratedDocument] = useState<string | null>(null);
 
+  // ----------------------------------------
+  // Common submit handler
+  // ----------------------------------------
+  const handleSubmit =
+    (type: "document" | "chat" | "agent") => async (e: FormEvent) => {
+      e.preventDefault();
+
+      // Set loading states
       if (type === "document") {
         setDocumentLoading(true);
       } else if (type === "chat") {
@@ -136,8 +152,62 @@ export function DashboardContent() {
       }
 
       try {
-        await new Promise((resolve) => setTimeout(resolve, delay));
-        throw new Error("Failed to process your request");
+        // Prepare the fields to send to our API
+        let nameToSend = "";
+        let goalToSend = "";
+
+        if (type === "agent") {
+          // Reuse documentName + goal from Agent tab
+          nameToSend = documentName || "Untitled Agent Doc";
+          goalToSend = goal;
+        } else if (type === "document") {
+          // Use doc type + doc prompt
+          nameToSend = documentType; // or pass something like: `Document: ${documentType}`
+          goalToSend = documentPrompt;
+        } else if (type === "chat") {
+          // Chat just sends the user's chat input as the "goal"
+          nameToSend = "ChatMessage";
+          goalToSend = chatInput;
+        }
+
+        const response = await fetch("/api/docs/generate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            type,
+            documentName: nameToSend,
+            goal: goalToSend,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to process your request");
+        }
+
+        const data = await response.json();
+        const message = data.data.message || "No response received.";
+
+        // For "agent" or "document", we show a single "generatedDocument" in a Card
+        if (type === "agent" || type === "document") {
+          setGeneratedDocument(message);
+          toast({
+            title: "Success",
+            description: "Your document has been generated successfully!",
+          });
+        }
+
+        // For "chat", we want to append both the user message and the assistant's response
+        if (type === "chat") {
+          setChatMessages((prev) => [
+            ...prev,
+            { type: "user", message: chatInput },
+            { type: "bot", message },
+          ]);
+          // Reset chat input
+          setChatInput("");
+        }
       } catch (error) {
         console.error(error);
         toast({
@@ -146,6 +216,7 @@ export function DashboardContent() {
           description: "Something went wrong. Please try again later.",
         });
       } finally {
+        // Clear loading states
         if (type === "document") {
           setDocumentLoading(false);
         } else if (type === "chat") {
@@ -153,10 +224,26 @@ export function DashboardContent() {
         } else if (type === "agent") {
           setAgentLoading(false);
         }
+
         clearFile();
       }
     };
 
+  // ----------------------------------------
+  // Download as PDF
+  // ----------------------------------------
+  const handleDownloadPDF = () => {
+    if (!generatedDocument) return;
+
+    const doc = new jsPDF();
+    const lines = doc.splitTextToSize(generatedDocument, 180);
+    doc.text(lines, 10, 10);
+    doc.save(`${documentName || "document"}.pdf`);
+  };
+
+  // ----------------------------------------
+  // Template click
+  // ----------------------------------------
   const handleTemplateClick = (template: Template) => {
     if (template.name === "See More") {
       toast({
@@ -166,6 +253,8 @@ export function DashboardContent() {
       return;
     }
     setSelectedTemplate(template);
+
+    // Pre-fill for Agent tab
     setDocumentName(`ResearchAI - ${template.name}`);
     setGoal(template.goal);
   };
@@ -186,11 +275,11 @@ export function DashboardContent() {
             <Badge>Beta</Badge>
           </div>
           <p className="text-sm md:text-base text-muted-foreground">
-            Use AI to generate documents, sign them, and share on the
-            blockchain.
+            Use AI to generate documents, sign them, and share on the blockchain.
           </p>
         </div>
       </motion.div>
+
       <div className="grid gap-8">
         <Tabs defaultValue="agent" className="w-full">
           <motion.div
@@ -220,7 +309,11 @@ export function DashboardContent() {
             </TabsList>
           </motion.div>
 
-          {/* Agent Tab */}
+          {/*
+            ----------------------------------------
+            AGENT TAB
+            ----------------------------------------
+          */}
           <TabsContent value="agent" className="space-y-8 mt-8">
             <motion.div
               className="grid gap-4"
@@ -235,6 +328,7 @@ export function DashboardContent() {
               >
                 Templates
               </motion.h3>
+
               <motion.div
                 className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4"
                 variants={container}
@@ -262,6 +356,7 @@ export function DashboardContent() {
                 ))}
               </motion.div>
             </motion.div>
+
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -284,7 +379,14 @@ export function DashboardContent() {
                     <label className="text-sm font-medium">
                       Language Model
                     </label>
-                    <Select value={selectedTemplate?.model || "gpt-4o"}>
+                    <Select
+                      value={selectedTemplate?.model || "gpt-4o"}
+                      onValueChange={(value) => {
+                        setSelectedTemplate((prev) =>
+                          prev ? { ...prev, model: value as Template["model"] } : prev
+                        );
+                      }}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select model" />
                       </SelectTrigger>
@@ -316,9 +418,94 @@ export function DashboardContent() {
                 </CardContent>
               </Card>
             </motion.div>
+
+            {/* Display Generated Document (Agent) */}
+            {generatedDocument && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      Generated Document
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="prose max-w-none">
+                      {generatedDocument.split("\n").map((line, idx) => (
+                        <p key={idx}>{line}</p>
+                      ))}
+                    </div>
+                    <Button
+                      variant="primary"
+                      onClick={handleDownloadPDF}
+                      className="flex items-center gap-2"
+                    >
+                      <Download className="h-4 w-4" />
+                      Download PDF
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
+            {/* Recent Generations (Agent) */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <h3 className="text-lg font-medium">Recent Generations</h3>
+              <div className="grid gap-4">
+                {!recentGenerations.length ? (
+                  <p className="text-sm text-muted-foreground">
+                    No recent generations.
+                  </p>
+                ) : (
+                  recentGenerations.map((item, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <Card>
+                        <CardContent className="flex items-center justify-between p-4">
+                          <div className="flex items-center gap-4">
+                            <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-primary flex-shrink-0" />
+                            <div className="min-w-0">
+                              <p className="font-medium truncate">
+                                {item.title}
+                              </p>
+                              <p className="text-xs sm:text-sm text-muted-foreground">
+                                {item.timestamp}
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="ml-2 flex-shrink-0"
+                          >
+                            View
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ))
+                )}
+              </div>
+            </motion.div>
           </TabsContent>
 
-          {/* Document Tab */}
+          {/*
+            ----------------------------------------
+            DOCUMENT TAB
+            ----------------------------------------
+          */}
           <TabsContent value="document" className="space-y-6 mt-6 sm:mt-8">
             <div className="grid gap-6">
               {/* AI Document Generation */}
@@ -335,87 +522,133 @@ export function DashboardContent() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4 sm:space-y-6">
-                    <div className="space-y-2">
-                      <Label>Document Type</Label>
-                      <Select>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select document type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="contract">
-                            Contract Agreement
-                          </SelectItem>
-                          <SelectItem value="proposal">
-                            Business Proposal
-                          </SelectItem>
-                          <SelectItem value="letter">
-                            Professional Letter
-                          </SelectItem>
-                          <SelectItem value="report">
-                            Technical Report
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Prompt</Label>
-                      <Textarea
-                        placeholder="Describe the document you want to generate..."
-                        className="min-h-[100px] w-full"
-                      />
-                    </div>
-                    <div className="flex flex-col sm:flex-row gap-2 md:gap-4 justify-end">
-                      <Button
-                        className="w-full sm:w-auto"
-                        isLoading={documentLoading}
-                        onClick={handleSubmit("document")}
-                      >
-                        Generate Document
-                      </Button>
-                      {/* Upload Reference */}
-                      <div className="flex flex-col lg:flex-row gap-2">
-                        <Button
-                          variant="outline"
-                          onClick={() => fileInputRef.current?.click()}
+                    <form
+                      className="space-y-4"
+                      onSubmit={handleSubmit("document")}
+                    >
+                      <div className="space-y-2">
+                        <Label>Document Type</Label>
+                        <Select
+                          value={documentType}
+                          onValueChange={(val) => setDocumentType(val)}
                         >
-                          <FileText className="h-4 w-4" />
-                          Upload Reference
-                        </Button>
-                        <input
-                          type="file"
-                          ref={fileInputRef}
-                          onChange={handleFileChange}
-                          accept=".pdf,.doc,.docx,.txt"
-                          className="hidden"
-                        />
-                        {file && (
-                          <div className="flex flex-row gap-4">
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              className="px-2"
-                              onClick={clearFile}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              <span className="sr-only">Remove file</span>
-                            </Button>
-                            <div className="space-y-1">
-                              <p className="text-xs sm:text-sm text-muted-foreground">
-                                Selected: {file.name}
-                              </p>
-                              <p className="text-xs sm:text-sm text-muted-foreground">
-                                Size: {formatFileSize(file.size)}
-                              </p>
-                            </div>
-                          </div>
-                        )}
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select document type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="contract">
+                              Contract Agreement
+                            </SelectItem>
+                            <SelectItem value="proposal">
+                              Business Proposal
+                            </SelectItem>
+                            <SelectItem value="letter">
+                              Professional Letter
+                            </SelectItem>
+                            <SelectItem value="report">
+                              Technical Report
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
-                    </div>
+
+                      <div className="space-y-2">
+                        <Label>Prompt</Label>
+                        <Textarea
+                          placeholder="Describe the document you want to generate..."
+                          className="min-h-[100px] w-full"
+                          value={documentPrompt}
+                          onChange={(e) => setDocumentPrompt(e.target.value)}
+                        />
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row gap-2 md:gap-4 justify-end">
+                        <Button
+                          className="w-full sm:w-auto"
+                          isLoading={documentLoading}
+                          type="submit"
+                        >
+                          Generate Document
+                        </Button>
+
+                        {/* Upload Reference */}
+                        <div className="flex flex-col lg:flex-row gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => fileInputRef.current?.click()}
+                          >
+                            <FileText className="h-4 w-4" />
+                            Upload Reference
+                          </Button>
+                          <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleFileChange}
+                            accept=".pdf,.doc,.docx,.txt"
+                            className="hidden"
+                          />
+                          {file && (
+                            <div className="flex flex-row gap-4">
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                className="px-2"
+                                onClick={clearFile}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                <span className="sr-only">Remove file</span>
+                              </Button>
+                              <div className="space-y-1">
+                                <p className="text-xs sm:text-sm text-muted-foreground">
+                                  Selected: {file.name}
+                                </p>
+                                <p className="text-xs sm:text-sm text-muted-foreground">
+                                  Size: {formatFileSize(file.size)}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </form>
                   </CardContent>
                 </Card>
               </motion.div>
 
-              {/* Recent Generations */}
+              {/* Display Generated Document (Document tab) */}
+              {generatedDocument && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <FileText className="h-5 w-5" />
+                        Generated Document
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="prose max-w-none">
+                        {generatedDocument.split("\n").map((line, idx) => (
+                          <p key={idx}>{line}</p>
+                        ))}
+                      </div>
+                      <Button
+                        variant="primary"
+                        onClick={handleDownloadPDF}
+                        className="flex items-center gap-2"
+                      >
+                        <Download className="h-4 w-4" />
+                        Download PDF
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )}
+
+              {/* Recent Generations (Document) */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -465,7 +698,11 @@ export function DashboardContent() {
             </div>
           </TabsContent>
 
-          {/* Chat Tab */}
+          {/*
+            ----------------------------------------
+            CHAT TAB
+            ----------------------------------------
+          */}
           <TabsContent value="chat" className="mt-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -477,23 +714,7 @@ export function DashboardContent() {
                   <div className="flex h-[600px] flex-col">
                     {/* Chat Messages */}
                     <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                      {[
-                        {
-                          type: "bot",
-                          message:
-                            "Hello! I'm your document assistant. How can I help improve your documents today?",
-                        },
-                        // {
-                        //   type: "user",
-                        //   message:
-                        //     "Can you help me make this contract more concise?",
-                        // },
-                        // {
-                        //   type: "bot",
-                        //   message:
-                        //     "Of course! Please share the contract you'd like me to review, and I'll help you make it more concise while maintaining its legal integrity.",
-                        // },
-                      ].map((message, index) => (
+                      {chatMessages.map((message, index) => (
                         <motion.div
                           key={index}
                           initial={{ opacity: 0, y: 10 }}
@@ -538,8 +759,10 @@ export function DashboardContent() {
                         <Input
                           placeholder="Type your message..."
                           className="flex-1"
+                          value={chatInput}
+                          onChange={(e) => setChatInput(e.target.value)}
                         />
-                        <Button isLoading={chatLoading}>
+                        <Button type="submit" isLoading={chatLoading}>
                           {!chatLoading && <Send className="h-4 w-4" />}
                           <span className="sr-only">Send message</span>
                         </Button>
