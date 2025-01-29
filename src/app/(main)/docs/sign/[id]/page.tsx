@@ -14,7 +14,7 @@ const getDocument = async (id: string) => {
   const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("documents")
-    .select("id,mime_type,unsigned_document")
+    .select("id,password,mime_type,unsigned_document")
     .eq("id", id)
     .single();
 

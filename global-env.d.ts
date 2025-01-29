@@ -37,6 +37,7 @@ export declare global {
 
   interface DocumentToSign {
     id: string;
+    password: string | null;
     mime_type: string;
     unsigned_document: string;
   }
@@ -44,7 +45,6 @@ export declare global {
   interface SignedDocument {
     id: string;
     signed_document: Blob;
-    // password: string;
   }
 
   interface SignedDocumentResponse {
