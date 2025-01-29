@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+// import { zodResolver } from "@hookform/resolvers/zod";
+// import z from "zod";
+// import { useForm } from "react-hook-form";
 import { captureException } from "@sentry/nextjs";
 import { Pencil, Trash2, FileText } from "lucide-react";
 
@@ -27,6 +30,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+// import {
+//   Dialog,
+//   DialogContent,
+//   DialogDescription,
+//   DialogFooter,
+//   DialogHeader,
+//   DialogTitle,
+// } from "@/components/ui/dialog";
+// import {
+//   Form,
+//   FormControl,
+//   FormDescription,
+//   FormField,
+//   FormItem,
+//   FormLabel,
+//   FormMessage,
+// } from "@/components/ui/form";
 
 import { SignDocumentDialog } from "./sign-doc-dialog";
 
@@ -37,6 +57,10 @@ import { SignDocumentDialog } from "./sign-doc-dialog";
 //   signedHash:
 //     "df1af2ed785db434e9f1e7f16e8342e9621b0f8a9aa14e40ceee9953c6eb9b7a",
 // };
+
+// const passwordSchema = z.object({
+//   password: z.string().min(1, { message: "Password is required" }),
+// });
 
 export function SignDocumentContent({
   id,
@@ -60,9 +84,12 @@ export function SignDocumentContent({
   const [signatureType, setSignatureType] = useState("draw"); // "draw" or "type"
   const [typedSignature, setTypedSignature] = useState("");
   const [showDialog, setShowDialog] = useState(false);
-  const [results, setResults] = useState<SignedDocumentResult | null>(
-    null
-  );
+  // const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [results, setResults] = useState<SignedDocumentResult | null>(null);
+  // const passwordForm = useForm<z.infer<typeof passwordSchema>>({
+  //   resolver: zodResolver(passwordSchema),
+  //   mode: "onSubmit",
+  // });
 
   const handleCloseDialog = () => {
     setShowDialog(false);
@@ -70,10 +97,11 @@ export function SignDocumentContent({
   };
 
   const handleSign = async () => {
+    debugger;
     if (
       !unsignedDoc ||
-      (signatureType === "draw" && hasDrawn) ||
-      (signatureType === "type" && typedSignature)
+      (signatureType === "draw" && !hasDrawn) ||
+      (signatureType === "type" && !typedSignature)
     ) {
       return;
     }
@@ -134,6 +162,7 @@ export function SignDocumentContent({
       });
 
       setResults({ id, txSignature, signedHash });
+      setShowDialog(true);
 
       clearCanvas();
       setTypedSignature("");
@@ -296,6 +325,65 @@ export function SignDocumentContent({
           </CardFooter>
         </Card>
       </motion.div>
+
+      {/* <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+        <DialogContent>
+          <Form {...passwordForm}>
+            <form onSubmit={passwordForm.handleSubmit(handlePasswordSubmit)}>
+              <DialogHeader>
+                <DialogTitle>Password Required</DialogTitle>
+                <DialogDescription>
+                  This document is password protected. Please enter the password
+                  to view it.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="space-y-2">
+                  <FormField
+                    control={passwordForm.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem className="w-full">
+                        <FormLabel>Password</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            id="password"
+                            type="password"
+                            placeholder="Enter document password"
+                            autoComplete="off"
+                          />
+                        </FormControl>
+                        <FormMessage className="text-sm" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+              <DialogFooter className="flex flex-col gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowPasswordDialog(false);
+                    setPendingHash("");
+                    passwordForm.reset();
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={!passwordForm.formState.isValid}
+                  isLoading={passwordForm.formState.isSubmitting}
+                >
+                  Submit
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog> */}
     </>
   );
 }

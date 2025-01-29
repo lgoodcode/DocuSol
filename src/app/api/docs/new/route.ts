@@ -81,12 +81,12 @@ export async function POST(request: Request) {
       .select("id")
       .single();
 
-    if (insertError)
+    if (insertError) {
       throw new Error(`Failed to insert document: ${insertError.message}`);
-    const id = insertData.id;
+    }
 
     return NextResponse.json({
-      id,
+      id: insertData.id,
       txSignature,
       unsignedHash: unsignedDocumentHash,
     });

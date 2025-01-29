@@ -44,6 +44,7 @@ export declare global {
   interface SignedDocument {
     id: string;
     signed_document: Blob;
+    // password: string;
   }
 
   interface SignedDocumentResponse {

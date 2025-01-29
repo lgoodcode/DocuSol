@@ -171,6 +171,7 @@ export function NewDocumentContent() {
       });
 
       setResults({ id, txSignature, unsignedHash });
+      setShowDialog(true);
 
       form.reset({ name: "", password: "", confirmPassword: "" });
       clearFile();
