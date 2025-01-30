@@ -52,12 +52,13 @@ export async function POST(request: Request) {
     }
 
     // Process signed document
+    const timestamp = new Date().toISOString();
     const signedDocumentBuffer = Buffer.from(
       await signedDocument.arrayBuffer()
     );
     const signedHash = crypto
       .createHash("sha256")
-      .update(signedDocumentBuffer)
+      .update(signedDocumentBuffer + timestamp + password)
       .digest("hex");
 
     // Send memo transaction for signed document
@@ -72,7 +73,7 @@ export async function POST(request: Request) {
         signed_hash: signedHash,
         signed_transaction_signature: transactionSignature,
         signed_document: bufferToHex(signedDocumentBuffer),
-        signed_at: new Date().toISOString(),
+        signed_at: timestamp,
       })
       .eq("id", id);
 
