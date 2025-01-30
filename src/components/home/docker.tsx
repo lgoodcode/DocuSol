@@ -103,11 +103,7 @@ function Docker() {
         </DockItem>
       </StaticDockIcon>
       <StaticDockIcon>
-        <DockItem
-          href="/api-documentation"
-          newTab={false}
-          content="API Documentation"
-        >
+        <DockItem href="https://docs.docusol.app" content="Documentation">
           <FileText className="size-5" />
         </DockItem>
       </StaticDockIcon>
