@@ -38,7 +38,9 @@ export const viewDocument = async (id: string): Promise<void> => {
 
 export const viewTransaction = async (txSignature: string): Promise<void> => {
   const url = getTransactionUrl(txSignature);
-  window.open(url, "_blank");
+  if (window) {
+    window.open(url, "_blank");
+  }
 };
 
 export const copyTxSignature = async (txSignature: string): Promise<string> => {

@@ -37,7 +37,6 @@ export declare global {
 
   interface DocumentToSign {
     id: string;
-    password: string | null;
     mime_type: string;
     unsigned_document: string;
   }

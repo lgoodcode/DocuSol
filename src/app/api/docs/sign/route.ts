@@ -17,16 +17,13 @@ export async function POST(request: Request) {
     const form = await request.formData();
     const id = form.get("id") as string | null;
     const signedDocument = form.get("signed_document") as File | null;
-    // const password = form.get("password") as string | null;
+    const password = form.get("password") as string | null;
 
     if (!id) {
       throw new Error("No id provided");
     } else if (!signedDocument) {
       throw new Error("No signed document provided");
     }
-    // else if (!password) {
-    //   throw new Error("No password provided");
-    // }
 
     // Check if document exists
     const supabase = await createServerClient();
@@ -46,14 +43,13 @@ export async function POST(request: Request) {
         },
         { status: 409 }
       );
+    } else if (document.password) {
+      if (!password) {
+        throw new Error("Password required for this document");
+      } else if (password !== document.password) {
+        throw new Error("Invalid password");
+      }
     }
-    // else if (document.password) {
-    //   if (!password) {
-    //     throw new Error("Password required for this document");
-    //   } else if (password !== document.password) {
-    //     throw new Error("Invalid password");
-    //   }
-    // }
 
     // Process signed document
     const signedDocumentBuffer = Buffer.from(

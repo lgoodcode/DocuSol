@@ -41,44 +41,46 @@ export function MobileMenu({
   const { theme, setTheme } = useTheme();
 
   const handleSheetOpenChange = (newOpen: boolean) => {
-    const event = (window.event as CustomEvent).detail
-      ?.originalEvent as PointerEvent;
-    if (!newOpen && event) {
-      const menuRect = menuButtonRef.current?.getBoundingClientRect();
-      const themeRect = themeButtonRef.current?.getBoundingClientRect();
-      const logoRect = logoRef.current?.getBoundingClientRect();
+    if (window) {
+      const event = (window.event as CustomEvent).detail
+        ?.originalEvent as PointerEvent;
+      if (!newOpen && event) {
+        const menuRect = menuButtonRef.current?.getBoundingClientRect();
+        const themeRect = themeButtonRef.current?.getBoundingClientRect();
+        const logoRect = logoRef.current?.getBoundingClientRect();
 
-      if (
-        menuRect &&
-        event.clientX >= menuRect.left &&
-        event.clientX <= menuRect.right &&
-        event.clientY >= menuRect.top &&
-        event.clientY <= menuRect.bottom
-      ) {
-        setOpen(newOpen);
-        return;
+        if (
+          menuRect &&
+          event.clientX >= menuRect.left &&
+          event.clientX <= menuRect.right &&
+          event.clientY >= menuRect.top &&
+          event.clientY <= menuRect.bottom
+        ) {
+          setOpen(newOpen);
+          return;
+        }
+        if (
+          themeRect &&
+          event.clientX >= themeRect.left &&
+          event.clientX <= themeRect.right &&
+          event.clientY >= themeRect.top &&
+          event.clientY <= themeRect.bottom
+        ) {
+          setTheme(theme === "dark" ? "light" : "dark");
+          return;
+        }
+        if (
+          logoRect &&
+          event.clientX >= logoRect.left &&
+          event.clientX <= logoRect.right &&
+          event.clientY >= logoRect.top &&
+          event.clientY <= logoRect.bottom
+        ) {
+          logoRef.current?.click();
+        }
       }
-      if (
-        themeRect &&
-        event.clientX >= themeRect.left &&
-        event.clientX <= themeRect.right &&
-        event.clientY >= themeRect.top &&
-        event.clientY <= themeRect.bottom
-      ) {
-        setTheme(theme === "dark" ? "light" : "dark");
-        return;
-      }
-      if (
-        logoRect &&
-        event.clientX >= logoRect.left &&
-        event.clientX <= logoRect.right &&
-        event.clientY >= logoRect.top &&
-        event.clientY <= logoRect.bottom
-      ) {
-        logoRef.current?.click();
-      }
+      setOpen(true);
     }
-    setOpen(true);
   };
 
   return (
