@@ -8,6 +8,8 @@ export const IS_MOBILE = () => {
   );
 };
 
+export const ACCEPTED_FILE_TYPES = [".pdf", ".jpeg", ".png", ".jpg"];
+
 export const GITHUB_URL = "";
 
 export const CONTRACT_ADDRESS = "2thfFEH6nR7Qbqd315Dt9BjSJRau9YQ4mmBhkAuepump";
