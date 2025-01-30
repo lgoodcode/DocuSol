@@ -344,124 +344,122 @@ export function SignDocumentContent({
         </motion.div>
       )}
 
-      {isValid && (
-        <>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            {/* File Preview Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Preview Document
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {unsignedDoc && <FilePreview file={unsignedDoc} />}
-              </CardContent>
-            </Card>
-          </motion.div>
+      <>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          {/* File Preview Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Preview Document
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {unsignedDoc && <FilePreview file={unsignedDoc} />}
+            </CardContent>
+          </Card>
+        </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-          >
-            {/* Signature Card */}
-            <Card>
-              <CardHeader className="flex flex-col sm:flex-row items-start gap-4 sm:gap-0 sm:items-center justify-between">
-                <div className="flex flex-col gap-1 max-w-sm">
-                  <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
-                    <Pencil className="h-5 w-5" />
-                    Sign Document
-                  </CardTitle>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Select
-                    value={signatureType}
-                    onValueChange={setSignatureType}
-                    disabled={isSubmitting}
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue placeholder="Signature type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="draw">Draw</SelectItem>
-                      <SelectItem value="type">Type</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {signatureType === "draw" && hasDrawn && (
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      disabled={!hasDrawn || isSubmitting}
-                      onClick={clearCanvas}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      <span className="sr-only">Clear signature</span>
-                    </Button>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent>
-                {signatureType === "draw" ? (
-                  <div className="relative aspect-[3/2] sm:aspect-[3/1] w-full border rounded-lg overflow-hidden bg-background dark:bg-background/60">
-                    <canvas
-                      ref={canvasRef}
-                      width={900}
-                      height={300}
-                      onMouseDown={startDrawing}
-                      onMouseMove={draw}
-                      onMouseUp={stopDrawing}
-                      onMouseLeave={stopDrawing}
-                      onTouchStart={startDrawing}
-                      onTouchMove={draw}
-                      onTouchEnd={stopDrawing}
-                      className="touch-none w-full h-full"
-                      aria-label="Signature canvas"
-                    />
-                  </div>
-                ) : (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.2 }}
-                    className="grid w-full gap-1.5"
-                  >
-                    <Label htmlFor="typed-signature" className="mb-1">
-                      Type your signature
-                    </Label>
-                    <Input
-                      id="typed-signature"
-                      autoComplete="off"
-                      value={typedSignature}
-                      onChange={(e) => setTypedSignature(e.target.value)}
-                      placeholder="Type your signature here"
-                      disabled={isSubmitting}
-                    />
-                  </motion.div>
-                )}
-              </CardContent>
-              <CardFooter>
-                <Button
-                  type="submit"
-                  className="ml-auto"
-                  isLoading={isSubmitting}
-                  disabled={!hasDrawn && !typedSignature}
-                  onClick={handleSign}
-                >
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+        >
+          {/* Signature Card */}
+          <Card>
+            <CardHeader className="flex flex-col sm:flex-row items-start gap-4 sm:gap-0 sm:items-center justify-between">
+              <div className="flex flex-col gap-1 max-w-sm">
+                <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+                  <Pencil className="h-5 w-5" />
                   Sign Document
-                </Button>
-              </CardFooter>
-            </Card>
-          </motion.div>
-        </>
-      )}
+                </CardTitle>
+              </div>
+              <div className="flex items-center gap-2">
+                <Select
+                  value={signatureType}
+                  onValueChange={setSignatureType}
+                  disabled={isSubmitting}
+                >
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Signature type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="draw">Draw</SelectItem>
+                    <SelectItem value="type">Type</SelectItem>
+                  </SelectContent>
+                </Select>
+                {signatureType === "draw" && hasDrawn && (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    disabled={!hasDrawn || isSubmitting}
+                    onClick={clearCanvas}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span className="sr-only">Clear signature</span>
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {signatureType === "draw" ? (
+                <div className="relative aspect-[3/2] sm:aspect-[3/1] w-full border rounded-lg overflow-hidden bg-background dark:bg-background/60">
+                  <canvas
+                    ref={canvasRef}
+                    width={900}
+                    height={300}
+                    onMouseDown={startDrawing}
+                    onMouseMove={draw}
+                    onMouseUp={stopDrawing}
+                    onMouseLeave={stopDrawing}
+                    onTouchStart={startDrawing}
+                    onTouchMove={draw}
+                    onTouchEnd={stopDrawing}
+                    className="touch-none w-full h-full"
+                    aria-label="Signature canvas"
+                  />
+                </div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
+                  className="grid w-full gap-1.5"
+                >
+                  <Label htmlFor="typed-signature" className="mb-1">
+                    Type your signature
+                  </Label>
+                  <Input
+                    id="typed-signature"
+                    autoComplete="off"
+                    value={typedSignature}
+                    onChange={(e) => setTypedSignature(e.target.value)}
+                    placeholder="Type your signature here"
+                    disabled={isSubmitting}
+                  />
+                </motion.div>
+              )}
+            </CardContent>
+            <CardFooter>
+              <Button
+                type="submit"
+                className="ml-auto"
+                isLoading={isSubmitting}
+                disabled={!hasDrawn && !typedSignature}
+                onClick={handleSign}
+              >
+                Sign Document
+              </Button>
+            </CardFooter>
+          </Card>
+        </motion.div>
+      </>
     </>
   );
 }
