@@ -1,9 +1,11 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useDropzone } from "react-dropzone";
 import { UploadIcon, Trash2 } from "lucide-react";
 
+import { ACCEPTED_FILE_TYPES, MAX_FILE_SIZE } from "@/constants";
 import { cn } from "@/lib/utils";
+import { formatFileSize } from "@/lib/utils/format-file-size";
 import { Button } from "@/components/ui/button";
 
 const mainVariant = {
@@ -33,11 +35,12 @@ export const FileUpload = ({
   onRemove,
 }: {
   files: File[];
-  onChange?: (files: File[]) => void;
-  onRemove?: (file: File) => void;
+  onChange: (files: File[]) => void;
+  onRemove: (file: File) => void;
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const trashRef = useRef<HTMLButtonElement>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as Node;
@@ -50,6 +53,35 @@ export const FileUpload = ({
     }
   };
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setError(null);
+    const file = e.target.files?.[0];
+    if (!file) {
+      return;
+    } else if (file.size > MAX_FILE_SIZE) {
+      setError(
+        `File is too large. Max size is ${formatFileSize(
+          MAX_FILE_SIZE
+        )}. Your file is ${formatFileSize(file.size)}`
+      );
+      return;
+    } else {
+      const acceptedFileTypes = Object.keys(ACCEPTED_FILE_TYPES);
+      if (!acceptedFileTypes.includes(file.type)) {
+        setError(
+          `${
+            file.type
+          } type is not supported. Supported types are ${acceptedFileTypes.join(
+            ", "
+          )}`
+        );
+        return;
+      }
+    }
+
+    onChange([file]);
+  };
+
   const handleRemove = (file: File) => () => {
     onRemove?.(file);
     if (fileInputRef.current) {
@@ -58,13 +90,15 @@ export const FileUpload = ({
   };
 
   const { getRootProps, isDragActive } = useDropzone({
+    accept: ACCEPTED_FILE_TYPES,
     multiple: false,
     noClick: true,
+    maxSize: MAX_FILE_SIZE,
     onDrop: (acceptedFiles) => {
-      onChange?.(acceptedFiles);
+      onChange(acceptedFiles);
     },
     onDropRejected: (error) => {
-      console.log(error);
+      setError(error[0].errors[0].message);
     },
   });
 
@@ -79,7 +113,7 @@ export const FileUpload = ({
           ref={fileInputRef}
           id="file-upload-handle"
           type="file"
-          onChange={(e) => onChange?.(Array.from(e.target.files || []))}
+          onChange={handleFileUpload}
           className="hidden"
         />
         <div className="absolute inset-0 [mask-image:radial-gradient(ellipse_at_center,white,transparent)]">
@@ -92,6 +126,13 @@ export const FileUpload = ({
           <p className="relative z-20 font-sans font-normal text-neutral-400 dark:text-neutral-400 text-base mt-2">
             Drag or drop your files here or click to upload
           </p>
+          <p className="relative z-20 font-sans font-normal text-neutral-400 dark:text-neutral-400 text-sm mt-1">
+            Supported formats:{" "}
+            {Object.keys(ACCEPTED_FILE_TYPES)
+              .map((type) => type.split("/")[1].toUpperCase())
+              .join(", ")}
+          </p>
+
           <div className="relative w-full mt-10 max-w-xl mx-auto">
             {files.length > 0 &&
               files.map((file, idx) => (
@@ -121,7 +162,7 @@ export const FileUpload = ({
                         layout
                         className="rounded-lg px-2 py-1 w-fit flex-shrink-0 text-sm text-neutral-600 dark:bg-neutral-800 dark:text-white shadow-input"
                       >
-                        {(file.size / (1024 * 1024)).toFixed(2)} MB
+                        {formatFileSize(file.size)}
                       </motion.p>
                     </div>
 
@@ -200,6 +241,15 @@ export const FileUpload = ({
           </div>
         </div>
       </motion.div>
+      {error && (
+        <motion.p
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-red-500 dark:text-red-400 text-sm mt-2 text-center"
+        >
+          {error}
+        </motion.p>
+      )}
     </div>
   );
 };

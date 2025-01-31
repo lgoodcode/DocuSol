@@ -2,27 +2,18 @@
 
 import { useState } from "react";
 import { z } from "zod";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { captureException } from "@sentry/nextjs";
-import {
-  UploadIcon as FileUpload,
-  Pencil,
-  Save,
-  Trash2,
-  Lock,
-  FileText,
-} from "lucide-react";
+import { UploadIcon, Pencil, Save, Trash2, Lock, FileText } from "lucide-react";
 
-import { ACCEPTED_FILE_TYPES } from "@/constants";
 import { storeNewDocument } from "@/lib/utils";
 import { uploadNewDocument, sign } from "@/lib/utils/sign";
-import { formatFileSize } from "@/lib/utils/format-file-size";
 import { useDrawing } from "@/hooks/use-drawing";
-import { useFileUpload } from "@/hooks/use-file-upload";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { FileUpload } from "@/components/ui/file-upload";
 import { FilePreview } from "@/components/file-preview";
 import {
   Card,
@@ -76,7 +67,6 @@ const documentSchema = z
 
 export function NewDocumentContent() {
   const { toast } = useToast();
-  const { file, handleFileChange, clearFile, fileInputRef } = useFileUpload();
   const {
     canvasRef,
     startDrawing,
@@ -89,11 +79,16 @@ export function NewDocumentContent() {
   const [signatureType, setSignatureType] = useState("draw"); // "draw" or "type"
   const [typedSignature, setTypedSignature] = useState("");
   const [showDialog, setShowDialog] = useState(false);
+  const [files, setFiles] = useState<File[]>([]);
   const [results, setResults] = useState<NewDocumentResult | null>(null);
   const form = useForm<z.infer<typeof documentSchema>>({
     resolver: zodResolver(documentSchema),
     mode: "onSubmit",
   });
+
+  const handleFileRemove = (file: File) => {
+    setFiles((prevFiles) => prevFiles.filter((f) => f.name !== file.name));
+  };
 
   const handleCloseDialog = () => {
     setShowDialog(false);
@@ -104,7 +99,7 @@ export function NewDocumentContent() {
     name,
     password,
   }: z.infer<typeof documentSchema>) => {
-    if (!file) {
+    if (!files.length) {
       return;
     }
 
@@ -112,44 +107,44 @@ export function NewDocumentContent() {
       (signatureType === "draw" && hasDrawn) ||
       (signatureType === "type" && typedSignature);
 
-      let signedDoc: Blob | null = null;
-      if (isSigned) {
-        try {
-          signedDoc = await sign(
-            file,
-            signatureType === "draw" ? getSignatureAsBlack() : null,
-            signatureType === "type" ? typedSignature : undefined
-          );
-        } catch (err) {
-          const error = err as Error;
-          console.error(error);
-          if (error.message.includes("encrypted")) {
-            toast({
-              title: "Error",
-              description: "The document is encrypted and cannot be modified",
-              variant: "destructive",
-            });
-            return;
-          }
-
-          captureException(error);
+    let signedDoc: Blob | null = null;
+    if (isSigned) {
+      try {
+        signedDoc = await sign(
+          files[0],
+          signatureType === "draw" ? getSignatureAsBlack() : null,
+          signatureType === "type" ? typedSignature : undefined
+        );
+      } catch (err) {
+        const error = err as Error;
+        console.error(error);
+        if (error.message.includes("encrypted")) {
           toast({
             title: "Error",
-            description: "An error occurred while signing the document",
+            description: "The document is encrypted and cannot be modified",
             variant: "destructive",
           });
           return;
         }
+
+        captureException(error);
+        toast({
+          title: "Error",
+          description: "An error occurred while signing the document",
+          variant: "destructive",
+        });
+        return;
       }
+    }
 
     try {
       const { error, id, txSignature, unsignedHash } = await uploadNewDocument({
         name,
         password: password || "",
-        original_filename: file.name,
-        mime_type: file.type,
-        original_document: file,
-        unsigned_document: signedDoc || file,
+        original_filename: files[0].name,
+        mime_type: files[0].type,
+        original_document: files[0],
+        unsigned_document: signedDoc || files[0],
       });
 
       if (error) {
@@ -173,7 +168,7 @@ export function NewDocumentContent() {
       setShowDialog(true);
 
       form.reset({ name: "", password: "", confirmPassword: "" });
-      clearFile();
+      setFiles([]);
       clearCanvas();
       setTypedSignature("");
     } catch (error) {
@@ -214,73 +209,52 @@ export function NewDocumentContent() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          {/* File Upload Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
           >
-            {/* File Upload Card */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
-                  <FileUpload className="h-5 w-5" />
+                  <UploadIcon className="h-5 w-5" />
                   Upload Document
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid w-full gap-2">
-                  <div className="flex flex-row gap-2">
-                    <Button
-                      variant="outline"
-                      className="w-full md:w-auto"
-                      disabled={form.formState.isSubmitting}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        fileInputRef.current?.click();
-                      }}
-                    >
-                      <FileText className="h-4 w-4" />
-                      Select File
-                    </Button>
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleFileChange}
-                      accept={ACCEPTED_FILE_TYPES.join(",")}
-                      disabled={form.formState.isSubmitting}
-                      className="hidden"
-                    />
-                    {file && (
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        onClick={clearFile}
-                        disabled={form.formState.isSubmitting}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        <span className="sr-only">Remove file</span>
-                      </Button>
-                    )}
-                  </div>
-                  {file && (
-                    <div className="space-y-1">
-                      <div className="space-y-1">
-                        <p className="text-xs sm:text-sm text-muted-foreground">
-                          Selected: {file.name}
-                        </p>
-                        <p className="text-xs sm:text-sm text-muted-foreground">
-                          Size: {formatFileSize(file.size)}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {file && <FilePreview file={file} />}
+                <FileUpload
+                  files={files}
+                  onChange={setFiles}
+                  onRemove={handleFileRemove}
+                />
               </CardContent>
             </Card>
           </motion.div>
+
+          {/* File Preview Card */}
+          <AnimatePresence mode="wait">
+            {files.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      Document Preview
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {files.length > 0 && <FilePreview file={files[0]} />}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -482,7 +456,7 @@ export function NewDocumentContent() {
                   type="submit"
                   className="ml-auto"
                   isLoading={form.formState.isSubmitting}
-                  disabled={!file}
+                  disabled={!files.length}
                 >
                   <Save className="h-4 w-4" />
                   Save Document
