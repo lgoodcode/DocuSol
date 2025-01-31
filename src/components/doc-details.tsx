@@ -83,6 +83,32 @@ export function DocumentDetails({
       value: formatValue(document.name),
     },
     {
+      icon: <PenTool className="h-4 w-4" />,
+      label: "Signed Status",
+      value: document.is_signed ? "Signed" : "Not signed",
+    },
+    {
+      icon: <Calendar className="h-4 w-4" />,
+      label: "Signed At",
+      value: document.signed_at
+        ? new Date(document.signed_at).toLocaleString()
+        : "Not signed",
+    },
+    {
+      icon: <Clock className="h-4 w-4" />,
+      label: "Created At",
+      value: document.created_at
+        ? new Date(document.created_at).toLocaleString()
+        : "Not available",
+    },
+    {
+      icon: <Clock className="h-4 w-4" />,
+      label: "Updated At",
+      value: document.updated_at
+        ? new Date(document.updated_at).toLocaleString()
+        : "Not available",
+    },
+    {
       icon: <FileText className="h-4 w-4" />,
       label: "Password",
       value: document.password ? "Set" : "Not set",
@@ -121,6 +147,7 @@ export function DocumentDetails({
       value: formatValue(document.signed_transaction_signature),
       canCopy: true,
     },
+
     {
       icon: <File className="h-4 w-4" />,
       label: "Original Document",
@@ -138,32 +165,6 @@ export function DocumentDetails({
       label: "Signed Document",
       value: formatValue(document.signed_document),
       binary: true,
-    },
-    {
-      icon: <PenTool className="h-4 w-4" />,
-      label: "Signed Status",
-      value: document.is_signed ? "Signed" : "Not signed",
-    },
-    {
-      icon: <Calendar className="h-4 w-4" />,
-      label: "Signed At",
-      value: document.signed_at
-        ? new Date(document.signed_at).toLocaleString()
-        : "Not signed",
-    },
-    {
-      icon: <Clock className="h-4 w-4" />,
-      label: "Created At",
-      value: document.created_at
-        ? new Date(document.created_at).toLocaleString()
-        : "Not available",
-    },
-    {
-      icon: <Clock className="h-4 w-4" />,
-      label: "Updated At",
-      value: document.updated_at
-        ? new Date(document.updated_at).toLocaleString()
-        : "Not available",
     },
   ];
 
