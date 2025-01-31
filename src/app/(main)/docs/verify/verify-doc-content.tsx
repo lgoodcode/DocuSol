@@ -14,7 +14,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 
-import { ACCEPTED_FILE_TYPES, MAX_FILE_SIZE } from "@/constants";
+import { ACCEPTED_FILE_EXTENSIONS, MAX_FILE_SIZE } from "@/constants";
 import { isTransactionSignature } from "@/lib/utils/solana";
 import { useFileUpload } from "@/hooks/use-file-upload";
 import { DocumentDetails } from "@/components/doc-details";
@@ -53,7 +53,7 @@ const searchSchema = z.object({
       (file) => {
         if (!file) return false;
         const ext = `.${file.type.split("/").pop()!}`;
-        return ACCEPTED_FILE_TYPES.includes(ext);
+        return ACCEPTED_FILE_EXTENSIONS.includes(ext);
       },
       {
         message: "Invalid file type. Please upload a PDF or image file.",
@@ -247,7 +247,7 @@ export function VerifyDocContent() {
                           type="file"
                           ref={fileInputRef}
                           onChange={handleFileChange}
-                          accept={ACCEPTED_FILE_TYPES.join(",")}
+                          accept={ACCEPTED_FILE_EXTENSIONS.join(",")}
                           disabled={form.formState.isSubmitting}
                           className="hidden"
                         />

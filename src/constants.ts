@@ -15,6 +15,7 @@ export const ACCEPTED_FILE_TYPES: Record<string, string[]> = {
   "image/jpeg": [".jpeg"],
   "image/jpg": [".jpg"],
 };
+export const ACCEPTED_FILE_EXTENSIONS = Object.values(ACCEPTED_FILE_TYPES).flat();
 
 export const MAX_FILE_SIZE = 20 * 1024 * 1024; // 10 MB
 
@@ -23,3 +24,6 @@ export const CONTRACT_ADDRESS = "2thfFEH6nR7Qbqd315Dt9BjSJRau9YQ4mmBhkAuepump";
 export const X_URL = "https://x.com/docusol_";
 export const PUMPFUN_URL = "";
 export const DEXSCREENER_URL = "";
+
+export const SUPPORT_EMAIL = "support@docusol.app";
+export const SUPPORT_DISCORD_URL = "https://discord.gg/docusol";

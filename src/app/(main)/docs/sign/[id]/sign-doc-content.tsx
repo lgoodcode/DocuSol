@@ -238,6 +238,8 @@ export function SignDocumentContent({
         description: "An error occurred while signing the document",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
