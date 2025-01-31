@@ -144,10 +144,9 @@ export function SignDocumentContent({
         return;
       }
 
+      // Don't reset password so we can use that when submitting the doc for signing
       setIsValid(true);
       setShowPasswordDialog(false);
-      passwordForm.reset();
-
       setDocument(await getDocument(id));
     } catch (error) {
       captureException(error);
@@ -202,9 +201,11 @@ export function SignDocumentContent({
     }
 
     try {
+      debugger;
       const { error, txSignature, signedHash } = await uploadSignedDocument({
         id: document.id,
         signed_document: signedDoc,
+        password: docPassword ? passwordForm.getValues("password") : null,
       });
 
       if (error) {

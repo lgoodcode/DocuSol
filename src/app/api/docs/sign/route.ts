@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     );
     const signedHash = crypto
       .createHash("sha256")
-      .update(signedDocumentBuffer + timestamp + password)
+      .update(signedDocumentBuffer + timestamp + password || '')
       .digest("hex");
 
     // Send memo transaction for signed document

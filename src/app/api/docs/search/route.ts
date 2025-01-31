@@ -65,7 +65,11 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json(document);
+    const documentDetails: DocumentDetails = {
+      ...document,
+      password: !!document.password,
+    };
+    return NextResponse.json(documentDetails);
   } catch (err) {
     const error = err as Error;
     console.error(error);

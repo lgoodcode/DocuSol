@@ -6,6 +6,7 @@ import {
   Send,
   TrendingUp,
   User,
+  ShieldCheck,
   Plus,
   type LucideIcon,
   Compass,
@@ -43,6 +44,12 @@ export const navRoutes: Route[] = [
     path: "/docs/explore",
     Icon: Compass,
     description: "Search for documents.",
+  },
+  {
+    name: "Verify",
+    path: "/docs/verify",
+    Icon: ShieldCheck,
+    description: "Verify documents.",
   },
   {
     name: "Writer",

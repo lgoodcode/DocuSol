@@ -16,7 +16,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-import type { Document } from "@/lib/supabase/types";
 import { DocumentDetails } from "@/components/doc-details";
 import { isTransactionSignature } from "@/lib/utils/solana";
 import { useToast } from "@/hooks/use-toast";
@@ -52,7 +51,7 @@ const passwordSchema = z.object({
 
 export function ExploreContent() {
   const { toast } = useToast();
-  const [document, setDocument] = useState<Document | null>(null);
+  const [document, setDocument] = useState<DocumentDetails | null>(null);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [pendingHash, setPendingHash] = useState("");
   const searchForm = useForm<z.infer<typeof searchSchema>>({
@@ -103,7 +102,7 @@ export function ExploreContent() {
         throw new Error(data.error);
       }
 
-      setDocument(data as Document);
+      setDocument(data as DocumentDetails);
     } catch (error) {
       captureException(error);
       toast({
@@ -130,7 +129,7 @@ export function ExploreContent() {
         return;
       }
 
-      const data = (await response.json()) as Document;
+      const data = (await response.json()) as DocumentDetails;
       setDocument(data);
       setShowPasswordDialog(false);
       setPendingHash("");
