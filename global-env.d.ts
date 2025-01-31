@@ -1,3 +1,5 @@
+import type { Document } from "@/lib/supabase/types";
+
 export declare global {
   declare namespace NodeJS {
     export interface ProcessEnv {
@@ -12,6 +14,11 @@ export declare global {
       NEXT_PUBLIC_PRIVY_APP_ID: string;
     }
   }
+
+
+  type DocumentDetails = Partial<Omit<Document, 'password'> & {
+    password:  boolean
+  }>
 
   interface NewDocument {
     name: string;
@@ -37,13 +44,13 @@ export declare global {
 
   interface DocumentToSign {
     id: string;
-    password: string | null;
     mime_type: string;
     unsigned_document: string;
   }
 
   interface SignedDocument {
     id: string;
+    password: string | null;
     signed_document: Blob;
   }
 
@@ -74,6 +81,16 @@ export declare global {
     signedDocumentHex: string | null;
     createdAt: string;
     updatedAt: string;
+  }
+
+  interface VerifyDocument {
+    id: string;
+    name: string;
+    password: boolean;
+    mime_type: string;
+    signed_hash: string | null;
+    created_at: string;
+    signed_at: string | null;
   }
 
   /**

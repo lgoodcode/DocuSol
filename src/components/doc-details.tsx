@@ -8,11 +8,8 @@ import {
   File,
   PenTool,
   Clock,
-  ExternalLink,
 } from "lucide-react";
 
-import type { Document } from "@/lib/supabase/types";
-import { hexToBuffer, previewBlob } from "@/lib/utils";
 import { Card, CardContent, CardTitle, CardHeader } from "@/components/ui/card";
 import { CopyButton } from "@/components/ui/copy-button";
 import { BlobPreview } from "@/components/file-preview";
@@ -33,12 +30,52 @@ const formatValue = (value: any) => {
   return value.toString();
 };
 
-export function DocumentDetails({ document }: { document: Document }) {
+const DocumentFieldItem = ({
+  field,
+  mimeType,
+}: {
+  field: DocumentField;
+  mimeType?: string;
+}) => (
+  <div className="flex flex-col gap-2">
+    <div className="flex flex-row items-center">
+      {field.icon}
+      <h2 className="ml-2 mr-1">{field.label}</h2>
+    </div>
+    <div className="flex flex-col">
+      {field.binary && field.value !== "Not available" && mimeType ? (
+        <div className="flex flex-col justify-center items-center gap-2">
+          <BlobPreview hexValue={field.value} mimeType={mimeType} />
+        </div>
+      ) : field?.canCopy ? (
+        <div className="flex items-center gap-2 p-2 rounded-md bg-muted-foreground/10 dark:bg-muted/50">
+          <code className="text-xs sm:text-sm font-mono break-all flex-1">
+            {field.value}
+          </code>
+          <CopyButton value={field.value} />
+        </div>
+      ) : (
+        <span className="text-sm md:text-base text-muted-foreground break-all">
+          {field.value}
+        </span>
+      )}
+    </div>
+  </div>
+);
+
+export function DocumentDetails({
+  document,
+  partial,
+}: {
+  document: DocumentDetails;
+  partial?: boolean;
+}) {
   const fields: DocumentField[] = [
     {
       icon: <Hash className="h-4 w-4" />,
       label: "Document ID",
       value: formatValue(document.id),
+      canCopy: true,
     },
     {
       icon: <FileText className="h-4 w-4" />,
@@ -105,7 +142,7 @@ export function DocumentDetails({ document }: { document: Document }) {
     {
       icon: <PenTool className="h-4 w-4" />,
       label: "Signed Status",
-      value: formatValue(document.is_signed),
+      value: document.is_signed ? "Signed" : "Not signed",
     },
     {
       icon: <Calendar className="h-4 w-4" />,
@@ -117,19 +154,18 @@ export function DocumentDetails({ document }: { document: Document }) {
     {
       icon: <Clock className="h-4 w-4" />,
       label: "Created At",
-      value: new Date(document.created_at).toLocaleString(),
+      value: document.created_at
+        ? new Date(document.created_at).toLocaleString()
+        : "Not available",
     },
     {
       icon: <Clock className="h-4 w-4" />,
       label: "Updated At",
-      value: new Date(document.updated_at).toLocaleString(),
+      value: document.updated_at
+        ? new Date(document.updated_at).toLocaleString()
+        : "Not available",
     },
   ];
-
-  const handleViewDocument = (value: string) => () => {
-    const rawData = hexToBuffer(value);
-    previewBlob(new Blob([rawData], { type: document.mime_type }));
-  };
 
   return (
     <Card>
@@ -141,39 +177,25 @@ export function DocumentDetails({ document }: { document: Document }) {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-4">
-          {fields.map((field, index) => (
-            <div key={index} className="flex flex-col gap-2">
-              <div className="flex flex-row items-center">
-                {field.icon}
-                <h2 className="ml-2 mr-1">{field.label}</h2>
-                {field?.canCopy && field.value !== "Not available" && (
-                  <CopyButton value={field.value} />
-                )}
-              </div>
-              <div className="flex flex-col">
-                {field.binary && field.value !== "Not available" ? (
-                  <div className="flex flex-col justify-center items-center gap-2">
-                    <BlobPreview
-                      hexValue={field.value}
-                      mimeType={document.mime_type}
-                    />
-                    <button
-                      onClick={handleViewDocument(field.value)}
-                      className="flex items-center gap-2 text-blue-600 hover:text-blue-800 hover:underline"
-                      aria-label="View document"
-                    >
-                      View in new tab
-                      <ExternalLink className="h-4 w-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <span className="text-sm md:text-base text-muted-foreground break-all">
-                    {field.value}
-                  </span>
-                )}
-              </div>
-            </div>
-          ))}
+          {partial &&
+            fields
+              .filter((field) => field.value !== "Not available")
+              .map((field, index) => (
+                <DocumentFieldItem
+                  key={index}
+                  field={field}
+                  mimeType={document.mime_type}
+                />
+              ))}
+
+          {!partial &&
+            fields.map((field, index) => (
+              <DocumentFieldItem
+                key={index}
+                field={field}
+                mimeType={document.mime_type}
+              />
+            ))}
         </div>
       </CardContent>
     </Card>

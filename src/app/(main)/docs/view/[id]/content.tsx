@@ -15,7 +15,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-import type { Document } from "@/lib/supabase/types";
 import { useToast } from "@/hooks/use-toast";
 import { DocumentDetails } from "@/components/doc-details";
 import { Button } from "@/components/ui/button";
@@ -33,7 +32,11 @@ const passwordSchema = z.object({
   password: z.string().min(1, { message: "Password is required" }),
 });
 
-export function ViewDocumentContent({ document }: { document: Document }) {
+export function ViewDocumentContent({
+  document,
+}: {
+  document: DocumentDetails;
+}) {
   const { toast } = useToast();
   const [isValid, setIsValid] = useState(!Boolean(document.password));
   const [showPasswordDialog, setShowPasswordDialog] = useState(

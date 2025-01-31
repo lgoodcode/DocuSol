@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { captureException } from "@sentry/nextjs";
 
-import type { Document } from "@/lib/supabase/types";
 import { createServerClient } from "@/lib/supabase/server";
 import { DocumentNotFound } from "@/components/doc-not-found";
 
@@ -11,7 +10,7 @@ export const metadata: Metadata = {
   title: "View Document",
 };
 
-const getDocument = async (hash: string): Promise<Document | null> => {
+const getDocument = async (hash: string): Promise<DocumentDetails | null> => {
   const supabase = await createServerClient();
   const { error, data } = await supabase
     .from("documents")
@@ -26,10 +25,14 @@ const getDocument = async (hash: string): Promise<Document | null> => {
     });
   }
 
-  if (error && error.code === "PGRST116") {
+  if ((error && error.code === "PGRST116") || !data) {
     return null;
   }
-  return data;
+
+  return {
+    ...data,
+    password: !!data.password,
+  };
 };
 
 export default async function ViewDocPage({

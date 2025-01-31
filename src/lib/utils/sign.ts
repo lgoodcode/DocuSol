@@ -1,6 +1,5 @@
 import { PDFDocument, rgb } from "pdf-lib";
 
-export const ACCEPTED_FILE_TYPES = [".pdf", ".jpeg", ".png", ".jpg"];
 
 export async function uploadNewDocument(newDocument: NewDocument) {
   const formData = new FormData();

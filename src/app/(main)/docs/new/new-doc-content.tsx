@@ -15,8 +15,9 @@ import {
   FileText,
 } from "lucide-react";
 
+import { ACCEPTED_FILE_TYPES } from "@/constants";
 import { storeNewDocument } from "@/lib/utils";
-import { uploadNewDocument, sign, ACCEPTED_FILE_TYPES } from "@/lib/utils/sign";
+import { uploadNewDocument, sign } from "@/lib/utils/sign";
 import { formatFileSize } from "@/lib/utils/format-file-size";
 import { useDrawing } from "@/hooks/use-drawing";
 import { useFileUpload } from "@/hooks/use-file-upload";

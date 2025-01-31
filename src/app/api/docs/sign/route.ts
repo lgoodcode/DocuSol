@@ -17,16 +17,13 @@ export async function POST(request: Request) {
     const form = await request.formData();
     const id = form.get("id") as string | null;
     const signedDocument = form.get("signed_document") as File | null;
-    // const password = form.get("password") as string | null;
+    const password = form.get("password") as string | null;
 
     if (!id) {
       throw new Error("No id provided");
     } else if (!signedDocument) {
       throw new Error("No signed document provided");
     }
-    // else if (!password) {
-    //   throw new Error("No password provided");
-    // }
 
     // Check if document exists
     const supabase = await createServerClient();
@@ -46,22 +43,22 @@ export async function POST(request: Request) {
         },
         { status: 409 }
       );
+    } else if (document.password) {
+      if (!password) {
+        throw new Error("Password required for this document");
+      } else if (password !== document.password) {
+        throw new Error("Invalid password");
+      }
     }
-    // else if (document.password) {
-    //   if (!password) {
-    //     throw new Error("Password required for this document");
-    //   } else if (password !== document.password) {
-    //     throw new Error("Invalid password");
-    //   }
-    // }
 
     // Process signed document
+    const timestamp = new Date().toISOString();
     const signedDocumentBuffer = Buffer.from(
       await signedDocument.arrayBuffer()
     );
     const signedHash = crypto
       .createHash("sha256")
-      .update(signedDocumentBuffer)
+      .update(signedDocumentBuffer + timestamp + password || '')
       .digest("hex");
 
     // Send memo transaction for signed document
@@ -76,7 +73,7 @@ export async function POST(request: Request) {
         signed_hash: signedHash,
         signed_transaction_signature: transactionSignature,
         signed_document: bufferToHex(signedDocumentBuffer),
-        signed_at: new Date().toISOString(),
+        signed_at: timestamp,
       })
       .eq("id", id);
 

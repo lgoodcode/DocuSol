@@ -42,8 +42,8 @@ export const getHashFromTransactionSignature = async (tx: string) => {
   });
   const messages = txRes?.meta?.logMessages;
   if (Array.isArray(messages) && messages.length === 4) {
-    const memo = messages[1];
-    if (memo.startsWith("Program log: Memo (len 74):")) {
+    const memo = messages.find((m) => m.startsWith("Program log: Memo"));
+    if (memo) {
       const hash = memo.match(/FILE_HASH=([a-f0-9]{64})/i)?.[1];
       return hash ?? null;
     }
