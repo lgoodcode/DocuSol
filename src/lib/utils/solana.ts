@@ -110,3 +110,34 @@ export async function sendMemoTransaction(message: string): Promise<string> {
     throw new Error(`Failed to send transaction: ${error.message}`);
   }
 }
+
+export async function confirmTransaction(signature: string) {
+  const connection = new Connection(RPC_URL, "confirmed");
+  return await connection.confirmTransaction({
+    signature,
+    blockhash: (await connection.getLatestBlockhash()).blockhash,
+    lastValidBlockHeight: (await connection.getBlockHeight()) + 150,
+  });
+}
+
+export async function getLatestBlockSlot() {
+  const connection = new Connection(RPC_URL, "confirmed");
+  return await connection.getSlot();
+}
+
+export async function getConfirmedTransactionSlot(
+  signature: string
+): Promise<number> {
+  const connection = new Connection(RPC_URL, "confirmed");
+
+  try {
+    const tx = await connection.getTransaction(signature);
+    if (!tx?.slot) {
+      throw new Error("No slot found for transaction");
+    }
+    return tx.slot;
+  } catch (err) {
+    const error = err as Error;
+    throw new Error(`Failed to get slot for transaction: ${error.message}`);
+  }
+}

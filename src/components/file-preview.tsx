@@ -15,7 +15,7 @@ export function FilePreview({ file }: PreviewProps) {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(
-    window.innerWidth < 768 || IS_MOBILE
+    typeof window !== undefined ? window.innerWidth < 768 || IS_MOBILE : false
   );
 
   useEffect(() => {
@@ -27,7 +27,9 @@ export function FilePreview({ file }: PreviewProps) {
 
   useEffect(() => {
     const checkMobileWidth = () => {
-      setIsMobile(window.innerWidth < 768 || IS_MOBILE);
+      if (typeof window !== undefined) {
+        setIsMobile(window.innerWidth < 768 || IS_MOBILE);
+      }
     };
 
     checkMobileWidth();

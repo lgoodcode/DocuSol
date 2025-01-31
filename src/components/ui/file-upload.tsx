@@ -33,16 +33,23 @@ export const FileUpload = ({
   files,
   onChange,
   onRemove,
+  disabled,
 }: {
   files: File[];
   onChange: (files: File[]) => void;
   onRemove: (file: File) => void;
+  disabled?: boolean;
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const trashRef = useRef<HTMLButtonElement>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (disabled) {
+      e.preventDefault();
+      return;
+    }
+
     const target = e.target as Node;
     const isTrashButton = trashRef.current?.contains(target);
 
@@ -93,6 +100,7 @@ export const FileUpload = ({
     accept: ACCEPTED_FILE_TYPES,
     multiple: false,
     noClick: true,
+    disabled,
     maxSize: MAX_FILE_SIZE,
     onDrop: (acceptedFiles) => {
       onChange(acceptedFiles);
@@ -197,6 +205,7 @@ export const FileUpload = ({
                       variant="destructive"
                       size="icon"
                       onClick={handleRemove(file)}
+                      disabled={disabled}
                     >
                       <Trash2 className="w-5 h-5" />
                     </Button>

@@ -227,6 +227,7 @@ export function VerifyDocContent() {
                               type="search"
                               placeholder="Enter transaction signature"
                               className="w-full pl-4"
+                              disabled={form.formState.isSubmitting}
                             />
                           </FormControl>
                           <FormDescription className="text-sm">
@@ -243,6 +244,7 @@ export function VerifyDocContent() {
                           files={file ? [file] : []}
                           onChange={handleFileChange}
                           onRemove={handleFileRemove}
+                          disabled={form.formState.isSubmitting}
                         />
                       </div>
                       <FormMessage className="text-sm">
@@ -257,7 +259,7 @@ export function VerifyDocContent() {
                     className="w-full"
                     isLoading={form.formState.isSubmitting}
                   >
-                    Verify
+                    {form.formState.isSubmitting ? "Verifying..." : "Verify"}
                   </Button>
                 </div>
 

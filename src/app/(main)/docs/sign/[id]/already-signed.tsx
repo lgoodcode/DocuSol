@@ -27,7 +27,7 @@ export function DocAlreadySigned({ timestamp }: { timestamp: string }) {
           transition={{ delay: 0.2, duration: 0.5 }}
           className="w-full space-y-8"
         >
-          <p className="sm:text-lg max-w-sm md:max-w-lg lg:max-w-xl md:text-xl text-muted-foreground mx-auto">
+          <p className="sm:text-lg md:text-xl text-muted-foreground mx-auto">
             This document was already signed on{" "}
             {new Date(timestamp).toLocaleDateString("en-US", {
               weekday: "long",

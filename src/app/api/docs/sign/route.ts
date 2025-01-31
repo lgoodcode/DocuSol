@@ -1,10 +1,14 @@
-import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { captureException } from "@sentry/nextjs";
 
 import { createServerClient } from "@/lib/supabase/server";
-import { sendMemoTransaction } from "@/lib/utils/solana";
+import {
+  confirmTransaction,
+  getLatestBlockSlot,
+  sendMemoTransaction,
+} from "@/lib/utils/solana";
 import { bufferToHex } from "@/lib/utils";
+import { createFileHash } from "@/lib/utils/hashing";
 
 const ERRORS = {
   NO_ID: "No id provided",
@@ -12,12 +16,16 @@ const ERRORS = {
   DOCUMENT_NOT_FOUND: "Document not found",
   PASSWORD_REQUIRED: "Password required for this document",
   INVALID_PASSWORD: "Invalid password",
-  FAILED_TO_UPDATE_DOCUMENT: (error: string) => `Failed to update document: ${error}`,
+  TRANSACTION_FAILED: (error: Error) =>
+    `Transaction failed: ${error.message}`,
+  TRANSACTION_CONFIRMATION_FAILED: (error: Error) =>
+    `Transaction confirmation failed: ${error.message}`,
+  FAILED_TO_UPDATE_DOCUMENT: (error: string) =>
+    `Failed to update document: ${error}`,
 };
 
 export async function POST(request: Request) {
   try {
-    // Check content type
     const contentType = request.headers.get("content-type") || "";
     if (!contentType.includes("multipart/form-data")) {
       throw new Error("Invalid content type. Expected multipart/form-data");
@@ -61,18 +69,31 @@ export async function POST(request: Request) {
     }
 
     // Process signed document
-    const timestamp = new Date().toISOString();
+    const blockSlot = await getLatestBlockSlot();
     const signedDocumentBuffer = Buffer.from(
       await signedDocument.arrayBuffer()
     );
-    const signedHash = crypto
-      .createHash("sha256")
-      .update(signedDocumentBuffer + timestamp + password || '')
-      .digest("hex");
+    const signedHash = createFileHash(
+      signedDocumentBuffer,
+      blockSlot,
+      password
+    );
 
     // Send memo transaction for signed document
     const memoMessage = `SIGNED_FILE_HASH=${signedHash}`;
-    const transactionSignature = await sendMemoTransaction(memoMessage);
+
+    let transactionSignature: string;
+    try {
+      transactionSignature = await sendMemoTransaction(memoMessage);
+    } catch (error) {
+      throw new Error(ERRORS.TRANSACTION_FAILED(error as Error));
+    }
+
+    try {
+      await confirmTransaction(transactionSignature);
+    } catch (error) {
+      throw new Error(ERRORS.TRANSACTION_CONFIRMATION_FAILED(error as Error));
+    }
 
     // Update document with signed information
     const { error: updateError } = await supabase
@@ -82,7 +103,7 @@ export async function POST(request: Request) {
         signed_hash: signedHash,
         signed_transaction_signature: transactionSignature,
         signed_document: bufferToHex(signedDocumentBuffer),
-        signed_at: timestamp,
+        signed_at: new Date().toISOString(),
       })
       .eq("id", id);
 
