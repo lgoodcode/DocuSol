@@ -201,7 +201,6 @@ export function SignDocumentContent({
     }
 
     try {
-      debugger;
       const { error, txSignature, signedHash } = await uploadSignedDocument({
         id: document.id,
         signed_document: signedDoc,

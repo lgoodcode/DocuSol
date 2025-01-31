@@ -6,17 +6,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
 import { useForm } from "react-hook-form";
 import { captureException } from "@sentry/nextjs";
-import {
-  FileText,
-  Trash2,
-  ShieldCheck,
-  XCircle,
-  CheckCircle,
-} from "lucide-react";
+import { ShieldCheck, XCircle, CheckCircle } from "lucide-react";
 
 import { ACCEPTED_FILE_EXTENSIONS, MAX_FILE_SIZE } from "@/constants";
 import { isTransactionSignature } from "@/lib/utils/solana";
-import { useFileUpload } from "@/hooks/use-file-upload";
+import { FileUpload } from "@/components/ui/file-upload";
 import { DocumentDetails } from "@/components/doc-details";
 import { FilePreview } from "@/components/file-preview";
 import { useToast } from "@/hooks/use-toast";
@@ -63,9 +57,10 @@ const searchSchema = z.object({
 
 export function VerifyDocContent() {
   const { toast } = useToast();
-  const { file, handleFileChange, clearFile, fileInputRef } = useFileUpload();
-  const [documentDetails, setDocumentDetails] =
-    useState<VerifyDocument | null>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [documentDetails, setDocumentDetails] = useState<VerifyDocument | null>(
+    null
+  );
   const [success, setSuccess] = useState(false);
   const [errorResponseMessage, setErrorResponseMessage] = useState<
     string | null
@@ -75,14 +70,21 @@ export function VerifyDocContent() {
     mode: "onSubmit",
   });
 
-  // Update form value when file changes
-  useEffect(() => {
-    if (file) {
-      form.setValue("file", file as File, {
-        shouldValidate: true,
-      });
+  const handleFileChange = (files: File[] | null) => {
+    if (files && files.length > 0) {
+      setFile(files[0]);
+    } else {
+      setFile(null);
     }
-  }, [file, form]);
+  };
+
+  const handleFileRemove = () => {
+    setFile(null);
+    form.reset({
+      txSignature: form.getValues("txSignature"),
+      file: undefined,
+    });
+  };
 
   const onSearchSubmit = async ({
     txSignature,
@@ -113,9 +115,7 @@ export function VerifyDocContent() {
         setErrorResponseMessage(data.error);
         setDocumentDetails(null);
         return;
-      } else
-
-      if (!data.matches) {
+      } else if (!data.matches) {
         setErrorResponseMessage(
           "The file you provided does not match the file hash in the transaction signature provided."
         );
@@ -134,6 +134,15 @@ export function VerifyDocContent() {
       });
     }
   };
+
+  // Update form value when file changes
+  useEffect(() => {
+    if (file) {
+      form.setValue("file", file as File, {
+        shouldValidate: true,
+      });
+    }
+  }, [file, form]);
 
   return (
     <>
@@ -229,45 +238,13 @@ export function VerifyDocContent() {
                       )}
                     />
                     <div className="flex flex-col gap-2">
-                      <div className="w-ful flex flex-row gap-2">
-                        {/* File Input */}
-                        <Button
-                          variant="outline"
-                          className="w-full md:w-auto"
-                          disabled={form.formState.isSubmitting}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            fileInputRef.current?.click();
-                          }}
-                        >
-                          <FileText className="h-4 w-4" />
-                          Select File
-                        </Button>
-                        <input
-                          type="file"
-                          ref={fileInputRef}
+                      <div className="w-full flex flex-row gap-2">
+                        <FileUpload
+                          files={file ? [file] : []}
                           onChange={handleFileChange}
-                          accept={ACCEPTED_FILE_EXTENSIONS.join(",")}
-                          disabled={form.formState.isSubmitting}
-                          className="hidden"
+                          onRemove={handleFileRemove}
                         />
-                        {file && (
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="icon"
-                            onClick={clearFile}
-                            disabled={form.formState.isSubmitting}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            <span className="sr-only">Remove file</span>
-                          </Button>
-                        )}
                       </div>
-
-                      <FormDescription className="text-sm">
-                        Select the file to verify.
-                      </FormDescription>
                       <FormMessage className="text-sm">
                         {form.formState.errors.file?.message}
                       </FormMessage>
