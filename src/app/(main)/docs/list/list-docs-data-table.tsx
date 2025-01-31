@@ -93,8 +93,7 @@ export function DataTable({
             {table
               .getAllColumns()
               .filter((column) => column.getCanHide())
-              .map((column) => {
-                return (
+              .map((column) =>  (
                   <DropdownMenuCheckboxItem
                     key={column.id}
                     className="capitalize"
@@ -104,9 +103,8 @@ export function DataTable({
                     }
                   >
                     {column.id}
-                  </DropdownMenuCheckboxItem>
-                );
-              })}
+                </DropdownMenuCheckboxItem>
+              ))}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
