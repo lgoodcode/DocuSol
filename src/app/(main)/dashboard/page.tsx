@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
-import { DashboardContent } from "./content";
+// import { DashboardContent } from "./content";
+import { Maintenance } from "@/components/maintenance";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
 export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-8 py-8 max-w-5xl mx-auto">
-      <DashboardContent />
+      <Maintenance />
     </div>
   );
 }
