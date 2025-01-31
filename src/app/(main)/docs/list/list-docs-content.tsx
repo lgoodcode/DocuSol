@@ -92,7 +92,7 @@ const getDocuments = async (): Promise<ViewDocument[]> => {
   return documents;
 };
 
-export function DocsListContent() {
+export function ListDocsContent() {
   const [documents, setDocuments] = useState<ViewDocument[]>([]);
 
   useEffect(() => {

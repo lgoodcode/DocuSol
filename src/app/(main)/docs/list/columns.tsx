@@ -36,7 +36,7 @@ import {
   copyViewUrl,
   downloadDocument,
   deleteDocument,
-} from "./actions";
+} from "./list-docs-actions";
 
 type ActionType =
   | "view"
