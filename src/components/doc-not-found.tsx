@@ -22,7 +22,7 @@ export function DocumentNotFound() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
-          className="w-full max-w-sm space-y-8"
+          className="w-full space-y-8"
         >
           <p className="sm:text-lg md:text-xl text-muted-foreground mx-auto">
             The document you are looking for doesn&apos;t exist or has been
