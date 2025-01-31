@@ -4,41 +4,10 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
 import { getAllStoredDocuments } from "@/lib/utils";
-
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 
 import { DataTable } from "./list-docs-data-table";
-
-// const documents: Document[] = [
-//   {
-//     id: "1",
-//     name: "Contract-2024.pdf",
-//     createdAt: "2024-01-15T09:24:00Z",
-//     expiresAt: "2024-02-15T09:24:00Z",
-//     status: "pending",
-//     password: "123456",
-//     size: 1240000,
-//   },
-//   {
-//     id: "2",
-//     name: "Agreement.pdf",
-//     createdAt: "2024-01-14T15:30:00Z",
-//     expiresAt: null,
-//     status: "signed",
-//     password: null,
-//     size: 890000,
-//   },
-//   {
-//     id: "3",
-//     name: "NDA-2023.pdf",
-//     createdAt: "2023-12-20T11:00:00Z",
-//     expiresAt: "2024-01-20T11:00:00Z",
-//     status: "expired",
-//     password: "123456",
-//     size: 450000,
-//   },
-// ];
 
 const getDocuments = async (): Promise<ViewDocument[]> => {
   const ids = await getAllStoredDocuments().then((docs) =>
@@ -94,9 +63,12 @@ const getDocuments = async (): Promise<ViewDocument[]> => {
 
 export function ListDocsContent() {
   const [documents, setDocuments] = useState<ViewDocument[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    getDocuments().then((docs) => setDocuments(docs));
+    getDocuments()
+      .then(setDocuments)
+      .finally(() => setIsLoading(false));
   }, []);
 
   return (
@@ -120,7 +92,11 @@ export function ListDocsContent() {
       >
         <Card>
           <CardContent>
-            <DataTable data={documents} setData={setDocuments} />
+            <DataTable
+              data={documents}
+              setData={setDocuments}
+              isLoading={isLoading}
+            />
           </CardContent>
         </Card>
       </motion.div>

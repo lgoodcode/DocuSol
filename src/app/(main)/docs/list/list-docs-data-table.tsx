@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import {
+  ColumnDef,
   type ColumnFiltersState,
   type SortingState,
   type VisibilityState,
@@ -13,6 +14,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 import {
   Table,
@@ -36,9 +38,11 @@ import { useColumns } from "./columns";
 export function DataTable({
   data,
   setData,
+  isLoading,
 }: {
   data: ViewDocument[];
   setData: React.Dispatch<React.SetStateAction<ViewDocument[]>>;
+  isLoading: boolean;
 }) {
   const columns = useColumns((id: string) => {
     setData((prev) => prev.filter((doc) => doc.id !== id));
@@ -127,7 +131,31 @@ export function DataTable({
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, index) => (
+                <TableRow key={`loading-${index}`}>
+                  {table
+                    .getAllColumns()
+                    .slice(0, -1)
+                    .map((column: ColumnDef<ViewDocument>) => (
+                      <TableCell key={column.id}>
+                        <div
+                          className={cn("h-6 animate-pulse rounded bg-muted", {
+                            "w-[200px]": column.id === "name",
+                            "w-20":
+                              column.id === "status" ||
+                              column.id === "mimeType",
+                            "w-[120px]":
+                              column.id === "createdAt" ||
+                              column.id === "updatedAt",
+                            "w-8": column.id === "actions",
+                          })}
+                        />
+                      </TableCell>
+                    ))}
+                </TableRow>
+              ))
+            ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
