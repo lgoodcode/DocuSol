@@ -3,11 +3,17 @@
 import { PrivyProvider as AppPrivyProvider } from "@privy-io/react-auth";
 import { toSolanaWalletConnectors } from "@privy-io/react-auth/solana";
 
+import { IS_PROD } from "@/constants";
+
 const solanaConnectors = toSolanaWalletConnectors({
   shouldAutoConnect: false,
 });
 
 export function PrivyProvider({ children }: { children: React.ReactNode }) {
+  if (!IS_PROD) {
+    return <>{children}</>;
+  }
+
   return (
     <AppPrivyProvider
       appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID!}

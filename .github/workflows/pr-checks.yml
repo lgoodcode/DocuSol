@@ -7,7 +7,6 @@ on:
 env:
   RUNNER_TOOL_CACHE: /toolcache
   PNPM_CACHE_FOLDER: .cache/pnpm
-  NEXT_PUBLIC_PRIVY_APP_ID: "cl919191919191919191919191"
 
 jobs:
   test:
