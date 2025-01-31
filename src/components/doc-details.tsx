@@ -8,10 +8,8 @@ import {
   File,
   PenTool,
   Clock,
-  ExternalLink,
 } from "lucide-react";
 
-import { hexToBuffer, previewBlob } from "@/lib/utils";
 import { Card, CardContent, CardTitle, CardHeader } from "@/components/ui/card";
 import { CopyButton } from "@/components/ui/copy-button";
 import { BlobPreview } from "@/components/file-preview";
@@ -32,13 +30,10 @@ const formatValue = (value: any) => {
   return value.toString();
 };
 
-const handleViewDocument = (value: string, mimeType : string) => () => {
-  const rawData = hexToBuffer(value);
-  previewBlob(new Blob([rawData], { type: mimeType }));
-};
-
-
-const DocumentFieldItem = ({field, mimeType}: {
+const DocumentFieldItem = ({
+  field,
+  mimeType,
+}: {
   field: DocumentField;
   mimeType?: string;
 }) => (
@@ -48,22 +43,9 @@ const DocumentFieldItem = ({field, mimeType}: {
       <h2 className="ml-2 mr-1">{field.label}</h2>
     </div>
     <div className="flex flex-col">
-      {field.binary &&
-      field.value !== "Not available" && mimeType
-        ? (
+      {field.binary && field.value !== "Not available" && mimeType ? (
         <div className="flex flex-col justify-center items-center gap-2">
-          <BlobPreview
-            hexValue={field.value}
-            mimeType={mimeType}
-          />
-          <button
-            onClick={handleViewDocument(field.value, mimeType)}
-            className="flex items-center gap-2 text-blue-600 hover:text-blue-800 hover:underline"
-            aria-label="View document"
-          >
-            View in new tab
-            <ExternalLink className="h-4 w-4" />
-          </button>
+          <BlobPreview hexValue={field.value} mimeType={mimeType} />
         </div>
       ) : field?.canCopy ? (
         <div className="flex items-center gap-2 p-2 rounded-md bg-muted-foreground/10 dark:bg-muted/50">
@@ -79,8 +61,7 @@ const DocumentFieldItem = ({field, mimeType}: {
       )}
     </div>
   </div>
-)
-
+);
 
 export function DocumentDetails({
   document,
@@ -186,7 +167,6 @@ export function DocumentDetails({
     },
   ];
 
-
   return (
     <Card>
       <CardHeader>
@@ -201,12 +181,20 @@ export function DocumentDetails({
             fields
               .filter((field) => field.value !== "Not available")
               .map((field, index) => (
-                <DocumentFieldItem key={index} field={field} mimeType={document.mime_type} />
+                <DocumentFieldItem
+                  key={index}
+                  field={field}
+                  mimeType={document.mime_type}
+                />
               ))}
 
           {!partial &&
             fields.map((field, index) => (
-              <DocumentFieldItem key={index} field={field} mimeType={document.mime_type} />
+              <DocumentFieldItem
+                key={index}
+                field={field}
+                mimeType={document.mime_type}
+              />
             ))}
         </div>
       </CardContent>

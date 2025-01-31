@@ -111,16 +111,19 @@ export function VerifyDocContent() {
       const data = await response.json();
       if (data.error) {
         setErrorResponseMessage(data.error);
+        setDocumentDetails(null);
         return;
-      }
+      } else
 
       if (!data.matches) {
         setErrorResponseMessage(
           "The file you provided does not match the file hash in the transaction signature provided."
         );
+        setDocumentDetails(null);
         return;
       }
 
+      setSuccess(true);
       setDocumentDetails(data.verifyDocument as VerifyDocument);
     } catch (error) {
       captureException(error);
