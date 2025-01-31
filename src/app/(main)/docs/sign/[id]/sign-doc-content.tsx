@@ -201,7 +201,6 @@ export function SignDocumentContent({
     }
 
     try {
-      debugger;
       const { error, txSignature, signedHash } = await uploadSignedDocument({
         id: document.id,
         signed_document: signedDoc,
@@ -238,6 +237,8 @@ export function SignDocumentContent({
         description: "An error occurred while signing the document",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

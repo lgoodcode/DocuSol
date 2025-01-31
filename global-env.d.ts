@@ -15,10 +15,11 @@ export declare global {
     }
   }
 
-
-  type DocumentDetails = Partial<Omit<Document, 'password'> & {
-    password:  boolean
-  }>
+  type DocumentDetails = Partial<
+    Omit<Document, "password"> & {
+      password: boolean;
+    }
+  >;
 
   interface NewDocument {
     name: string;
@@ -41,6 +42,7 @@ export declare global {
     txSignature: string;
     unsignedHash: string;
   }
+
 
   interface DocumentToSign {
     id: string;

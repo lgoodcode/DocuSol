@@ -2,29 +2,46 @@ import type { Metadata } from "next";
 import { captureException } from "@sentry/nextjs";
 
 import { createServerClient } from "@/lib/supabase/server";
-import { ErrorPage } from "@/components/error-page";
+import { ErrorPageContent } from "@/components/error-page-content";
 import { DocumentNotFound } from "@/components/doc-not-found";
 
+import { DocAlreadySigned } from "./already-signed";
 import { SignDocumentContent } from "./sign-doc-content";
 
 export const metadata: Metadata = {
   title: "Sign Document",
 };
 
-type DocumentData =
+/**
+ * This is used server-side to check if already signed prior
+ * to sending to the client
+ */
+type DocumentCheckPriorToSign =
+  | null // If null, document not found
   | {
       error: Error;
     }
   | {
-      document: DocumentToSign | null;
+      // Need to send just the password so that it can be authenticated
+      // prior to retrieving and send the data to the client
       password: string | null;
+    }
+  | {
+      // The document is already signed and we want to inform the user
+      // without retrieving the document
+      is_signed: boolean;
+      signed_at: string;
+    }
+  | {
+      // No password and not signed, so we need to send the document
+      document: DocumentToSign;
     };
 
-const getDocument = async (id: string): Promise<DocumentData | null> => {
+const getDocument = async (id: string): Promise<DocumentCheckPriorToSign> => {
   const supabase = await createServerClient();
   const { data: initialData, error: intialError } = await supabase
     .from("documents")
-    .select("id,password")
+    .select("id,password,is_signed,signed_at")
     .eq("id", id)
     .single();
 
@@ -39,9 +56,16 @@ const getDocument = async (id: string): Promise<DocumentData | null> => {
     return { error: intialError };
   }
 
-  // Check if there's a password
+  // Check if there's a password and set signed data, if any
   if (initialData.password) {
-    return { document: null, password: initialData.password };
+    return {
+      password: initialData.password,
+    };
+  } else if (initialData.is_signed) {
+    return {
+      is_signed: true,
+      signed_at: initialData.signed_at!,
+    };
   }
 
   const { data: documentData, error: documentError } = await supabase
@@ -60,7 +84,9 @@ const getDocument = async (id: string): Promise<DocumentData | null> => {
     }
     return { error: documentError };
   }
-  return { document: documentData as DocumentToSign, password: null };
+  return {
+    document: documentData as DocumentToSign,
+  };
 };
 
 export default async function SignDocumentPage({
@@ -71,11 +97,12 @@ export default async function SignDocumentPage({
   const { id } = await params;
   const data = await getDocument(id);
 
-  if (!data) {
+  if (data === null) {
     return <DocumentNotFound />;
-    // @ts-expect-error - data is not null
-  } else if (data.error) {
-    return <ErrorPage />;
+  } else if ("error" in data) {
+    return <ErrorPageContent />;
+  } else if ("is_signed" in data) {
+    return <DocAlreadySigned timestamp={data.signed_at} />;
   }
 
   // @ts-expect-error - data is not null

@@ -32,11 +32,7 @@ const passwordSchema = z.object({
   password: z.string().min(1, { message: "Password is required" }),
 });
 
-export function ViewDocumentContent({
-  document,
-}: {
-  document: DocumentDetails;
-}) {
+export function ViewDocContent({ document }: { document: DocumentDetails }) {
   const { toast } = useToast();
   const [isValid, setIsValid] = useState(!Boolean(document.password));
   const [showPasswordDialog, setShowPasswordDialog] = useState(

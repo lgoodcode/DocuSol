@@ -2,17 +2,10 @@ import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { captureException } from "@sentry/nextjs";
 
+import { ACCEPTED_FILE_TYPES } from "@/constants";
 import { createServerClient } from "@/lib/supabase/server";
 import { sendMemoTransaction } from "@/lib/utils/solana";
 import { bufferToHex } from "@/lib/utils";
-
-const allowedMimeTypes = [
-  "application/pdf",
-  "image/jpeg",
-  "image/png",
-  "image/gif",
-  "image/webp",
-];
 
 export async function POST(request: Request) {
   try {
@@ -40,7 +33,7 @@ export async function POST(request: Request) {
       throw new Error("No original document provided");
     } else if (!unsignedDocument) {
       throw new Error("No unsigned document provided");
-    } else if (!allowedMimeTypes.includes(mimeType)) {
+    } else if (!Object.keys(ACCEPTED_FILE_TYPES).includes(mimeType)) {
       throw new Error("Invalid file type");
     }
 
