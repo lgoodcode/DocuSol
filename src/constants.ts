@@ -1,5 +1,6 @@
 export const IS_PROD = process.env.NODE_ENV === "production";
 export const IS_PREVIEW = process.env.NEXT_PUBLIC_VERCEL_ENV === "preview";
+export const IS_CI = process.env.CI === "true";
 
 export const IS_MOBILE = () => {
   if (typeof window === "undefined") return false;
@@ -15,7 +16,8 @@ export const ACCEPTED_FILE_TYPES: Record<string, string[]> = {
   "image/jpeg": [".jpeg"],
   "image/jpg": [".jpg"],
 };
-export const ACCEPTED_FILE_EXTENSIONS = Object.values(ACCEPTED_FILE_TYPES).flat();
+export const ACCEPTED_FILE_EXTENSIONS =
+  Object.values(ACCEPTED_FILE_TYPES).flat();
 
 export const MAX_FILE_SIZE = 20 * 1024 * 1024; // 10 MB
 
