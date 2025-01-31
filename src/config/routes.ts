@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard,
+  // LayoutDashboard,
   Folder,
   PenTool,
   CopyPlus,
@@ -27,12 +27,12 @@ export const navRoutes: Route[] = [
     Icon: Plus,
     description: "Create a new document.",
   },
-  {
-    name: "Dashboard",
-    path: "/dashboard",
-    Icon: LayoutDashboard,
-    description: "View your documents and templates.",
-  },
+  // {
+  //   name: "Dashboard",
+  //   path: "/dashboard",
+  //   Icon: LayoutDashboard,
+  //   description: "View your documents and templates.",
+  // },
   {
     name: "Documents",
     path: "/docs/list",
