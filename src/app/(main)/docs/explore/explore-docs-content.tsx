@@ -49,7 +49,7 @@ const passwordSchema = z.object({
   password: z.string().min(1, { message: "Password is required" }),
 });
 
-export function ExploreContent() {
+export function ExploreDocsContent() {
   const { toast } = useToast();
   const [document, setDocument] = useState<DocumentDetails | null>(null);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);

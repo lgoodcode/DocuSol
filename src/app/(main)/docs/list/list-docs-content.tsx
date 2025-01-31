@@ -8,7 +8,7 @@ import { getAllStoredDocuments } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 
-import { DataTable } from "./data-table";
+import { DataTable } from "./list-docs-data-table";
 
 // const documents: Document[] = [
 //   {
@@ -92,7 +92,7 @@ const getDocuments = async (): Promise<ViewDocument[]> => {
   return documents;
 };
 
-export function ViewContent() {
+export function DocsListContent() {
   const [documents, setDocuments] = useState<ViewDocument[]>([]);
 
   useEffect(() => {

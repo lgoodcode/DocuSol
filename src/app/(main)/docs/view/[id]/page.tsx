@@ -4,7 +4,7 @@ import { captureException } from "@sentry/nextjs";
 import { createServerClient } from "@/lib/supabase/server";
 import { DocumentNotFound } from "@/components/doc-not-found";
 
-import { ViewDocumentContent } from "./content";
+import { ViewDocContent } from "./view-doc-content";
 
 export const metadata: Metadata = {
   title: "View Document",
@@ -44,11 +44,7 @@ export default async function ViewDocPage({
   const document = await getDocument(id);
   return (
     <div className="container max-w-4xl mx-auto py-8 space-y-8">
-      {document ? (
-        <ViewDocumentContent document={document} />
-      ) : (
-        <DocumentNotFound />
-      )}
+      {document ? <ViewDocContent document={document} /> : <DocumentNotFound />}
     </div>
   );
 }

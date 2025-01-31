@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-// import { DashboardContent } from "./content";
+// import { DashboardContent } from "./dashboard-content";
 import { Maintenance } from "@/components/maintenance";
 
 export const metadata: Metadata = {
