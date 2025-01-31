@@ -1,18 +1,29 @@
-import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { captureException } from "@sentry/nextjs";
 
 import { ACCEPTED_FILE_TYPES } from "@/constants";
 import { createServerClient } from "@/lib/supabase/server";
-import { sendMemoTransaction } from "@/lib/utils/solana";
+import { getLatestBlockSlot, sendMemoTransaction } from "@/lib/utils/solana";
 import { bufferToHex } from "@/lib/utils";
+import { createFileHash } from "@/lib/utils/hashing";
+
+const ERRORS = {
+  INVALID_CONTENT_TYPE: "Invalid content type. Expected multipart/form-data",
+  NO_NAME: "No name provided",
+  NO_ORIGINAL_FILENAME: "No original filename provided",
+  NO_MIME_TYPE: "No mime type provided",
+  NO_ORIGINAL_DOCUMENT: "No original document provided",
+  NO_UNSIGNED_DOCUMENT: "No unsigned document provided",
+  INVALID_FILE_TYPE: "Invalid file type",
+  TRANSACTION_FAILED: (error: Error) => `Transaction failed: ${error.message}`,
+};
 
 export async function POST(request: Request) {
   try {
     // Check content type
     const contentType = request.headers.get("content-type") || "";
     if (!contentType.includes("multipart/form-data")) {
-      throw new Error("Invalid content type. Expected multipart/form-data");
+      throw new Error(ERRORS.INVALID_CONTENT_TYPE);
     }
 
     const form = await request.formData();
@@ -24,37 +35,41 @@ export async function POST(request: Request) {
     const unsignedDocument = form.get("unsigned_document") as File | null;
 
     if (!name) {
-      throw new Error("No name provided");
+      throw new Error(ERRORS.NO_NAME);
     } else if (!originalFilename) {
-      throw new Error("No original filename provided");
+      throw new Error(ERRORS.NO_ORIGINAL_FILENAME);
     } else if (!mimeType) {
       throw new Error("No mime type provided");
     } else if (!originalDocument) {
-      throw new Error("No original document provided");
+      throw new Error(ERRORS.NO_ORIGINAL_DOCUMENT);
     } else if (!unsignedDocument) {
-      throw new Error("No unsigned document provided");
+      throw new Error(ERRORS.NO_UNSIGNED_DOCUMENT);
     } else if (!Object.keys(ACCEPTED_FILE_TYPES).includes(mimeType)) {
-      throw new Error("Invalid file type");
+      throw new Error(ERRORS.INVALID_FILE_TYPE);
     }
 
-    // Add unique timestamp to the document to prevent duplicate hashes
-    // in the event of a hash collision
-    const timestamp = new Date().toISOString();
-    // Get file data and hash
+    const blockSlot = await getLatestBlockSlot();
     const originalDocumentBuffer = Buffer.from(
       await originalDocument.arrayBuffer()
     );
     const unsignedDocumentBuffer = Buffer.from(
       await unsignedDocument.arrayBuffer()
     );
-    const unsignedDocumentHash = crypto
-      .createHash("sha256")
-      .update(unsignedDocumentBuffer + timestamp + password)
-      .digest("hex");
+    const unsignedDocumentHash = createFileHash(
+      unsignedDocumentBuffer,
+      blockSlot,
+      password
+    );
 
     // Create memo message and send transaction
     const memoMessage = `FILE_HASH=${unsignedDocumentHash}`;
-    const txSignature = await sendMemoTransaction(memoMessage);
+
+    let txSignature: string;
+    try {
+      txSignature = await sendMemoTransaction(memoMessage);
+    } catch (error) {
+      throw new Error(ERRORS.TRANSACTION_FAILED(error as Error));
+    }
 
     // Store document in database
     const supabase = await createServerClient();
@@ -69,7 +84,7 @@ export async function POST(request: Request) {
         original_filename: originalFilename,
         original_document: bufferToHex(originalDocumentBuffer),
         unsigned_document: bufferToHex(unsignedDocumentBuffer),
-        created_at: timestamp,
+        created_at: new Date().toISOString(),
       })
       .select("id")
       .single();

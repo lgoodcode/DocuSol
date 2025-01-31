@@ -303,10 +303,10 @@ export function NewDocumentContent() {
                         <FormLabel>Password Protection (Optional)</FormLabel>
                         <FormControl>
                           <Input
+                            {...field}
                             type="password"
                             placeholder="Enter password"
                             autoComplete="off"
-                            {...field}
                             disabled={form.formState.isSubmitting}
                           />
                         </FormControl>
@@ -327,10 +327,10 @@ export function NewDocumentContent() {
                           <FormLabel>Confirm Password</FormLabel>
                           <FormControl>
                             <Input
+                              {...field}
                               type="password"
                               placeholder="Enter password"
                               autoComplete="off"
-                              {...field}
                               disabled={form.formState.isSubmitting}
                             />
                           </FormControl>
@@ -458,8 +458,12 @@ export function NewDocumentContent() {
                   isLoading={form.formState.isSubmitting}
                   disabled={!files.length}
                 >
-                  <Save className="h-4 w-4" />
-                  Save Document
+                  {!form.formState.isSubmitting && (
+                    <Save className="h-4 w-4" />
+                  )}
+                  {form.formState.isSubmitting
+                    ? "Uploading..."
+                    : "Upload Document"}
                 </Button>
               </CardFooter>
             </Card>
