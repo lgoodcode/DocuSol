@@ -43,8 +43,8 @@ export function HeroImage({ theme }: { theme: string }) {
             <Image
               src={
                 theme === "dark"
-                  ? "/img/landing/new_document.webp"
-                  : "/img/landing/new_document_light.webp"
+                  ? "/img/landing/new_doc.webp"
+                  : "/img/landing/new_doc_light.webp"
               }
               alt="DocuSol Dashboard Preview"
               width={823}

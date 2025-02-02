@@ -220,7 +220,7 @@ export function HomeContent() {
 
               {/* What is DocuSol? */}
               <motion.section
-                className="relative my-24 lg:top-16 border-t border-border"
+                className="relative my-24 lg:mt-0 lg:top-16 border-t border-border"
                 variants={sectionVariants}
                 initial="hidden"
                 whileInView="visible"
