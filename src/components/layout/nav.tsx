@@ -37,9 +37,9 @@ export function Nav() {
       <MobileMenu authenticated={authenticated} onAuthClick={handleAuthClick} />
       <aside className="w-[60px] py-4 hidden md:flex flex-col border-r border-stone-300 dark:border-border sticky top-0 h-screen z-50">
         <div className="flex flex-col flex-1">
-          <Link href="/" className="p-3 w-full h-12 mb-3">
+          <Link href="/" className="w-full h-12 mb-3">
             <Image
-              src="/img/docusol_icon.webp"
+              src="/img/branding/logo.webp"
               alt="DocuSol"
               width={318}
               height={85}

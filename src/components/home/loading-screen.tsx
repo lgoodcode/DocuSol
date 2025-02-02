@@ -30,7 +30,7 @@ export function LoadingScreen({ onAnimationComplete }: LoadingScreenProps) {
         className="flex flex-col items-center space-y-4"
       >
         <motion.div
-          className="relative w-[120px] h-[120px]"
+          className="relative w-[144px] h-[144px]"
           animate={{
             scale: [1, 1.05, 1],
             rotate: [0, 0, 0],
@@ -42,10 +42,10 @@ export function LoadingScreen({ onAnimationComplete }: LoadingScreenProps) {
           }}
         >
           <Image
-            src="/img/docusol_icon.webp"
+            src="/img/branding/logo.webp"
             alt="DocuSol Logo"
-            fill
             className="object-contain"
+            fill
           />
         </motion.div>
         <motion.div className="h-2 bg-primary/20 rounded-full w-full overflow-hidden">
