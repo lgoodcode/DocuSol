@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { captureException } from "@sentry/nextjs";
 
-import { ACCEPTED_FILE_TYPES, MAX_FILE_SIZE_MB } from "@/constants";
+import { ACCEPTED_FILE_TYPES } from "@/constants";
 import { createServerClient } from "@/lib/supabase/server";
 import { getLatestBlockSlot, sendMemoTransaction } from "@/lib/utils/solana";
 import { bufferToHex } from "@/lib/utils";
@@ -9,7 +9,7 @@ import { createFileHash } from "@/lib/utils/hashing";
 
 export const config = {
   api: {
-    responseLimit: `${MAX_FILE_SIZE_MB}mb`,
+    responseLimit: "20mb",
   },
 };
 
