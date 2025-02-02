@@ -4,7 +4,7 @@ import { AppProgressBar as ProgressBar } from "next-nprogress-bar";
 import { useTheme } from "next-themes";
 
 import { Nav } from "@/components/layout/nav";
-import { DatabaseWipeDialog } from "@/components/database-wipe-dialog";
+// import { DatabaseWipeDialog } from "@/components/database-wipe-dialog";
 
 export default function MainLayout({
   children,
@@ -28,7 +28,7 @@ export default function MainLayout({
           <div className="fixed inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-black/5 dark:from-primary/[0.03] to-transparent" />
         </div>
 
-        <DatabaseWipeDialog />
+        {/* <DatabaseWipeDialog /> */}
 
         <Nav />
         <main className="relative z-10 flex-1 px-6 mt-[64px] md:mt-0">

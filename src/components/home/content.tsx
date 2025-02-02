@@ -8,16 +8,16 @@ import { useTheme } from "next-themes";
 import { AppProgressBar as ProgressBar } from "next-nprogress-bar";
 import { Bolt, Bot, Lock } from "lucide-react";
 
+import { heroDescription } from "@/config/site";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Footer } from "@/components/home/footer";
 import { InteractiveHoverButton } from "@/components/home/interactive-hover-button";
 import { LoadingScreen } from "@/components/home/loading-screen";
 import { HeroImage } from "@/components/home/hero-image";
-import { Marquee } from "@/components/ui/marquee";
+import { MarqueeImages } from "@/components/home/marquee-images";
 import { Boxes } from "@/components/home/background-boxes";
 import { DockerContainer } from "@/components/home/docker";
-import { PoweredByLogos } from "@/components/home/powered-by-logos";
 
 const contentVariants = {
   hidden: {
@@ -166,22 +166,22 @@ export function HomeContent() {
               className="relative max-w-screen overflow-hidden"
             >
               {/* Hero Section */}
-              <section className="relative max-w-[1720px] mx-auto grid grid-cols-1 xl:grid-cols-2 min-h-[80dvh]">
+              <section className="relative max-w-[1720px] mx-auto grid grid-cols-1 xl:grid-cols-2 min-h-[85dvh]">
                 {/* Left Column */}
                 <div className="px-8 md:px-16 py-12 pt-28 md:pt-20 lg:px-32 !pb-28 xl:p-36 xl:pt-24 xl:pr-16 2xl:p-24 flex flex-col relative z-10">
-                  <div className="flex items-center mb-6">
+                  <div className="flex items-center mb-2 md:mb-0">
                     <Badge>Beta</Badge>
                   </div>
 
                   {/* Left Column Content */}
                   <motion.div variants={childVariants} className="space-y-8">
-                    <div className="flex items-center gap-4">
-                      <div className="w-[64px] h-[64px] md:w-[92px] md:h-[92px] xl:w-[108px] xl:h-[108px] flex items-center justify-center">
+                    <div className="flex items-center">
+                      <div className="w-[64px] h-[64px] md:w-[92px] md:h-[92px] xl:w-[120px] xl:h-[120px] flex items-center justify-center">
                         <Image
-                          src="/img/docusol_icon.webp"
+                          src="/img/branding/logo.webp"
                           alt="DocuSol Logo"
-                          width={120}
-                          height={48}
+                          width={500}
+                          height={500}
                           className="w-full h-full object-contain"
                           priority
                         />
@@ -192,16 +192,17 @@ export function HomeContent() {
                     </div>
 
                     <p className="text-xl md:text-3xl text-muted-foreground font-light">
-                      A secure document signing and sharing app built on Solana
-                      and powered by DeepSeek-R1.
+                      {heroDescription}
                     </p>
 
                     <p className="text-base md:text-lg text-muted-foreground">
-                      Generate, sign, and share documents securely on-chain for
-                      free.
+                      Upload your documents, to share, sign, and have file
+                      hashes of signed documents stored on the blockchain, where
+                      it is immutable and tamper-proof.
                     </p>
 
-                    <PoweredByLogos />
+                    {/* Replace with something here? */}
+                    {/* <PoweredByLogos /> */}
 
                     <div className="flex flex-col sm:flex-row gap-4">
                       <Link href="/docs/new">
@@ -223,19 +224,16 @@ export function HomeContent() {
                 variants={sectionVariants}
                 initial="hidden"
                 whileInView="visible"
-                viewport={{ once: true, margin: "-100px" }}
+                viewport={{ once: true, margin: "-200px" }}
               >
                 <h2 className="text-center p-4 text-4xl font-semibold border-b border-border">
                   What is DocuSol?
                 </h2>
                 <div className="max-w-2xl mx-auto my-24 pb-24 text-center px-8">
                   <h3 className="text-2xl font-semibold">
-                    A powerful platform that seamlessly integrates
-                    DeepSeek-R1&apos;s advanced AI document generation with
-                    secure blockchain-based signing and sharing. Create, edit,
-                    and manage documents with state-of-the-art AI assistance,
-                    while ensuring tamper-proof security and streamlined
-                    collaboration through distributed ledger technology.
+                    A simple and secure platform that gives you decentralized
+                    signatures, allowing you to self-verify signed documents
+                    integrity on the blockchain.
                   </h3>
                 </div>
               </motion.section>
@@ -258,8 +256,7 @@ export function HomeContent() {
                       DocuSol empowers you with
                     </p>
                     <h3 className="text-3xl font-semibold">
-                      AI-driven document creation, secure signing, and
-                      blockchain-based sharing capabilities.
+                      Secure decentralized and transparent signatures
                     </h3>
                   </div>
                   <div className="grid grid-cols-2 gap-8">
@@ -285,9 +282,10 @@ export function HomeContent() {
                       <div className="bg-primary/20 p-2 w-fit rounded-lg">
                         <Bolt className="w-6 h-6 text-primary" />
                       </div>
-                      <h4 className="font-semibold">Blockchain Storage</h4>
+                      <h4 className="font-semibold">Blockchain Transparency</h4>
                       <p className="text-sm text-muted-foreground">
-                        Store and share documents on the blockchain
+                        Files hashes of signed documents are stored on the
+                        blockchain, tamper-proof and immutable.
                       </p>
                     </div>
                     <div className="space-y-4">
@@ -318,22 +316,7 @@ export function HomeContent() {
               {/* Marquee */}
               <section className="mt-24 mb-12">
                 <div className="relative flex h-[500px] w-full flex-col items-center justify-center overflow-hidden border-t border-b border-border bg-transparent">
-                  <Marquee className="[--duration:20s] p-0">
-                    {[
-                      "/img/landing/dashboard.webp",
-                      "/img/landing/documents.webp",
-                      "/img/landing/new_document.webp",
-                    ].map((src) => (
-                      <Image
-                        key={src}
-                        src={src}
-                        alt="DocuSol images"
-                        width={823}
-                        height={616}
-                        className="relative z-0 w-full object-contain"
-                      />
-                    ))}
-                  </Marquee>
+                  <MarqueeImages theme={theme} />
 
                   {/* Left gradient overlay */}
                   <div className="pointer-events-none absolute inset-y-0 left-0 w-[9%] sm:w-1/6 md:w-1/4 xl:w-1/4 bg-gradient-to-r from-background via-background/80 to-transparent dark:from-background/95 dark:via-background/75 dark:to-transparent"></div>
@@ -358,8 +341,8 @@ export function HomeContent() {
                     </h2>
                     <div className="flex flex-col gap-6">
                       <p className="text-xl text-muted-foreground font-medium">
-                        Build your documents with AI and sign them on the
-                        blockchain
+                        Sign your documents and have the integrity of those
+                        signatures stored on the blockchain.
                       </p>
                       <Link href="/docs/new">
                         <Button

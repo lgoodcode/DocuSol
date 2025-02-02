@@ -456,7 +456,7 @@ export function SignDocumentContent({
                 disabled={!hasDrawn && !typedSignature}
                 onClick={handleSign}
               >
-                Sign Document
+                {isSubmitting ? "Signing..." : "Sign Document"}
               </Button>
             </CardFooter>
           </Card>

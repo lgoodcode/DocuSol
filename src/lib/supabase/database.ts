@@ -29,7 +29,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          created_at?: string
+          created_at: string
           id?: string
           is_signed?: boolean
           mime_type: string

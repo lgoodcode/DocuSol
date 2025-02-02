@@ -144,7 +144,7 @@ export default function DocsPage() {
           <div className="flex items-center gap-4 justify-center mb-16">
             <div className="w-[64px] h-[64px] md:w-[92px] md:h-[92px] xl:w-[108px] xl:h-[108px] flex items-center justify-center">
               <Image
-                src="/img/docusol_icon.webp"
+                src="/img/branding/logo.webp"
                 alt="DocuSol Logo"
                 width={120}
                 height={48}

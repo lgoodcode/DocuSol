@@ -4,7 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { PenTool } from "lucide-react";
 
-import { SUPPORT_EMAIL, SUPPORT_DISCORD_URL } from "@/constants";
+import { SUPPORT_EMAIL, DISCORD_URL } from "@/constants";
 
 export function DocAlreadySigned({ timestamp }: { timestamp: string }) {
   return (
@@ -49,7 +49,7 @@ export function DocAlreadySigned({ timestamp }: { timestamp: string }) {
             </Link>{" "}
             or via the ticketing system in our{" "}
             <Link
-              href={SUPPORT_DISCORD_URL}
+              href={DISCORD_URL}
               target="_blank"
               className="text-primary underline"
             >

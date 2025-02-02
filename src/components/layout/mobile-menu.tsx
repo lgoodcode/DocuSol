@@ -96,7 +96,7 @@ export function MobileMenu({
         >
           <div className="flex items-center gap-2">
             <Image
-              src="/img/docusol_icon.webp"
+              src="/img/branding/logo.webp"
               alt="DocuSol"
               width={32}
               height={32}
@@ -172,7 +172,7 @@ export function MobileMenu({
               {/* <div className="flex items-center justify-between border-b border-border pb-4">
                 <div className="p-2 w-12 h-12 flex items-center gap-2">
                   <Image
-                    src="/img/docusol_icon.webp"
+                    src="/img/branding/logo.webp"
                     alt="DocuSol"
                     width={318}
                     height={85}

@@ -8,8 +8,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { captureException } from "@sentry/nextjs";
 import { UploadIcon, Pencil, Save, Trash2, Lock, FileText } from "lucide-react";
 
+import { MAX_FILE_SIZE } from "@/constants";
 import { storeNewDocument } from "@/lib/utils";
 import { uploadNewDocument, sign } from "@/lib/utils/sign";
+import { formatFileSize } from "@/lib/utils/format-file-size";
 import { useDrawing } from "@/hooks/use-drawing";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -171,12 +173,19 @@ export function NewDocumentContent() {
       setFiles([]);
       clearCanvas();
       setTypedSignature("");
-    } catch (error) {
+    } catch (err) {
+      const error = err as Error;
       console.error(error);
       captureException(error);
+
+      const isTooLarge = error.message.includes("Request Entity Too Large");
       toast({
         title: "Error",
-        description: "An error occurred while uploading the document",
+        description: isTooLarge
+          ? `The file is too large. Please try a smaller file. (Max file size: ${formatFileSize(
+              MAX_FILE_SIZE
+            )})`
+          : "An error occurred while uploading the document",
         variant: "destructive",
       });
     }
@@ -458,9 +467,7 @@ export function NewDocumentContent() {
                   isLoading={form.formState.isSubmitting}
                   disabled={!files.length}
                 >
-                  {!form.formState.isSubmitting && (
-                    <Save className="h-4 w-4" />
-                  )}
+                  {!form.formState.isSubmitting && <Save className="h-4 w-4" />}
                   {form.formState.isSubmitting
                     ? "Uploading..."
                     : "Upload Document"}

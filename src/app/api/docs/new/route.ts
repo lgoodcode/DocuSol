@@ -7,6 +7,12 @@ import { getLatestBlockSlot, sendMemoTransaction } from "@/lib/utils/solana";
 import { bufferToHex } from "@/lib/utils";
 import { createFileHash } from "@/lib/utils/hashing";
 
+export const config = {
+  api: {
+    responseLimit: "20mb",
+  },
+};
+
 const ERRORS = {
   INVALID_CONTENT_TYPE: "Invalid content type. Expected multipart/form-data",
   NO_NAME: "No name provided",

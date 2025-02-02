@@ -10,14 +10,19 @@ import {
 import { bufferToHex } from "@/lib/utils";
 import { createFileHash } from "@/lib/utils/hashing";
 
+export const config = {
+  api: {
+    responseLimit: "20mb",
+  },
+};
+
 const ERRORS = {
   NO_ID: "No id provided",
   NO_SIGNED_DOCUMENT: "No signed document provided",
   DOCUMENT_NOT_FOUND: "Document not found",
   PASSWORD_REQUIRED: "Password required for this document",
   INVALID_PASSWORD: "Invalid password",
-  TRANSACTION_FAILED: (error: Error) =>
-    `Transaction failed: ${error.message}`,
+  TRANSACTION_FAILED: (error: Error) => `Transaction failed: ${error.message}`,
   TRANSACTION_CONFIRMATION_FAILED: (error: Error) =>
     `Transaction confirmation failed: ${error.message}`,
   FAILED_TO_UPDATE_DOCUMENT: (error: string) =>
