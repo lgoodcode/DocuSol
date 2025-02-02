@@ -15,7 +15,7 @@ import { Footer } from "@/components/home/footer";
 import { InteractiveHoverButton } from "@/components/home/interactive-hover-button";
 import { LoadingScreen } from "@/components/home/loading-screen";
 import { HeroImage } from "@/components/home/hero-image";
-import { Marquee } from "@/components/ui/marquee";
+import { MarqueeImages } from "@/components/home/marquee-images";
 import { Boxes } from "@/components/home/background-boxes";
 import { DockerContainer } from "@/components/home/docker";
 
@@ -166,10 +166,10 @@ export function HomeContent() {
               className="relative max-w-screen overflow-hidden"
             >
               {/* Hero Section */}
-              <section className="relative max-w-[1720px] mx-auto grid grid-cols-1 xl:grid-cols-2 min-h-[80dvh] lg:min-h-[70dvh]">
+              <section className="relative max-w-[1720px] mx-auto grid grid-cols-1 xl:grid-cols-2 min-h-[85dvh]">
                 {/* Left Column */}
                 <div className="px-8 md:px-16 py-12 pt-28 md:pt-20 lg:px-32 !pb-28 xl:p-36 xl:pt-24 xl:pr-16 2xl:p-24 flex flex-col relative z-10">
-                  <div className="flex items-center mb-6">
+                  <div className="flex items-center">
                     <Badge>Beta</Badge>
                   </div>
 
@@ -196,9 +196,9 @@ export function HomeContent() {
                     </p>
 
                     <p className="text-base md:text-lg text-muted-foreground">
-                      Upload your documents, to share, sign, and have the
-                      integrity of those signatures and signed files stored on
-                      the blockchain, where it is immutable and tamper-proof.
+                      Upload your documents, to share, sign, and have file
+                      hashes of signed documents stored on the blockchain, where
+                      it is immutable and tamper-proof.
                     </p>
 
                     {/* Replace with something here? */}
@@ -220,11 +220,11 @@ export function HomeContent() {
 
               {/* What is DocuSol? */}
               <motion.section
-                className="relative my-24 lg:mt-0 lg:top-16 border-t border-border"
+                className="relative my-24 lg:top-16 border-t border-border"
                 variants={sectionVariants}
                 initial="hidden"
                 whileInView="visible"
-                viewport={{ once: true, margin: "-300px" }}
+                viewport={{ once: true, margin: "-200px" }}
               >
                 <h2 className="text-center p-4 text-4xl font-semibold border-b border-border">
                   What is DocuSol?
@@ -316,22 +316,7 @@ export function HomeContent() {
               {/* Marquee */}
               <section className="mt-24 mb-12">
                 <div className="relative flex h-[500px] w-full flex-col items-center justify-center overflow-hidden border-t border-b border-border bg-transparent">
-                  <Marquee className="[--duration:20s] p-0">
-                    {[
-                      "/img/landing/dashboard.webp",
-                      "/img/landing/documents.webp",
-                      "/img/landing/new_document.webp",
-                    ].map((src) => (
-                      <Image
-                        key={src}
-                        src={src}
-                        alt="DocuSol images"
-                        width={823}
-                        height={616}
-                        className="relative z-0 w-full object-contain"
-                      />
-                    ))}
-                  </Marquee>
+                  <MarqueeImages theme={theme} />
 
                   {/* Left gradient overlay */}
                   <div className="pointer-events-none absolute inset-y-0 left-0 w-[9%] sm:w-1/6 md:w-1/4 xl:w-1/4 bg-gradient-to-r from-background via-background/80 to-transparent dark:from-background/95 dark:via-background/75 dark:to-transparent"></div>

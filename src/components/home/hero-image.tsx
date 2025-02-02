@@ -16,7 +16,7 @@ export function HeroImage({ theme }: { theme: string }) {
         }}
         className="hidden xl:block absolute xl:-right-[22%] 2xl:-right-[13%] 3xl:-right-[10%] will-change-transform"
       >
-        <div className="p-4 md:p-16 relative z-10 [perspective:2000px]">
+        <div className="p-4 md:scale-[73%] lg:scale-[90%] relative z-10 [perspective:2000px]">
           <motion.div
             className="
               relative rounded-xl overflow-hidden
@@ -47,8 +47,8 @@ export function HeroImage({ theme }: { theme: string }) {
                   : "/img/landing/new_doc_light.webp"
               }
               alt="DocuSol Dashboard Preview"
-              width={823}
-              height={616}
+              width={923}
+              height={766}
               className="object-contain w-full relative z-0"
               priority
             />
@@ -95,12 +95,12 @@ export function HeroImage({ theme }: { theme: string }) {
             <Image
               src={
                 theme === "dark"
-                  ? "/img/landing/small_new_document.webp"
-                  : "/img/landing/small_new_document_light.webp"
+                  ? "/img/landing/new_doc.webp"
+                  : "/img/landing/new_doc_light.webp"
               }
               alt="DocuSol Dashboard Preview"
-              width={823}
-              height={616}
+              width={1025}
+              height={851}
               className="object-contain w-full relative z-0"
               priority
             />
