@@ -356,8 +356,8 @@ export function HomeContent() {
                     </h2>
                     <div className="flex flex-col gap-6">
                       <p className="text-xl text-muted-foreground font-medium">
-                        Build your documents with AI and sign them on the
-                        blockchain
+                        Sign your documents and have the integrity of those
+                        signatures stored on the blockchain.
                       </p>
                       <Link href="/docs/new">
                         <Button

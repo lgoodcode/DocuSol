@@ -25,8 +25,11 @@ export const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024;
 export const GITHUB_URL = "";
 export const CONTRACT_ADDRESS = "2thfFEH6nR7Qbqd315Dt9BjSJRau9YQ4mmBhkAuepump";
 export const X_URL = "https://x.com/docusol_";
-export const PUMPFUN_URL = "";
-export const DEXSCREENER_URL = "";
+export const DISCORD_URL = "https://discord.com/invite/docusol";
+export const LINKTREE_URL = "https://linktr.ee/docusol";
+export const PUMPFUN_URL =
+  "https://pump.fun/coin/2thfFEH6nR7Qbqd315Dt9BjSJRau9YQ4mmBhkAuepump";
+export const DEXSCREENER_URL =
+  "https://dexscreener.com/solana/2thfFEH6nR7Qbqd315Dt9BjSJRau9YQ4mmBhkAuepump";
 
 export const SUPPORT_EMAIL = "support@docusol.app";
-export const SUPPORT_DISCORD_URL = "https://discord.gg/docusol";

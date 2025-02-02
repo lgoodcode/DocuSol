@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AlertCircle } from "lucide-react";
 
-import { SUPPORT_EMAIL, SUPPORT_DISCORD_URL } from "@/constants";
+import { SUPPORT_EMAIL, DISCORD_URL } from "@/constants";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -50,7 +50,7 @@ export function ErrorPageContent({
             </Link>{" "}
             or via the ticketing system in our{" "}
             <Link
-              href={SUPPORT_DISCORD_URL}
+              href={DISCORD_URL}
               target="_blank"
               className="text-primary underline"
             >
