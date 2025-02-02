@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useDropzone } from "react-dropzone";
 import { UploadIcon, Trash2 } from "lucide-react";
@@ -109,6 +109,12 @@ export const FileUpload = ({
       setError(error[0].errors[0].message);
     },
   });
+
+  useEffect(() => {
+    if (files.length === 0 && fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }, [files]);
 
   return (
     <div className="w-full" {...getRootProps()}>
