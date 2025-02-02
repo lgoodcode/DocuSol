@@ -10,7 +10,6 @@ import {
   GITHUB_URL,
   X_URL,
   DISCORD_URL,
-  DEXSCREENER_URL,
   // DEXSCREENER_URL,
   // CONTRACT_ADDRESS,
 } from "@/constants";
