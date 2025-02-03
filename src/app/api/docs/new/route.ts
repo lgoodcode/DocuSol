@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { captureException } from "@sentry/nextjs";
 
 import { ACCEPTED_FILE_TYPES } from "@/constants";
+import { rateLimit } from "@/lib/utils/ratelimiter";
 import { createServerClient } from "@/lib/supabase/server";
 import { getLatestBlockSlot, sendMemoTransaction } from "@/lib/utils/solana";
 import { bufferToHex } from "@/lib/utils";
@@ -9,7 +10,7 @@ import { createFileHash } from "@/lib/utils/hashing";
 
 export const config = {
   api: {
-    responseLimit: "20mb",
+    bodyParser: false, // Disable default body parsing
   },
 };
 
@@ -25,6 +26,11 @@ const ERRORS = {
 };
 
 export async function POST(request: Request) {
+  const rateLimited = await rateLimit(request);
+  if (rateLimited) {
+    return rateLimited;
+  }
+
   try {
     // Check content type
     const contentType = request.headers.get("content-type") || "";

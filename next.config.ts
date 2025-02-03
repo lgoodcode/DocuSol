@@ -3,6 +3,11 @@ import bundleAnyalzer from "@next/bundle-analyzer";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  api: {
+    bodyParser: {
+      sizeLimit: "20mb",
+    },
+  },
   rewrites: async () => {
     return [
       "/writer",

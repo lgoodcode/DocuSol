@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { captureException } from "@sentry/nextjs";
 
+import { rateLimit } from "@/lib/utils/ratelimiter";
 import { createServerClient } from "@/lib/supabase/server";
 import {
   confirmTransaction,
@@ -12,10 +13,9 @@ import { createFileHash } from "@/lib/utils/hashing";
 
 export const config = {
   api: {
-    responseLimit: "20mb",
+    bodyParser: false, // Disable default body parsing
   },
 };
-
 const ERRORS = {
   NO_ID: "No id provided",
   NO_SIGNED_DOCUMENT: "No signed document provided",
@@ -30,6 +30,11 @@ const ERRORS = {
 };
 
 export async function POST(request: Request) {
+  const rateLimited = await rateLimit(request);
+  if (rateLimited) {
+    return rateLimited;
+  }
+
   try {
     const contentType = request.headers.get("content-type") || "";
     if (!contentType.includes("multipart/form-data")) {

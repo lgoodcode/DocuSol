@@ -1,5 +1,6 @@
 import { captureException } from "@sentry/nextjs";
 
+import { rateLimit } from "@/lib/utils/ratelimiter";
 import { createServerClient } from "@/lib/supabase/server";
 import {
   isTransactionSignature,
@@ -8,6 +9,11 @@ import {
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
+  const rateLimited = await rateLimit(request);
+  if (rateLimited) {
+    return rateLimited;
+  }
+
   try {
     const { value, password } = await request.json();
 
