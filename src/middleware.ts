@@ -1,47 +1,123 @@
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import { captureException } from "@sentry/nextjs";
-
 import { rateLimit } from "@/lib/utils/ratelimiter";
 
-export async function middleware(request: Request) {
+const ERROR_MESSAGES = {
+  RATE_LIMIT: "Too many requests",
+  INTERNAL_ERROR: "Internal server error",
+} as const;
+
+const ERROR_CODES = {
+  RATE_LIMIT: "RATE_LIMIT",
+  INTERNAL_ERROR: "INTERNAL_SERVER_ERROR",
+} as const;
+
+type RateLimitErrorResponse = {
+  error: string;
+  code: (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
+  retryAfter: string;
+};
+
+const isApiRoute = (url: string): boolean => {
+  try {
+    const parsedUrl = new URL(url);
+    const segments = parsedUrl.pathname.split("/").filter(Boolean);
+    return segments[0]?.toLowerCase() === "api";
+  } catch (error) {
+    captureException(error, {
+      tags: { context: "api_route_check" },
+      extra: { url },
+    });
+    return url.includes("/api/");
+  }
+};
+
+
+const createRateLimitApiResponse = (
+  headers: Headers,
+  status: number = 429
+): NextResponse<RateLimitErrorResponse> => {
+  return NextResponse.json(
+    {
+      error: ERROR_MESSAGES.RATE_LIMIT,
+      code: ERROR_CODES.RATE_LIMIT,
+      retryAfter: headers.get("Retry-After") || "60",
+    },
+    { status, headers }
+  );
+};
+
+
+export async function middleware(request: NextRequest) {
   const response = NextResponse.next();
+
   try {
     const rateLimitHeaders = await rateLimit(request);
-    if (rateLimitHeaders) {
-      const isApiRoute = request.url.includes("/api/");
-      if (isApiRoute) {
-        return NextResponse.json(
-          {
-            error: "Too many requests",
-            code: "RATE_LIMIT",
-            retryAfter: rateLimitHeaders.get("Retry-After"),
-          },
-          { status: 429, headers: rateLimitHeaders }
-        );
-      }
-
-      // Set the rate limit headers to the response and handle in layout
-      rateLimitHeaders.entries().forEach(([key, value]) => {
-        response.headers.set(key, value);
-      });
+    if (!rateLimitHeaders) {
+      return response;
     }
+    // Add current path to headers for layout handling
+    const currentPath = new URL(request.url).pathname;
+    rateLimitHeaders.set("x-invoke-path", currentPath);
+
+    // Handle API routes differently
+    if (isApiRoute(request.url)) {
+      return createRateLimitApiResponse(rateLimitHeaders);
+    }
+
+    // For page routes, add rate limit headers to response
+    rateLimitHeaders.forEach((value, key) => {
+      response.headers.set(key, value);
+    });
+
+    return response;
   } catch (error) {
-    console.error(error);
-    captureException(error);
-    response.headers.set("Middleware-Error", "true");
+    console.error("Middleware error:", error);
+    captureException(error, {
+      tags: { context: "middleware" },
+      extra: { url: request.url },
+    });
+
+    // Set error header for debugging
+    response.headers.set("X-Middleware-Error", "true");
+
+    // For API routes, return error response
+    if (isApiRoute(request.url)) {
+      return NextResponse.json(
+        {
+          error: ERROR_MESSAGES.INTERNAL_ERROR,
+          code: ERROR_CODES.INTERNAL_ERROR,
+          retryAfter: "60",
+        },
+        { status: 500 }
+      );
+    }
+
+    return response;
   }
-  return response;
 }
 
+// Static file extensions to exclude
+const STATIC_FILE_EXTENSIONS = [
+  "svg",
+  "png",
+  "jpg",
+  "jpeg",
+  "gif",
+  "webp",
+  "mp4",
+  "ico",
+  "css",
+  "js",
+] as const;
+
+// Middleware configuration
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - assets (svg, png, jpg, jpeg, gif, webp, mp4)
-     */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp4)$).*)",
+    // Exclude Next.js internals
+    "/((?!_next/static|_next/image|favicon.ico).*)",
+    // Exclude static files using regex
+    `/((?!\\.(${STATIC_FILE_EXTENSIONS.join("|")})).*)`,
   ],
 };
