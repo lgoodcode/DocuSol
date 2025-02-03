@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { captureException } from "@sentry/nextjs";
 
+import { rateLimit } from "@/lib/utils/ratelimiter";
 import { createServerClient } from "@/lib/supabase/server";
 import {
   confirmTransaction,
@@ -29,6 +30,11 @@ const ERRORS = {
 };
 
 export async function POST(request: Request) {
+  const rateLimited = await rateLimit(request);
+  if (rateLimited) {
+    return rateLimited;
+  }
+
   try {
     const contentType = request.headers.get("content-type") || "";
     if (!contentType.includes("multipart/form-data")) {

@@ -8,6 +8,8 @@ const requiredEnvList = [
   "NEXT_PUBLIC_SUPABASE_ANON_KEY",
   "PRIVATE_KEY",
   "NEXT_PUBLIC_PRIVY_APP_ID",
+  "UPSTASH_REDIS_REST_URL",
+  "UPSTASH_REDIS_REST_TOKEN",
 ];
 
 // Skip checking environment variables if in local development or running on CI
