@@ -12,10 +12,9 @@ import { createFileHash } from "@/lib/utils/hashing";
 
 export const config = {
   api: {
-    responseLimit: "20mb",
+    bodyParser: false, // Disable default body parsing
   },
 };
-
 const ERRORS = {
   NO_ID: "No id provided",
   NO_SIGNED_DOCUMENT: "No signed document provided",

@@ -9,7 +9,7 @@ import { createFileHash } from "@/lib/utils/hashing";
 
 export const config = {
   api: {
-    responseLimit: "20mb",
+    bodyParser: false, // Disable default body parsing
   },
 };
 
