@@ -1,38 +1,42 @@
-"use client";
+import { headers } from "next/headers";
 
-import { AppProgressBar as ProgressBar } from "next-nprogress-bar";
-import { useTheme } from "next-themes";
-
+import { ProgressBarProvider } from "@/components/providers/progress-bar-provider";
 import { Nav } from "@/components/layout/nav";
-// import { DatabaseWipeDialog } from "@/components/database-wipe-dialog";
-
-export default function MainLayout({
+import { ErrorPageContent } from "@/components/error-page-content";
+import { RateLimitPageContent } from "@/components/rate-limit-page-content";
+import { BetaNoticeDialog } from "@/components/beta-notice-dialog";
+export default async function MainLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { theme } = useTheme();
+  const headersList = await headers();
+  const middlewareError = headersList.get("Middleware-Error");
+  const retryAfter = headersList.get("Retry-After");
+
+  let content: React.ReactNode;
+  if (middlewareError) {
+    content = <ErrorPageContent />;
+  } else if (retryAfter) {
+    content = <RateLimitPageContent waitTime={retryAfter} />;
+  } else {
+    content = children;
+  }
+
   return (
     <>
-      <ProgressBar
-        height="3px"
-        color={theme === "dark" ? "#fff" : "#000"}
-        options={{
-          showSpinner: false,
-          easing: "cubic-bezier(0.4, 0, 0.2, 1)",
-        }}
-      />
+      <ProgressBarProvider />
       <div className="relative flex">
-        {/* Tech pattern overlay */}
+        {/* Radial gradient overlay */}
         <div className="fixed inset-0 pointer-events-none">
           <div className="fixed inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-black/5 dark:from-primary/[0.03] to-transparent" />
         </div>
 
-        {/* <DatabaseWipeDialog /> */}
+        <BetaNoticeDialog />
 
         <Nav />
         <main className="relative z-10 flex-1 px-6 mt-[64px] md:mt-0">
-          {children}
+          {content}
         </main>
       </div>
     </>

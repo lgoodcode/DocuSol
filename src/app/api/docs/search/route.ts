@@ -1,91 +1,141 @@
+import { NextResponse } from "next/server";
 import { captureException } from "@sentry/nextjs";
+import { z } from "zod";
 
-import { rateLimit } from "@/lib/utils/ratelimiter";
 import { createServerClient } from "@/lib/supabase/server";
 import {
   isTransactionSignature,
   getHashFromTransactionSignature,
 } from "@/lib/utils/solana";
-import { NextResponse } from "next/server";
 
-export async function POST(request: Request) {
-  const rateLimited = await rateLimit(request);
-  if (rateLimited) {
-    return rateLimited;
+type DocumentDetailsWithPassword = {
+  document: DocumentDetails;
+  passwordToCheck: string | null;
+};
+
+// Error definitions
+const ERRORS = {
+  MISSING_VALUE: "Missing required field: value",
+  INVALID_VALUE: "Invalid value: must be a valid hash or transaction signature",
+  INVALID_TX_SIG: "Invalid transaction signature: no hash found",
+  DOCUMENT_NOT_FOUND: "Document not found",
+  PASSWORD_REQUIRED: "Password required for this document",
+  INVALID_PASSWORD: "Invalid password",
+  DATABASE_ERROR: (message: string) => `Database error: ${message}`,
+} as const;
+
+const ERROR_STATUS_CODES: Record<string, number> = {
+  [ERRORS.MISSING_VALUE]: 400,
+  [ERRORS.INVALID_VALUE]: 400,
+  [ERRORS.INVALID_TX_SIG]: 400,
+  [ERRORS.DOCUMENT_NOT_FOUND]: 404,
+  [ERRORS.PASSWORD_REQUIRED]: 401,
+  [ERRORS.INVALID_PASSWORD]: 403,
+};
+
+const RequestSchema = z.object({
+  value: z
+    .string({
+      required_error: ERRORS.MISSING_VALUE,
+    })
+    .refine(
+      (val) => isTransactionSignature(val) || /^[a-f0-9]{64}$/i.test(val),
+      ERRORS.INVALID_VALUE
+    ),
+  password: z.string().optional(),
+});
+
+const createErrorResponse = (error: unknown) => {
+  console.error("Error processing verify request:", error);
+  captureException(error);
+
+  if (error instanceof z.ZodError) {
+    return NextResponse.json(
+      { error: error.errors[0].message },
+      { status: 400 }
+    );
   }
 
+  if (error instanceof Error) {
+    const statusCode = ERROR_STATUS_CODES[error.message] || 500;
+    return NextResponse.json({ error: error.message }, { status: statusCode });
+  }
+
+  return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+};
+
+/**
+ * Get hash from input value (either hash or transaction signature)
+ */
+async function resolveHash(value: string): Promise<string> {
+  if (isTransactionSignature(value)) {
+    const hash = await getHashFromTransactionSignature(value);
+    if (!hash) {
+      throw new Error(ERRORS.INVALID_TX_SIG);
+    }
+    return hash;
+  }
+  return value;
+}
+
+/**
+ * Fetch document by hash
+ */
+async function fetchDocumentByHash(
+  hash: string
+): Promise<DocumentDetailsWithPassword> {
+  const supabase = await createServerClient();
+  const { error, data } = await supabase
+    .from("documents")
+    .select("*")
+    .or(`unsigned_hash.eq.${hash},signed_hash.eq.${hash}`);
+
+  if (error) {
+    throw new Error(ERRORS.DATABASE_ERROR(error.message));
+  }
+
+  if (!data?.[0]) {
+    throw new Error(ERRORS.DOCUMENT_NOT_FOUND);
+  }
+
+  return {
+    document: {
+      ...data[0],
+      password: !!data[0].password,
+    },
+    passwordToCheck: data[0].password,
+  };
+}
+
+function validateDocumentAccess(
+  password: string | undefined,
+  passwordToCheck: string | null
+): void {
+  if (passwordToCheck) {
+    if (!password) {
+      throw new Error(ERRORS.PASSWORD_REQUIRED);
+    }
+    if (password !== passwordToCheck) {
+      throw new Error(ERRORS.INVALID_PASSWORD);
+    }
+  }
+}
+
+/**
+ * Main POST handler
+ */
+export async function POST(request: Request) {
   try {
-    const { value, password } = await request.json();
+    const body = await request.json();
+    const { value, password } = RequestSchema.parse(body);
 
-    if (!value) {
-      return Response.json(
-        { error: "Missing required field: value" },
-        { status: 400 }
-      );
-    }
+    const hash = await resolveHash(value);
+    const { document, passwordToCheck } = await fetchDocumentByHash(hash);
 
-    const isTxSig = isTransactionSignature(value);
-    const isHash = /^[a-f0-9]{64}$/i.test(value);
-    if (!isTxSig && !isHash) {
-      return Response.json(
-        {
-          error: "Invalid value: must be a valid hash or transaction signature",
-        },
-        { status: 400 }
-      );
-    }
+    validateDocumentAccess(password, passwordToCheck);
 
-    let hash = value;
-    if (isTxSig) {
-      hash = await getHashFromTransactionSignature(value);
-      if (!hash) {
-        return Response.json(
-          { error: "Invalid transaction signature: no hash found" },
-          { status: 400 }
-        );
-      }
-    }
-
-    // Get full document details
-    const supabase = await createServerClient();
-    const { error, data } = await supabase
-      .from("documents")
-      .select("*")
-      .or(`unsigned_hash.eq.${hash},signed_hash.eq.${hash}`);
-
-    if (error) {
-      throw error;
-    } else if (!data || !data[0]) {
-      return Response.json({ error: "Document not found" }, { status: 404 });
-    }
-    // Verify password if required
-    const document = data[0];
-    if (document.password) {
-      if (!password) {
-        return Response.json(
-          { error: "Password required for this document" },
-          { status: 401 }
-        );
-      } else if (password !== document.password) {
-        return Response.json({ error: "Invalid password" }, { status: 403 });
-      }
-    }
-
-    const documentDetails: DocumentDetails = {
-      ...document,
-      password: !!document.password,
-    };
-    return NextResponse.json(documentDetails);
-  } catch (err) {
-    const error = err as Error;
-    console.error(error);
-    captureException(error);
-    return Response.json(
-      {
-        error: "Internal server error",
-        message: error.message,
-      },
-      { status: 500 }
-    );
+    return NextResponse.json(document);
+  } catch (error) {
+    return createErrorResponse(error);
   }
 }
