@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { captureException } from "@sentry/nextjs";
 import { z } from "zod";
 
-import { rateLimit } from "@/lib/utils/ratelimiter";
 import { createServerClient } from "@/lib/supabase/server";
 import {
   confirmTransaction,
@@ -170,14 +169,7 @@ async function updateDocumentWithSignature(
   }
 }
 
-/**
- * Main POST handler
- */
 export async function POST(request: Request) {
-  // Check rate limit
-  const rateLimited = await rateLimit(request);
-  if (rateLimited) return rateLimited;
-
   try {
     // Validate content type
     const contentType = request.headers.get("content-type") || "";
@@ -216,10 +208,10 @@ export async function POST(request: Request) {
       txSignature
     );
 
-    return NextResponse.json({
+    return NextResponse.json<SigningResponse>({
       txSignature,
       signedHash,
-    } satisfies SigningResponse);
+    });
   } catch (error) {
     return createErrorResponse(error);
   }
