@@ -87,26 +87,15 @@ export async function middleware(request: NextRequest) {
   }
 }
 
-// Static file extensions to exclude
-const STATIC_FILE_EXTENSIONS = [
-  "svg",
-  "png",
-  "jpg",
-  "jpeg",
-  "gif",
-  "webp",
-  "mp4",
-  "ico",
-  "css",
-  "js",
-] as const;
-
-// Middleware configuration
 export const config = {
   matcher: [
-    // Exclude Next.js internals
-    "/((?!_next/static|_next/image|favicon.ico).*)",
-    // Exclude static files using regex
-    "/((?!\\." + STATIC_FILE_EXTENSIONS.join("|") + ").*)",
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - assets (svg, png, jpg, jpeg, gif, webp, mp4)
+     */
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp4)$).*)",
   ],
 };
