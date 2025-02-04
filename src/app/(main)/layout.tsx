@@ -4,7 +4,7 @@ import { ProgressBarProvider } from "@/components/providers/progress-bar-provide
 import { Nav } from "@/components/layout/nav";
 import { ErrorPageContent } from "@/components/error-page-content";
 import { RateLimitPageContent } from "@/components/rate-limit-page-content";
-
+import { BetaNoticeDialog } from "@/components/beta-notice-dialog";
 export default async function MainLayout({
   children,
 }: {
@@ -31,6 +31,8 @@ export default async function MainLayout({
         <div className="fixed inset-0 pointer-events-none">
           <div className="fixed inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-black/5 dark:from-primary/[0.03] to-transparent" />
         </div>
+
+        <BetaNoticeDialog />
 
         <Nav />
         <main className="relative z-10 flex-1 px-6 mt-[64px] md:mt-0">
