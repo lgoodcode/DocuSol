@@ -107,6 +107,6 @@ export const config = {
     // Exclude Next.js internals
     "/((?!_next/static|_next/image|favicon.ico).*)",
     // Exclude static files using regex
-    `/((?!\\.(${STATIC_FILE_EXTENSIONS.join("|")})).*)`,
+    "/((?!\\." + STATIC_FILE_EXTENSIONS.join("|") + ").*)",
   ],
 };
