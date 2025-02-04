@@ -89,7 +89,7 @@ export declare global {
   interface VerifyDocument {
     id: string;
     name: string;
-    password: string | null;
+    password: boolean;
     mime_type: string;
     signed_hash: string;
     created_at: string;
