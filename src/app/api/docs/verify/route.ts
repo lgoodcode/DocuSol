@@ -6,11 +6,6 @@ import { createServerClient } from "@/lib/supabase/server";
 import { verifyFileHash } from "@/lib/utils/hashing";
 import { getConfirmedTransactionSlot } from "@/lib/utils/solana";
 
-type VerifyDocumentWithPassword = {
-  document: VerifyDocument;
-  password: string | null;
-};
-
 type VerificationResponse = {
   matches: boolean;
   verifyDocument: VerifyDocument | null;
@@ -75,7 +70,7 @@ const createErrorResponse = (error: unknown) => {
  */
 async function fetchDocumentByTxSignature(
   txSignature: string
-): Promise<VerifyDocumentWithPassword> {
+): Promise<VerifyDocument> {
   const supabase = await createServerClient();
   const { error, data } = await supabase
     .from("documents")
@@ -99,16 +94,13 @@ async function fetchDocumentByTxSignature(
   }
 
   return {
-    document: {
-      id: document.id,
-      name: document.name,
-      password: !!document.password,
-      mime_type: document.mime_type,
-      signed_hash: document.signed_hash,
-      created_at: document.created_at,
-      signed_at: document.signed_at,
-    },
+    id: document.id,
+    name: document.name,
     password: document.password,
+    mime_type: document.mime_type,
+    signed_hash: document.signed_hash,
+    created_at: document.created_at,
+    signed_at: document.signed_at,
   };
 }
 
@@ -148,7 +140,7 @@ export async function POST(request: Request) {
     });
 
     // Fetch document
-    const { document, password } = await fetchDocumentByTxSignature(
+    const document = await fetchDocumentByTxSignature(
       validatedData.txSignature
     );
 
@@ -165,7 +157,7 @@ export async function POST(request: Request) {
     const matches = verifyFileHash(
       fileBuffer,
       document.signed_hash,
-      password,
+      document.password,
       confirmationSlot
     );
 
