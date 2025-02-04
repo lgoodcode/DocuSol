@@ -215,10 +215,10 @@ export async function POST(request: Request) {
       txSignature
     );
 
-    return NextResponse.json<SigningResponse>({
+    return NextResponse.json({
       txSignature,
       signedHash,
-    });
+    } satisfies SigningResponse);
   } catch (error) {
     return createErrorResponse(error);
   }
