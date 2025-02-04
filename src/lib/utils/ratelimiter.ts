@@ -1,46 +1,51 @@
-import { type Duration, Ratelimit } from "@upstash/ratelimit";
+import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
-type RateLimit = {
-  requests: number;
-  period: Duration;
-};
+// Separate limits for API calls and page views
+const RATE_LIMITERS = {
+  api: Ratelimit.slidingWindow(20, "30 s"),
+  pages: Ratelimit.slidingWindow(60, "60 s"),
+} as const;
 
-const RATE_LIMIT: RateLimit = {
-  requests: 20,
-  period: "30 s",
-};
+// Initialize Redis outside middleware to enable connection reuse
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+  automaticDeserialization: false, // Optimize for Edge Runtime
+});
 
-const RateLimiter = ({
-  requests,
-  period,
-}: {
-  requests: number;
-  period: Duration;
-}) =>
-  new Ratelimit({
-    redis: Redis.fromEnv(),
-    limiter: Ratelimit.slidingWindow(requests, period),
+// Separate limiters for API and pages
+const limiters = {
+  api: new Ratelimit({
+    redis,
+    limiter: RATE_LIMITERS.api,
     analytics: true,
-    /**
-     * Optional prefix for the keys used in redis. This is useful if you want to share a redis
-     * instance with other applications and want to avoid key collisions. The default prefix is
-     * "@upstash/ratelimit"
-     */
-    prefix: "@upstash/ratelimit",
-  });
+    prefix: "@docusol/ratelimit/api",
+    timeout: 1000,
+  }),
+  pages: new Ratelimit({
+    redis,
+    limiter: RATE_LIMITERS.pages,
+    analytics: true,
+    prefix: "@docusol/ratelimit/pages",
+    timeout: 1000,
+  }),
+};
+
+const isApiRoute = (request: Request): boolean => {
+  return request.url.startsWith("/api/");
+};
+
+const getClientIp = (request: Request): string => {
+  const xff =
+    request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip");
+  return xff ? xff.split(",")[0].trim() : "127.0.0.1";
+};
 
 export const rateLimit = async (request: Request) => {
-  const ip =
-    request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip");
-  if (!ip) {
-    throw new Error("No IP was found");
-  }
-
-  const rateLimiter = RateLimiter({
-    requests: RATE_LIMIT.requests,
-    period: RATE_LIMIT.period,
-  });
+  const ip = getClientIp(request);
+  const isApi = isApiRoute(request);
+  const rateLimiter = isApi ? limiters.api : limiters.pages;
   const { success, reset, limit } = await rateLimiter.limit(ip);
 
   if (!success) {

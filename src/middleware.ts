@@ -19,20 +19,9 @@ type RateLimitErrorResponse = {
   retryAfter: string;
 };
 
-const isApiRoute = (url: string): boolean => {
-  try {
-    const parsedUrl = new URL(url);
-    const segments = parsedUrl.pathname.split("/").filter(Boolean);
-    return segments[0]?.toLowerCase() === "api";
-  } catch (error) {
-    captureException(error, {
-      tags: { context: "api_route_check" },
-      extra: { url },
-    });
-    return url.includes("/api/");
-  }
+const isApiRoute = (request: NextRequest): boolean => {
+  return request.nextUrl.pathname.startsWith("/api/");
 };
-
 
 const createRateLimitApiResponse = (
   headers: Headers,
@@ -48,9 +37,9 @@ const createRateLimitApiResponse = (
   );
 };
 
-
 export async function middleware(request: NextRequest) {
   const response = NextResponse.next();
+  const isApi = isApiRoute(request);
 
   try {
     const rateLimitHeaders = await rateLimit(request);
@@ -62,7 +51,7 @@ export async function middleware(request: NextRequest) {
     rateLimitHeaders.set("x-invoke-path", currentPath);
 
     // Handle API routes differently
-    if (isApiRoute(request.url)) {
+    if (isApi) {
       return createRateLimitApiResponse(rateLimitHeaders);
     }
 
@@ -83,7 +72,7 @@ export async function middleware(request: NextRequest) {
     response.headers.set("X-Middleware-Error", "true");
 
     // For API routes, return error response
-    if (isApiRoute(request.url)) {
+    if (isApi) {
       return NextResponse.json(
         {
           error: ERROR_MESSAGES.INTERNAL_ERROR,
