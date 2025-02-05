@@ -36,6 +36,7 @@ export default async function MainLayout({
 
         <BetaNoticeDialog />
         <WalletNoticeDialog />
+
         <Nav />
         <main className="relative z-10 flex-1 px-6 mt-[64px] md:mt-0">
           <WalletAuthWrapper>{content}</WalletAuthWrapper>

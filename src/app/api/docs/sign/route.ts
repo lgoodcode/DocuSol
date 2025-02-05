@@ -11,12 +11,6 @@ import {
 import { bufferToHex } from "@/lib/utils";
 import { createFileHash } from "@/lib/utils/hashing";
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
 interface Document {
   id: string;
   password: string | null;

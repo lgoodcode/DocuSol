@@ -8,12 +8,6 @@ import { getLatestBlockSlot, sendMemoTransaction } from "@/lib/utils/solana";
 import { bufferToHex } from "@/lib/utils";
 import { createFileHash } from "@/lib/utils/hashing";
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
 type DocumentUploadResponse = {
   id: string;
   txSignature: string;

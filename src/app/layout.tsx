@@ -39,7 +39,7 @@ export default function RootLayout({
       >
         <SpeedInsights />
         <Analytics />
-      <ProgressBarProvider />
+        <ProgressBarProvider />
         <NextThemesProvider
           attribute="class"
           defaultTheme="dark"
