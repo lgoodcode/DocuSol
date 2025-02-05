@@ -44,18 +44,18 @@ const DocumentFieldItem = ({
     </div>
     <div className="flex flex-col">
       {field.binary && field.value !== "Not available" && mimeType ? (
-        <div className="flex flex-col justify-center items-center gap-2">
+        <div className="flex flex-col items-center justify-center gap-2">
           <BlobPreview hexValue={field.value} mimeType={mimeType} />
         </div>
       ) : field?.canCopy ? (
-        <div className="flex items-center gap-2 p-2 rounded-md bg-muted-foreground/10 dark:bg-muted/50">
-          <code className="text-xs sm:text-sm font-mono break-all flex-1">
+        <div className="flex items-center gap-2 rounded-md bg-muted-foreground/10 p-2 dark:bg-muted/50">
+          <code className="flex-1 break-all font-mono text-xs sm:text-sm">
             {field.value}
           </code>
           <CopyButton value={field.value} />
         </div>
       ) : (
-        <span className="text-sm md:text-base text-muted-foreground break-all">
+        <span className="break-all text-sm text-muted-foreground md:text-base">
           {field.value}
         </span>
       )}
@@ -171,7 +171,7 @@ export function DocumentDetails({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
           <FileText className="h-5 w-5" />
           Document Details
         </CardTitle>
