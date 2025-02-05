@@ -5,12 +5,15 @@ import { Wallet } from "lucide-react";
 import { usePrivy } from "@privy-io/react-auth";
 
 import { SUPPORT_EMAIL, DISCORD_URL } from "@/constants";
+import { SkeletonContent } from "@/components/layout/skeleton-content";
 import { Button } from "@/components/ui/button";
 
 export function WalletAuthWrapper({ children }: { children: React.ReactNode }) {
   const { ready, login, authenticated } = usePrivy();
 
-  if (authenticated) {
+  if (!ready) {
+    return <SkeletonContent />;
+  } else if (authenticated) {
     return children;
   }
 
