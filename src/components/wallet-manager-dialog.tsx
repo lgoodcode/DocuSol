@@ -102,7 +102,7 @@ export function WalletManagerDialog({
 
               {activeWallet && (
                 <div>
-                  <p className="font-medium">Wallet Type</p>
+                  <p className="font-medium">Wallet Provider</p>
                   <p className="text-muted-foreground">
                     {getWalletType(activeWallet)}
                   </p>
