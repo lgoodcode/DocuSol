@@ -12,7 +12,6 @@ export function WalletAuthWrapper({ children }: { children: React.ReactNode }) {
   const { ready, login, authenticated } = usePrivy();
   const { wallets } = useSolanaWallets();
 
-
   if (!ready) {
     return <SkeletonContent />;
   } else if (authenticated || !!wallets.length) {

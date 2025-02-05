@@ -4,8 +4,9 @@ import { PrivyProvider } from "@/components/providers/privy-provider";
 import { Nav } from "@/components/layout/nav";
 import { ErrorPageContent } from "@/components/error-page-content";
 import { RateLimitPageContent } from "@/components/rate-limit-page-content";
-import { BetaNoticeDialog } from "@/components/beta-notice-dialog";
 import { WalletAuthWrapper } from "@/components/layout/wallet-auth-wrapper";
+import { BetaNoticeDialog } from "@/components/beta-notice-dialog";
+import { WalletNoticeDialog } from "@/components/wallet-notice-dialog";
 
 export default async function MainLayout({
   children,
@@ -34,7 +35,7 @@ export default async function MainLayout({
         </div>
 
         <BetaNoticeDialog />
-
+        <WalletNoticeDialog />
         <Nav />
         <main className="relative z-10 flex-1 px-6 mt-[64px] md:mt-0">
           <WalletAuthWrapper>{content}</WalletAuthWrapper>
