@@ -5,14 +5,10 @@ import Image from "next/image";
 import { usePrivy } from "@privy-io/react-auth";
 import { useRouter } from "next-nprogress-bar";
 
-import { LogOut, User } from "lucide-react";
-
 import { navRoutes } from "@/config/routes";
-import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { NavButton } from "@/components/layout/nav-button";
-import { NavTooltip } from "@/components/layout/nav-tooltip";
 import { MobileMenu } from "@/components/layout/mobile-menu";
+import { PrivyAuthButton } from "@/components/layout/privy-auth-button";
 
 export function Nav() {
   const router = useRouter();
@@ -26,7 +22,7 @@ export function Nav() {
     if (!ready) return;
     if (authenticated) {
       logout();
-      router.push("/");
+      router.refresh();
     } else {
       login();
     }
@@ -53,30 +49,18 @@ export function Nav() {
                 href={route.path}
                 icon={route.Icon}
                 label={route.name}
+                disabled={!authenticated}
               />
             ))}
           </nav>
         </div>
 
         <div className="mt-auto">
-          <div className="border-t border-stone-300 dark:border-border">
-            <ThemeToggle withTooltip />
-            <NavTooltip content={authenticated ? "Logout" : "Login"}>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="w-full h-12 text-primary/60 hover:text-primary-foreground bg-primary-foreground/10 hover:bg-primary dark:hover:bg-white dark:hover:text-black"
-                onClick={handleAuthClick}
-                disabled={!ready}
-              >
-                {authenticated ? (
-                  <LogOut className="h-5 w-5" />
-                ) : (
-                  <User className="h-5 w-5" />
-                )}
-              </Button>
-            </NavTooltip>
-          </div>
+          <PrivyAuthButton
+            ready={ready}
+            authenticated={authenticated}
+            handleAuthClick={handleAuthClick}
+          />
         </div>
       </aside>
     </>
