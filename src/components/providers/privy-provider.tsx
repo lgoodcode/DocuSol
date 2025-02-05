@@ -9,6 +9,22 @@ const solanaConnectors = toSolanaWalletConnectors({
   shouldAutoConnect: false,
 });
 
+const SOLANA_CHAIN = {
+  id: 101,
+  name: "Solana",
+  network: "mainnet",
+  nativeCurrency: {
+    name: "Solana",
+    symbol: "SOL",
+    decimals: 9,
+  },
+  rpcUrls: {
+    default: {
+      http: ["https://api.mainnet-beta.solana.com"],
+    },
+  },
+};
+
 export function PrivyProvider({ children }: { children: React.ReactNode }) {
   if (IS_CI) {
     return <>{children}</>;
@@ -25,6 +41,13 @@ export function PrivyProvider({ children }: { children: React.ReactNode }) {
           logo: "/img/docusol_logo_full.webp",
         },
         loginMethods: ["email", "wallet", "google"],
+        defaultChain: SOLANA_CHAIN,
+        supportedChains: [SOLANA_CHAIN],
+        embeddedWallets: {
+          solana: {
+            createOnLogin: "users-without-wallets",
+          },
+        },
         externalWallets: {
           solana: {
             connectors: solanaConnectors,
