@@ -3,34 +3,30 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePrivy } from "@privy-io/react-auth";
-import { useRouter } from "next-nprogress-bar";
+import { useState } from "react";
 
 import { navRoutes } from "@/config/routes";
 import { NavButton } from "@/components/layout/nav-button";
 import { MobileMenu } from "@/components/layout/mobile-menu";
+import { WalletManagerDialog } from "@/components/wallet-manager-dialog";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { PrivyAuthButton } from "@/components/layout/privy-auth-button";
 
 export function Nav() {
-  const router = useRouter();
-  const { ready, authenticated, login, logout, user } = usePrivy();
+  const [open, setOpen] = useState(false);
+  const { ready, authenticated } = usePrivy();
 
-  if (user) {
-    console.log(user);
-  }
-
-  const handleAuthClick = () => {
-    if (!ready) return;
-    if (authenticated) {
-      logout();
-      router.refresh();
-    } else {
-      login();
-    }
+  const handleWalletManagerClick = () => {
+    setOpen((prev) => !prev);
   };
 
   return (
     <>
-      <MobileMenu authenticated={authenticated} onAuthClick={handleAuthClick} />
+      <WalletManagerDialog
+        open={open}
+        setOpen={setOpen}
+      />
+      <MobileMenu authenticated={authenticated} onAuthClick={() => null} />
       <aside className="w-[60px] py-4 hidden md:flex flex-col border-r border-stone-300 dark:border-border sticky top-0 h-screen z-50">
         <div className="flex flex-col flex-1">
           <Link href="/" className="w-full h-12 mb-3">
@@ -56,11 +52,10 @@ export function Nav() {
         </div>
 
         <div className="mt-auto">
-          <PrivyAuthButton
-            ready={ready}
-            authenticated={authenticated}
-            handleAuthClick={handleAuthClick}
-          />
+          <div className="border-t border-stone-300 dark:border-border">
+            <ThemeToggle withTooltip />
+            <PrivyAuthButton ready={ready} onClick={handleWalletManagerClick} />
+          </div>
         </div>
       </aside>
     </>

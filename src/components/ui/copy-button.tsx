@@ -4,13 +4,16 @@ import { useState, forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Copy } from "lucide-react";
 
+import { cn } from "@/lib/utils";
+
 export const CopyButton = forwardRef(
   (
     {
       value,
       icon,
       noStyle,
-    }: { value: string; icon?: React.ReactNode; noStyle?: boolean },
+      className,
+    }: { value: string; icon?: React.ReactNode; noStyle?: boolean; className?: string },
     ref
   ) => {
     const [copied, setCopied] = useState(false);
@@ -25,11 +28,12 @@ export const CopyButton = forwardRef(
       <div
         ref={ref as React.RefObject<HTMLDivElement>}
         onClick={handleCopy}
-        className={
+        className={cn(
           noStyle
             ? ""
-            : "p-2 inline-flex bg-transparent hover:bg-transparent rounded-md"
-        }
+            : "p-2 inline-flex bg-transparent hover:bg-transparent rounded-md cursor-pointer",
+          className
+        )}
         aria-label={copied ? "Copied!" : "Copy to clipboard"}
       >
         <AnimatePresence mode="wait" initial={false}>
