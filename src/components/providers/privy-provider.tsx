@@ -38,7 +38,7 @@ export function PrivyProvider({ children }: { children: React.ReactNode }) {
           theme: "dark",
           accentColor: "#101012",
           walletChainType: "solana-only",
-          logo: "/img/docusol_logo_full.webp",
+          logo: "/img/branding/logo_color_white_1694x432.png",
         },
         loginMethods: ["email", "wallet", "google"],
         defaultChain: SOLANA_CHAIN,
