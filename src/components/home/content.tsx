@@ -136,15 +136,15 @@ export function HomeContent() {
       {/* Main Content */}
       {showContent && (
         <motion.div
-          className="flex relative max-w-[100vw]"
+          className="relative flex max-w-[100vw]"
           initial="hidden"
           animate="visible"
           variants={contentVariants}
         >
           {/* Background Elements */}
-          <div className="fixed inset-0 bg-gradient-to-br from-background via-background to-background/50 dark:from-background dark:via-background dark:to-background/20 pointer-events-none" />
-          <div className="fixed inset-0 bg-gradient-to-br from-transparent via-primary/5 to-primary/10 dark:from-transparent dark:via-primary/[0.03] dark:to-primary/[0.05] pointer-events-none" />
-          <div className="fixed inset-0 w-full h-full opacity-[0.23] bg-transparent pointer-events-none">
+          <div className="pointer-events-none fixed inset-0 bg-gradient-to-br from-background via-background to-background/50 dark:from-background dark:via-background dark:to-background/20" />
+          <div className="pointer-events-none fixed inset-0 bg-gradient-to-br from-transparent via-primary/5 to-primary/10 dark:from-transparent dark:via-primary/[0.03] dark:to-primary/[0.05]" />
+          <div className="pointer-events-none fixed inset-0 h-full w-full bg-transparent opacity-[0.23]">
             <Boxes />
           </div>
 
@@ -159,43 +159,78 @@ export function HomeContent() {
           {/* Main Content */}
           <motion.div
             variants={childVariants}
-            className="flex-1 overflow-auto relative"
+            className="relative flex-1 overflow-auto"
           >
             <motion.div
               variants={childVariants}
-              className="relative max-w-screen overflow-hidden"
+              className="max-w-screen relative overflow-hidden"
             >
               {/* Hero Section */}
-              <section className="relative max-w-[1720px] mx-auto grid grid-cols-1 xl:grid-cols-2 min-h-[85dvh]">
+              <section className="relative mx-auto grid min-h-[85dvh] max-w-[1720px] grid-cols-1 xl:grid-cols-2">
                 {/* Left Column */}
-                <div className="px-8 md:px-16 py-12 pt-28 md:pt-20 lg:px-32 !pb-28 xl:p-36 xl:pt-24 xl:pr-16 2xl:p-24 flex flex-col relative z-10">
-                  <div className="flex items-center mb-2 md:mb-0">
+                <div className="relative z-10 flex flex-col gap-3 px-8 py-12 !pb-28 pt-28 md:px-16 md:pt-20 lg:px-32 xl:p-36 xl:pr-16 xl:pt-24 2xl:p-24">
+                  <div className="mb-2 flex items-center md:mb-0">
                     <Badge>Beta</Badge>
                   </div>
 
                   {/* Left Column Content */}
                   <motion.div variants={childVariants} className="space-y-8">
                     <div className="flex items-center">
-                      <div className="w-[64px] h-[64px] md:w-[92px] md:h-[92px] xl:w-[120px] xl:h-[120px] flex items-center justify-center">
+                      <div className="flex h-[128px] items-center justify-center">
+                        {/* Preload both images */}
+                        <link
+                          rel="preload"
+                          as="image"
+                          href="/img/branding/logo_full_light_1694x432.png"
+                        />
+                        <link
+                          rel="preload"
+                          as="image"
+                          href="/img/branding/logo_full_dark_1694x432.png"
+                        />
+                        {/* Render the appropriate image based on theme */}
+                        {theme === "dark" ? (
+                          <Image
+                            src="/img/branding/logo_full_light_1694x432.png"
+                            alt="DocuSol Logo"
+                            width={1694}
+                            height={432}
+                            className="h-full w-full object-contain"
+                            priority
+                          />
+                        ) : (
+                          <Image
+                            src="/img/branding/logo_full_dark_1694x432.png"
+                            alt="DocuSol Logo"
+                            width={1694}
+                            height={432}
+                            className="h-full w-full object-contain"
+                            priority
+                          />
+                        )}
+                      </div>
+
+                      {/* Old */}
+                      {/* <div className="flex h-[64px] w-[64px] items-center justify-center md:h-[92px] md:w-[92px] xl:h-[120px] xl:w-[120px]">
                         <Image
                           src="/img/branding/logo.webp"
                           alt="DocuSol Logo"
                           width={500}
                           height={500}
-                          className="w-full h-full object-contain"
+                          className="h-full w-full object-contain"
                           priority
                         />
                       </div>
-                      <h1 className="text-5xl lg:text-7xl font-bold bg-gradient-to-br from-primary to-black/45 dark:to-primary-foreground bg-clip-text text-transparent">
+                      <h1 className="bg-gradient-to-br from-primary to-black/45 bg-clip-text text-5xl font-bold text-transparent dark:to-primary-foreground lg:text-7xl">
                         DocuSol
-                      </h1>
+                      </h1> */}
                     </div>
 
-                    <p className="text-xl md:text-3xl text-muted-foreground font-light">
+                    <p className="text-xl font-light text-muted-foreground md:text-3xl">
                       {heroDescription}
                     </p>
 
-                    <p className="text-base md:text-lg text-muted-foreground">
+                    <p className="text-base text-muted-foreground md:text-lg">
                       Upload your documents, to share, sign, and have file
                       hashes of signed documents stored on the blockchain, where
                       it is immutable and tamper-proof.
@@ -204,9 +239,9 @@ export function HomeContent() {
                     {/* Replace with something here? */}
                     {/* <PoweredByLogos /> */}
 
-                    <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex flex-col gap-4 sm:flex-row">
                       <Link href="/docs/new">
-                        <InteractiveHoverButton className="rounded-none text-lg py-4 px-6">
+                        <InteractiveHoverButton className="rounded-none px-6 py-4 text-lg">
                           Get Started Now
                         </InteractiveHoverButton>
                       </Link>
@@ -220,16 +255,16 @@ export function HomeContent() {
 
               {/* What is DocuSol? */}
               <motion.section
-                className="relative my-24 lg:top-16 border-t border-border"
+                className="relative my-24 border-t border-border lg:top-16"
                 variants={sectionVariants}
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true, margin: "-200px" }}
               >
-                <h2 className="text-center p-4 text-4xl font-semibold border-b border-border">
+                <h2 className="border-b border-border p-4 text-center text-4xl font-semibold">
                   What is DocuSol?
                 </h2>
-                <div className="max-w-2xl mx-auto my-24 pb-24 text-center px-8">
+                <div className="mx-auto my-24 max-w-2xl px-8 pb-24 text-center">
                   <h3 className="text-2xl font-semibold">
                     A simple and secure platform that gives you decentralized
                     signatures, allowing you to self-verify signed documents
@@ -241,16 +276,16 @@ export function HomeContent() {
               {/* Features */}
               <motion.section
                 id="features"
-                className="border-t border-border my-24 lg:my-64"
+                className="my-24 border-t border-border lg:my-64"
                 variants={sectionVariants}
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true, margin: "-100px" }}
               >
-                <h2 className="text-center p-4 text-2xl md:text-4xl font-semibold border-b border-border">
+                <h2 className="border-b border-border p-4 text-center text-2xl font-semibold md:text-4xl">
                   Key Features
                 </h2>
-                <div className="grid md:grid-cols-2 gap-8 p-8 md:p-16 lg:px-32 2xl:px-64">
+                <div className="grid gap-8 p-8 md:grid-cols-2 md:p-16 lg:px-32 2xl:px-64">
                   <div className="space-y-4">
                     <p className="text-lg text-muted-foreground">
                       DocuSol empowers you with
@@ -261,8 +296,8 @@ export function HomeContent() {
                   </div>
                   <div className="grid grid-cols-2 gap-8">
                     <div className="space-y-4">
-                      <div className="bg-primary/20 p-2 w-fit rounded-lg">
-                        <Bot className="w-6 h-6 text-primary" />
+                      <div className="w-fit rounded-lg bg-primary/20 p-2">
+                        <Bot className="h-6 w-6 text-primary" />
                       </div>
                       <h4 className="font-semibold">AI Generation</h4>
                       <p className="text-sm text-muted-foreground">
@@ -270,8 +305,8 @@ export function HomeContent() {
                       </p>
                     </div>
                     <div className="space-y-4">
-                      <div className="bg-primary/20 p-2 w-fit rounded-lg">
-                        <Lock className="w-6 h-6 text-primary" />
+                      <div className="w-fit rounded-lg bg-primary/20 p-2">
+                        <Lock className="h-6 w-6 text-primary" />
                       </div>
                       <h4 className="font-semibold">Secure Signing</h4>
                       <p className="text-sm text-muted-foreground">
@@ -279,8 +314,8 @@ export function HomeContent() {
                       </p>
                     </div>
                     <div className="space-y-4">
-                      <div className="bg-primary/20 p-2 w-fit rounded-lg">
-                        <Bolt className="w-6 h-6 text-primary" />
+                      <div className="w-fit rounded-lg bg-primary/20 p-2">
+                        <Bolt className="h-6 w-6 text-primary" />
                       </div>
                       <h4 className="font-semibold">Blockchain Transparency</h4>
                       <p className="text-sm text-muted-foreground">
@@ -289,9 +324,9 @@ export function HomeContent() {
                       </p>
                     </div>
                     <div className="space-y-4">
-                      <div className="bg-primary/20 p-2 w-fit rounded-lg">
+                      <div className="w-fit rounded-lg bg-primary/20 p-2">
                         <svg
-                          className="w-6 h-6 text-primary"
+                          className="h-6 w-6 text-primary"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -314,15 +349,15 @@ export function HomeContent() {
               </motion.section>
 
               {/* Marquee */}
-              <section className="mt-24 mb-12">
-                <div className="relative flex h-[500px] w-full flex-col items-center justify-center overflow-hidden border-t border-b border-border bg-transparent">
+              <section className="mb-12 mt-24">
+                <div className="relative flex h-[500px] w-full flex-col items-center justify-center overflow-hidden border-b border-t border-border bg-transparent">
                   <MarqueeImages theme={theme} />
 
                   {/* Left gradient overlay */}
-                  <div className="pointer-events-none absolute inset-y-0 left-0 w-[9%] sm:w-1/6 md:w-1/4 xl:w-1/4 bg-gradient-to-r from-background via-background/80 to-transparent dark:from-background/95 dark:via-background/75 dark:to-transparent"></div>
+                  <div className="pointer-events-none absolute inset-y-0 left-0 w-[9%] bg-gradient-to-r from-background via-background/80 to-transparent dark:from-background/95 dark:via-background/75 dark:to-transparent sm:w-1/6 md:w-1/4 xl:w-1/4"></div>
 
                   {/* Right gradient overlay */}
-                  <div className="pointer-events-none absolute inset-y-0 right-0 w-[9%] sm:w-1/6 md:w-1/4 xl:w-1/4 bg-gradient-to-l from-background via-background/80 to-transparent dark:from-background/95 dark:via-background/75 dark:to-transparent"></div>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 w-[9%] bg-gradient-to-l from-background via-background/80 to-transparent dark:from-background/95 dark:via-background/75 dark:to-transparent sm:w-1/6 md:w-1/4 xl:w-1/4"></div>
                 </div>
               </section>
 
@@ -334,20 +369,20 @@ export function HomeContent() {
                 whileInView="visible"
                 viewport={{ once: true, margin: "-100px" }}
               >
-                <div className="min-h-[50vh] flex items-center justify-center p-8">
+                <div className="flex min-h-[50vh] items-center justify-center p-8">
                   <div className="text-center">
-                    <h2 className="max-w-md mx-auto mb-2 md:mb-10 h-32 sm:h-24 xl:h-16 xl:max-w-none text-4xl md:text-5xl font-bold bg-gradient-to-br from-primary to-black/45 dark:to-primary-foreground bg-clip-text text-transparent">
+                    <h2 className="mx-auto mb-2 h-32 max-w-md bg-gradient-to-br from-primary to-black/45 bg-clip-text text-4xl font-bold text-transparent dark:to-primary-foreground sm:h-24 md:mb-10 md:text-5xl xl:h-16 xl:max-w-none">
                       Start Securing Your Documents Today
                     </h2>
                     <div className="flex flex-col gap-6">
-                      <p className="text-xl text-muted-foreground font-medium">
+                      <p className="text-xl font-medium text-muted-foreground">
                         Sign your documents and have the integrity of those
                         signatures stored on the blockchain.
                       </p>
                       <Link href="/docs/new">
                         <Button
                           size="lg"
-                          className="w-fit mx-auto bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 text-lg font-semibold shadow-lg hover:shadow-xl"
+                          className="mx-auto w-fit bg-primary text-lg font-semibold text-primary-foreground shadow-lg transition-all duration-200 hover:bg-primary/90 hover:shadow-xl"
                         >
                           Try it out now
                         </Button>

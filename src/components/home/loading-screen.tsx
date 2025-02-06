@@ -11,7 +11,7 @@ export function LoadingScreen({ onAnimationComplete }: LoadingScreenProps) {
   return (
     <motion.div
       // -top-16 to account for the content height to truly center
-      className="fixed inset-0 z-50 -top-16 flex items-center justify-center bg-background"
+      className="fixed inset-0 -top-16 z-50 flex items-center justify-center bg-background"
       initial={{ opacity: 1 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -30,9 +30,9 @@ export function LoadingScreen({ onAnimationComplete }: LoadingScreenProps) {
         className="flex flex-col items-center space-y-4"
       >
         <motion.div
-          className="relative w-[144px] h-[144px]"
+          className="relative h-[144px] w-[144px]"
           animate={{
-            scale: [1, 1.05, 1],
+            scale: [1, 0.9, 1],
             rotate: [0, 0, 0],
           }}
           transition={{
@@ -42,15 +42,16 @@ export function LoadingScreen({ onAnimationComplete }: LoadingScreenProps) {
           }}
         >
           <Image
-            src="/img/branding/logo.webp"
+            src="/img/branding/icon_100x100.webp"
             alt="DocuSol Logo"
             className="object-contain"
             fill
+            priority
           />
         </motion.div>
-        <motion.div className="h-2 bg-primary/20 rounded-full w-full overflow-hidden">
+        <motion.div className="h-2 w-full overflow-hidden rounded-full bg-primary/20">
           <motion.div
-            className="h-full bg-primary rounded-full"
+            className="h-full rounded-full bg-primary"
             initial={{ x: "-100%" }}
             animate={{ x: "100%" }}
             transition={{
