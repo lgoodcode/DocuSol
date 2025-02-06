@@ -60,7 +60,7 @@ const DockItem = memo(
           rel={newTab ? "noopener noreferrer" : undefined}
         >
           <Button
-            className="!bg-transparent px-2.5 rounded-full border-none text-foreground hover:text-foreground hover:bg-gray-300"
+            className="rounded-full border-none !bg-transparent px-2.5 text-foreground hover:bg-gray-300 hover:text-foreground"
             onClick={onClick}
           >
             {children}
@@ -68,14 +68,14 @@ const DockItem = memo(
         </Link>
       ) : (
         <Button
-          className="!bg-transparent px-2.5 rounded-full border-none text-foreground hover:text-foreground hover:bg-gray-300"
+          className="rounded-full border-none !bg-transparent px-2.5 text-foreground hover:bg-gray-300 hover:text-foreground"
           onClick={onClick}
         >
           {children}
         </Button>
       )}
     </DockTooltip>
-  )
+  ),
 );
 
 DockItem.displayName = "DockItem";
@@ -89,7 +89,7 @@ const DockTooltip = memo(
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
-  )
+  ),
 );
 DockTooltip.displayName = "DockTooltip";
 
@@ -104,7 +104,10 @@ function Docker() {
         </DockItem>
       </StaticDockIcon>
       <StaticDockIcon>
-        <DockItem href="https://docs.docusol.app" content="Documentation">
+        <DockItem
+          href="https://docusol.gitbook.io/docusol"
+          content="Documentation"
+        >
           <FileText className="size-5" />
         </DockItem>
       </StaticDockIcon>
@@ -189,7 +192,7 @@ function Docker() {
 export function DockerContainer({ delay }: { delay: number }) {
   return (
     <motion.div
-      className="fixed top-0 left-0 w-full z-50"
+      className="fixed left-0 top-0 z-50 w-full"
       initial={{ y: "-100%", opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{
