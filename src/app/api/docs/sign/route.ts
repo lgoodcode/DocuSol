@@ -64,7 +64,7 @@ const createErrorResponse = (error: unknown) => {
   if (error instanceof z.ZodError) {
     return NextResponse.json(
       { error: error.errors[0].message },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -80,7 +80,7 @@ const createErrorResponse = (error: unknown) => {
  */
 async function validateDocumentAccess(
   id: string,
-  password: string | null
+  password: string | null,
 ): Promise<Document> {
   const supabase = await createServerClient();
   const { error: fetchError, data: document } = await supabase
@@ -115,7 +115,7 @@ async function validateDocumentAccess(
 async function processDocumentSigning(
   signedDocument: File,
   password: string | null,
-  blockSlot: number
+  blockSlot: number,
 ): Promise<{ hash: string; signature: string }> {
   const signedDocumentBuffer = Buffer.from(await signedDocument.arrayBuffer());
   const signedHash = createFileHash(signedDocumentBuffer, blockSlot, password);
@@ -144,7 +144,7 @@ async function updateDocumentWithSignature(
   id: string,
   signedDocument: Buffer,
   signedHash: string,
-  transactionSignature: string
+  transactionSignature: string,
 ): Promise<void> {
   const supabase = await createServerClient();
   const { error: updateError } = await supabase
@@ -185,13 +185,13 @@ export async function POST(request: Request) {
     // Get block slot and process signing
     const blockSlot = await getLatestBlockSlot();
     const signedDocumentBuffer = Buffer.from(
-      await validatedData.signed_document.arrayBuffer()
+      await validatedData.signed_document.arrayBuffer(),
     );
     const { hash: signedHash, signature: txSignature } =
       await processDocumentSigning(
         validatedData.signed_document,
         validatedData.password,
-        blockSlot
+        blockSlot,
       );
 
     // Update document
@@ -199,7 +199,7 @@ export async function POST(request: Request) {
       validatedData.id,
       signedDocumentBuffer,
       signedHash,
-      txSignature
+      txSignature,
     );
 
     return NextResponse.json<SigningResponse>({

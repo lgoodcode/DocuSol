@@ -34,7 +34,7 @@ const FormDataSchema = z.object({
     .string()
     .refine(
       (type) => Object.keys(ACCEPTED_FILE_TYPES).includes(type),
-      ERRORS.INVALID_FILE_TYPE
+      ERRORS.INVALID_FILE_TYPE,
     ),
   original_document: z.instanceof(File, {
     message: ERRORS.NO_ORIGINAL_DOCUMENT,
@@ -51,7 +51,7 @@ const createErrorResponse = (error: unknown, defaultStatus = 500) => {
   if (error instanceof z.ZodError) {
     return NextResponse.json(
       { error: error.errors[0].message },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -62,7 +62,7 @@ const createErrorResponse = (error: unknown, defaultStatus = 500) => {
 
   return NextResponse.json(
     { error: "Internal server error" },
-    { status: defaultStatus }
+    { status: defaultStatus },
   );
 };
 
@@ -80,16 +80,10 @@ const getErrorStatusCode = (message: string): number => {
   return 500;
 };
 
-/**
- * Process document upload and create blockchain record
- */
 async function processDocumentUpload(
-  formData: z.infer<typeof FormDataSchema>
+  formData: z.infer<typeof FormDataSchema>,
 ): Promise<DocumentUploadResponse> {
-  // Get latest block slot
   const blockSlot = await getLatestBlockSlot();
-
-  // Process documents
   const [originalBuffer, unsignedBuffer] = await Promise.all([
     formData.original_document.arrayBuffer(),
     formData.unsigned_document.arrayBuffer(),
@@ -98,11 +92,10 @@ async function processDocumentUpload(
   const originalDocumentBuffer = Buffer.from(originalBuffer);
   const unsignedDocumentBuffer = Buffer.from(unsignedBuffer);
 
-  // Create hash and send transaction
   const unsignedDocumentHash = createFileHash(
     unsignedDocumentBuffer,
     blockSlot,
-    formData.password
+    formData.password,
   );
 
   const memoMessage = `FILE_HASH=${unsignedDocumentHash}`;
@@ -113,7 +106,6 @@ async function processDocumentUpload(
     throw new Error(ERRORS.TRANSACTION_FAILED(error as Error));
   }
 
-  // Store in database
   const supabase = await createServerClient();
   const { error: insertError, data: insertData } = await supabase
     .from("documents")
@@ -147,13 +139,11 @@ async function processDocumentUpload(
  */
 export async function POST(request: Request) {
   try {
-    // Validate content type
     const contentType = request.headers.get("content-type") || "";
     if (!contentType.includes("multipart/form-data")) {
       throw new Error(ERRORS.INVALID_CONTENT_TYPE);
     }
 
-    // Parse and validate form data
     const formData = await request.formData();
     const validatedData = FormDataSchema.parse({
       name: formData.get("name"),
@@ -164,7 +154,6 @@ export async function POST(request: Request) {
       unsigned_document: formData.get("unsigned_document"),
     });
 
-    // Process upload
     const result = await processDocumentUpload(validatedData);
     return NextResponse.json(result);
   } catch (error) {

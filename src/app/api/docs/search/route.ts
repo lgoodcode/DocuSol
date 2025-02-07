@@ -40,7 +40,7 @@ const RequestSchema = z.object({
     })
     .refine(
       (val) => isTransactionSignature(val) || /^[a-f0-9]{64}$/i.test(val),
-      ERRORS.INVALID_VALUE
+      ERRORS.INVALID_VALUE,
     ),
   password: z.string().optional(),
 });
@@ -52,7 +52,7 @@ const createErrorResponse = (error: unknown) => {
   if (error instanceof z.ZodError) {
     return NextResponse.json(
       { error: error.errors[0].message },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -82,7 +82,7 @@ async function resolveHash(value: string): Promise<string> {
  * Fetch document by hash
  */
 async function fetchDocumentByHash(
-  hash: string
+  hash: string,
 ): Promise<DocumentDetailsWithPassword> {
   const supabase = await createServerClient();
   const { error, data } = await supabase
@@ -109,7 +109,7 @@ async function fetchDocumentByHash(
 
 function validateDocumentAccess(
   password: string | undefined,
-  passwordToCheck: string | null
+  passwordToCheck: string | null,
 ): void {
   if (passwordToCheck) {
     if (!password) {
@@ -126,7 +126,8 @@ function validateDocumentAccess(
  */
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    // Stupid NextJS API bug - there is no json() method on the request object
+    const body = request.body ? await request.json() : {};
     const { value, password } = RequestSchema.parse(body);
 
     const hash = await resolveHash(value);
@@ -134,7 +135,7 @@ export async function POST(request: Request) {
 
     validateDocumentAccess(password, passwordToCheck);
 
-    return NextResponse.json(document);
+    return NextResponse.json<DocumentDetails>(document);
   } catch (error) {
     return createErrorResponse(error);
   }

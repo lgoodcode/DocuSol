@@ -10,7 +10,7 @@ import {
 const RPC_URL = process.env.HELIUS_API_URL;
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 const MEMO_PROGRAM_ID = new PublicKey(
-  "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"
+  "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
 );
 
 export function getTransactionUrl(signature: string) {
@@ -20,7 +20,7 @@ export function getTransactionUrl(signature: string) {
 export const isTransactionSignature = (val: string) => {
   try {
     return (
-      (val.length === 88 || val.length === 87) && bs58.decode(val).length === 64
+      val.length >= 86 && val.length <= 88 && bs58.decode(val).length === 64
     );
   } catch {
     return false;
@@ -126,7 +126,7 @@ export async function getLatestBlockSlot() {
 }
 
 export async function getConfirmedTransactionSlot(
-  signature: string
+  signature: string,
 ): Promise<number> {
   const connection = new Connection(RPC_URL, "confirmed");
 
