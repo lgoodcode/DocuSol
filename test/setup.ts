@@ -10,7 +10,7 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-vi.mock("nextjs-toploader/app", () => ({
+vi.mock("next-nprogress-bar", () => ({
   useRouter: () => ({
     push: vi.fn(),
     replace: vi.fn(),
