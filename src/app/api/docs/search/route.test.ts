@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
 import { createServerClient } from "@/lib/supabase/server";
@@ -44,20 +43,13 @@ describe("POST /api/docs/search", () => {
 
     // Mock successful database response
     vi.mocked(createServerClient).mockResolvedValue({
-      from: () => ({
-        select: () => ({
-          or: () => ({
-            data: [mockDocument],
-            error: null,
-          }),
-        }),
+      from: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      or: vi.fn().mockResolvedValue({
+        data: [mockDocument],
+        error: null,
       }),
     } as unknown as any);
-
-    // Mock successful transaction signature resolution
-    vi.mocked(getHashFromTransactionSignature).mockResolvedValue(
-      "a".repeat(64),
-    );
   });
 
   it("should successfully find document by hash", async () => {

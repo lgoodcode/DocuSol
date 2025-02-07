@@ -34,15 +34,12 @@ describe("POST /api/docs/new", () => {
     vi.mocked(getLatestBlockSlot).mockResolvedValue(123456);
     vi.mocked(sendMemoTransaction).mockResolvedValue("mock-tx-signature");
     vi.mocked(createServerClient).mockResolvedValue({
-      from: () => ({
-        insert: () => ({
-          select: () => ({
-            single: () => ({
-              data: { id: "mock-id" },
-              error: null,
-            }),
-          }),
-        }),
+      from: vi.fn().mockReturnThis(),
+      insert: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: { id: "mock-id" },
+        error: null,
       }),
     } as unknown as any);
   });
