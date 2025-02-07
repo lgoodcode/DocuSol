@@ -70,7 +70,6 @@ export class MockBlob extends Blob {
   constructor(content: any[], options: any = {}) {
     super(content, options);
     const buffer = Buffer.from(content.join(""));
-    // @ts-expect-error - Length does exist
     this._size = buffer.length;
     this._type = options.type || "";
   }
