@@ -80,83 +80,58 @@ const getErrorStatusCode = (message: string): number => {
   return 500;
 };
 
-/**
- * Process document upload and create blockchain record
- */
 async function processDocumentUpload(
   formData: z.infer<typeof FormDataSchema>,
 ): Promise<DocumentUploadResponse> {
+  const blockSlot = await getLatestBlockSlot();
+  const [originalBuffer, unsignedBuffer] = await Promise.all([
+    formData.original_document.arrayBuffer(),
+    formData.unsigned_document.arrayBuffer(),
+  ]);
+
+  const originalDocumentBuffer = Buffer.from(originalBuffer);
+  const unsignedDocumentBuffer = Buffer.from(unsignedBuffer);
+
+  const unsignedDocumentHash = createFileHash(
+    unsignedDocumentBuffer,
+    blockSlot,
+    formData.password,
+  );
+
+  const memoMessage = `FILE_HASH=${unsignedDocumentHash}`;
+  let txSignature: string;
   try {
-    console.log("Starting document upload process");
-    // Get latest block slot
-    const blockSlot = await getLatestBlockSlot();
-    console.log("Retrieved block slot:", blockSlot);
-    console.log("formData", formData);
-    // Process documents
-    console.log("Processing document buffers");
-    const [originalBuffer, unsignedBuffer] = await Promise.all([
-      formData.original_document.arrayBuffer(),
-      formData.unsigned_document.arrayBuffer(),
-    ]);
-
-    const originalDocumentBuffer = Buffer.from(originalBuffer);
-    const unsignedDocumentBuffer = Buffer.from(unsignedBuffer);
-    console.log("Document buffers created successfully");
-
-    // Create hash and send transaction
-    console.log("Creating document hash");
-    const unsignedDocumentHash = createFileHash(
-      unsignedDocumentBuffer,
-      blockSlot,
-      formData.password,
-    );
-    console.log("Document hash created:", unsignedDocumentHash);
-
-    const memoMessage = `FILE_HASH=${unsignedDocumentHash}`;
-    let txSignature: string;
-    try {
-      console.log("Initiating transaction with memo:", memoMessage);
-      txSignature = await sendMemoTransaction(memoMessage);
-      console.log("Transaction successful, signature:", txSignature);
-    } catch (error) {
-      console.error("Transaction failed with error:", error);
-      throw new Error(ERRORS.TRANSACTION_FAILED(error as Error));
-    }
-
-    // Store in database
-    console.log("Storing document in database");
-    const supabase = await createServerClient();
-    const { error: insertError, data: insertData } = await supabase
-      .from("documents")
-      .insert({
-        name: formData.name,
-        password: formData.password,
-        mime_type: formData.mime_type,
-        unsigned_hash: unsignedDocumentHash,
-        unsigned_transaction_signature: txSignature,
-        original_filename: formData.original_filename,
-        original_document: bufferToHex(originalDocumentBuffer),
-        unsigned_document: bufferToHex(unsignedDocumentBuffer),
-        created_at: new Date().toISOString(),
-      })
-      .select("id")
-      .single();
-
-    if (insertError) {
-      console.error("Database insertion failed:", insertError);
-      throw new Error(ERRORS.DATABASE_ERROR(insertError.message));
-    }
-
-    console.log("Document upload process completed successfully");
-    return {
-      id: insertData.id,
-      txSignature,
-      unsignedHash: unsignedDocumentHash,
-    };
+    txSignature = await sendMemoTransaction(memoMessage);
   } catch (error) {
-    console.error("Document upload process failed:", error);
-    throw error; // Re-throw to be handled by the main error handler
+    throw new Error(ERRORS.TRANSACTION_FAILED(error as Error));
   }
+
+  const supabase = await createServerClient();
+  const { error: insertError, data: insertData } = await supabase
+    .from("documents")
+    .insert({
+      name: formData.name,
+      password: formData.password,
+      mime_type: formData.mime_type,
+      unsigned_hash: unsignedDocumentHash,
+      unsigned_transaction_signature: txSignature,
+      original_filename: formData.original_filename,
+      original_document: bufferToHex(originalDocumentBuffer),
+      unsigned_document: bufferToHex(unsignedDocumentBuffer),
+      created_at: new Date().toISOString(),
+    })
+    .select("id")
+    .single();
+
+  if (insertError) {
+    throw new Error(ERRORS.DATABASE_ERROR(insertError.message));
+  }
+
+  return {
+    id: insertData.id,
+    txSignature,
+    unsignedHash: unsignedDocumentHash,
+  };
 }
 
 /**
@@ -164,13 +139,11 @@ async function processDocumentUpload(
  */
 export async function POST(request: Request) {
   try {
-    // Validate content type
     const contentType = request.headers.get("content-type") || "";
     if (!contentType.includes("multipart/form-data")) {
       throw new Error(ERRORS.INVALID_CONTENT_TYPE);
     }
 
-    // Parse and validate form data
     const formData = await request.formData();
     const validatedData = FormDataSchema.parse({
       name: formData.get("name"),
@@ -181,8 +154,6 @@ export async function POST(request: Request) {
       unsigned_document: formData.get("unsigned_document"),
     });
 
-    console.log("validatedData", validatedData);
-    // Process upload
     const result = await processDocumentUpload(validatedData);
     return NextResponse.json(result);
   } catch (error) {
