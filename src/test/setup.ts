@@ -53,11 +53,13 @@ vi.mock("@sentry/nextjs", () => ({
 
 // Mock supabase
 vi.mock("@/lib/supabase/server", () => ({
-  createServerClient: createTypedSupabaseMock(),
+  createServerClient: vi
+    .fn()
+    .mockImplementation(() => Promise.resolve(createTypedSupabaseMock())),
 }));
 
 vi.mock("@/lib/supabase/client", () => ({
-  createClient: createTypedSupabaseMock(),
+  createClient: vi.fn().mockImplementation(() => createTypedSupabaseMock()),
 }));
 
 export const createTypedSupabaseMock = () => {
