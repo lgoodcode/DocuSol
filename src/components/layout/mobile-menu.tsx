@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
-function useIsFirstRender() {
+const useIsFirstRender = () => {
   const isFirst = useRef(true);
 
   useEffect(() => {
@@ -22,13 +22,13 @@ function useIsFirstRender() {
   }, []);
 
   return isFirst.current;
-}
+};
 
 export function MobileMenu({
-  authenticated,
+  connected,
   onAuthClick,
 }: {
-  authenticated: boolean;
+  connected: boolean;
   onAuthClick: () => void;
 }) {
   const pathname = usePathname();
@@ -86,13 +86,13 @@ export function MobileMenu({
   return (
     <div
       ref={headerRef}
-      className="fixed top-0 right-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 md:hidden"
+      className="fixed right-0 top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 md:hidden"
     >
       <div className="flex h-16 items-center justify-between px-4">
         <Link
           ref={logoRef}
           href="/"
-          className="p-2 flex items-center gap-2 min-w-fit"
+          className="flex min-w-fit items-center gap-2 p-2"
         >
           <div className="flex items-center gap-2">
             <Image
@@ -100,7 +100,7 @@ export function MobileMenu({
               alt="DocuSol"
               width={32}
               height={32}
-              className="w-8 h-8"
+              className="h-8 w-8"
             />
             <span className="sr-only">DocuSol</span>
             <h1 className="text-xl font-bold">DocuSol</h1>
@@ -113,7 +113,7 @@ export function MobileMenu({
               ref={themeButtonRef}
               variant="ghost"
               size="icon"
-              className="bg-transparent hover:bg-transparent active:bg-transparent hover:text-primary"
+              className="bg-transparent hover:bg-transparent hover:text-primary active:bg-transparent"
               onClick={(e) => {
                 e.stopPropagation();
                 setTheme(theme === "dark" ? "light" : "dark");
@@ -162,7 +162,7 @@ export function MobileMenu({
           <SheetContent
             ref={headerRef}
             side="right"
-            className="w-full py-2 px-2 border-l-0 [&>button]:hidden h-[calc(100dvh-64px)] mt-[65px] bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+            className="mt-[65px] h-[calc(100dvh-64px)] w-full border-l-0 bg-background/95 px-2 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/80 [&>button]:hidden"
             // Full sheet with top section that is commented out below
             // className="w-full border-l-0 [&>button]:hidden bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
           >
@@ -206,7 +206,7 @@ export function MobileMenu({
                           "flex items-center gap-4 rounded-none px-4 py-3 text-sm font-medium transition-colors hover:bg-accent",
                           pathname === route.path
                             ? "bg-accent text-accent-foreground"
-                            : "text-muted-foreground"
+                            : "text-muted-foreground",
                         )}
                       >
                         <route.Icon className="h-6 w-6" />
@@ -234,10 +234,10 @@ export function MobileMenu({
                     }}
                     className="flex w-full items-center gap-4 rounded-none px-4 py-3 text-sm font-medium transition-colors hover:bg-accent"
                   >
-                    {authenticated ? (
+                    {connected ? (
                       <>
                         <LogOut className="h-6 w-6" />
-                        <div className="flex flex-col gap-1 w-full text-left">
+                        <div className="flex w-full flex-col gap-1 text-left">
                           <span>Logout</span>
                           <span className="text-xs font-normal text-muted-foreground">
                             Sign out of your account
@@ -247,7 +247,7 @@ export function MobileMenu({
                     ) : (
                       <>
                         <User className="h-6 w-6" />
-                        <div className="flex flex-col gap-1 w-full text-left">
+                        <div className="flex w-full flex-col gap-1 text-left">
                           <span>Login</span>
                           <span className="text-xs font-normal text-muted-foreground">
                             Sign in to your account

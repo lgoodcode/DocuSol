@@ -1,43 +1,45 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { Wallet } from "lucide-react";
-import { usePrivy, useSolanaWallets } from "@privy-io/react-auth";
 
 import { SUPPORT_EMAIL, DISCORD_URL } from "@/constants";
 import { SkeletonContent } from "@/components/layout/skeleton-content";
+import { WalletDialog } from "@/components/layout/wallet-dialog";
 import { Button } from "@/components/ui/button";
 
 export function WalletAuthWrapper({ children }: { children: React.ReactNode }) {
-  const { ready, login, authenticated } = usePrivy();
-  const { wallets } = useSolanaWallets();
+  const { connected, connecting } = useWallet();
+  const [open, setOpen] = useState(false);
 
-  if (!ready) {
+  if (connecting) {
     return <SkeletonContent />;
-  } else if (authenticated || !!wallets.length) {
+  } else if (connected) {
     return children;
   }
 
   return (
-    <div className="relative overflow-hidden min-h-[calc(100dvh-200px)] flex items-center justify-center">
-      <div className="relative mx-auto flex flex-col items-center justify-center max-w-3xl text-center gap-4 px-4">
+    <div className="relative flex min-h-[calc(100dvh-200px)] items-center justify-center overflow-hidden">
+      <div className="relative mx-auto flex max-w-3xl flex-col items-center justify-center gap-4 px-4 text-center">
         <div className="space-y-4">
-          <Wallet className="h-24 w-24 text-muted-foreground/50 mx-auto" />
+          <Wallet className="mx-auto h-24 w-24 text-muted-foreground/50" />
 
-          <h1 className="p-2 text-4xl sm:text-5xl md:text-6xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-blue-600/60 dark:to-blue-500/50">
+          <h1 className="bg-gradient-to-r from-blue-500 to-blue-600/60 bg-clip-text p-2 text-4xl font-bold tracking-tighter text-transparent dark:to-blue-500/50 sm:text-5xl md:text-6xl">
             Connect Your Wallet
           </h1>
         </div>
 
         <div className="w-full space-y-8">
-          <p className="sm:text-lg md:text-xl text-muted-foreground mx-auto">
+          <p className="mx-auto text-muted-foreground sm:text-lg md:text-xl">
             To use this app, you&apos;ll need to connect your wallet. This
             allows us to use your wallet address as your unique signature. If
             authenticating with an email or federated identity, a wallet will be
             generated for you.
           </p>
 
-          <p className="sm:text-lg md:text-xl max-w-xl text-muted-foreground mx-auto">
+          <p className="mx-auto max-w-xl text-muted-foreground sm:text-lg md:text-xl">
             Having trouble? Contact support via{" "}
             <Link
               href={`mailto:${SUPPORT_EMAIL}`}
@@ -57,14 +59,11 @@ export function WalletAuthWrapper({ children }: { children: React.ReactNode }) {
             .
           </p>
 
-          <Button
-            size="lg"
-            className="mx-auto"
-            onClick={() => login()}
-            disabled={!ready}
-          >
-            Connect Wallet
-          </Button>
+          <WalletDialog open={open} setOpen={setOpen}>
+            <Button size="lg" className="mx-auto" onClick={() => setOpen(true)}>
+              Connect Wallet
+            </Button>
+          </WalletDialog>
         </div>
       </div>
     </div>

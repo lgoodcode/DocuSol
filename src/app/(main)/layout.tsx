@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 
-import { PrivyProvider } from "@/components/providers/privy-provider";
+// import { PrivyProvider } from "@/components/providers/privy-provider";
+import { WalletProvider } from "@/components/providers/wallet-provider";
 import { Nav } from "@/components/layout/nav";
 import { ErrorPageContent } from "@/components/error-page-content";
 import { RateLimitPageContent } from "@/components/rate-limit-page-content";
@@ -27,21 +28,21 @@ export default async function MainLayout({
   }
 
   return (
-    <PrivyProvider>
+    <WalletProvider>
       <div className="relative flex">
         {/* Radial gradient overlay */}
-        <div className="fixed inset-0 pointer-events-none">
-          <div className="fixed inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-black/5 dark:from-primary/[0.03] to-transparent" />
+        <div className="pointer-events-none fixed inset-0">
+          <div className="fixed inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-black/5 to-transparent dark:from-primary/[0.03]" />
         </div>
 
         <BetaNoticeDialog />
         <WalletNoticeDialog />
 
         <Nav />
-        <main className="relative z-10 flex-1 px-6 mt-[64px] md:mt-0">
+        <main className="relative z-10 mt-[64px] flex-1 px-6 md:mt-0">
           <WalletAuthWrapper>{content}</WalletAuthWrapper>
         </main>
       </div>
-    </PrivyProvider>
+    </WalletProvider>
   );
 }
