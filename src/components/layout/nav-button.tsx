@@ -19,11 +19,18 @@ export function NavButton({
 }: NavButtonProps) {
   return (
     <NavTooltip content={label}>
-      <Link href={href}>
+      <Link
+        href={href}
+        onClick={(e) => {
+          if (disabled) {
+            e.preventDefault();
+          }
+        }}
+      >
         <Button
           variant="ghost"
           size="icon"
-          className="w-full h-12 text-primary/60 hover:text-primary-foreground bg-primary-foreground/10 hover:bg-primary dark:hover:bg-white dark:hover:text-black"
+          className="h-12 w-full bg-primary-foreground/10 text-primary/60 hover:bg-primary hover:text-primary-foreground dark:hover:bg-white dark:hover:text-black"
           disabled={!!disabled}
         >
           <Icon className="h-5 w-5" />
