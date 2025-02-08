@@ -42,7 +42,7 @@ export function DatabaseWipeDialog() {
     <Dialog open={open}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader className="space-y-2.5">
-          <div className="flex gap-2 items-center">
+          <div className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-destructive" />
             <DialogTitle>Database Maintenance</DialogTitle>
           </div>
@@ -52,7 +52,7 @@ export function DatabaseWipeDialog() {
             ensure you have downloaded any important documents before this date.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4">
+        <div className="flex flex-col gap-6 py-4">
           <p className="text-sm text-muted-foreground">
             This is a scheduled maintenance to improve our service during our
             beta phase. All user data, including documents and signatures will

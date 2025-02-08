@@ -43,7 +43,7 @@ export function BetaNoticeDialog() {
     <Dialog open={open}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader className="space-y-2.5">
-          <div className="flex gap-2 items-center">
+          <div className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-warning" />
             <DialogTitle>Beta Version Notice</DialogTitle>
           </div>
@@ -52,7 +52,7 @@ export function BetaNoticeDialog() {
             application.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4">
+        <div className="flex flex-col gap-6 py-4">
           <p className="text-sm text-muted-foreground">
             As this is a beta releases, you may encounter occasional issues or
             interruptions in service. We&apos;re actively working on
