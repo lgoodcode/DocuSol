@@ -178,13 +178,15 @@ body {
 
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1;
   }
 }
 
 @layer utilities {
   .link {
-    @apply text-primary hover:underline underline-offset-4 text-sky-500 hover:text-sky-600;
+    @apply text-primary text-sky-500 underline-offset-4 hover:text-sky-600 hover:underline;
   }
 
   .bd-frost {

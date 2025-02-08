@@ -2,34 +2,25 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePrivy } from "@privy-io/react-auth";
 import { useState } from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
 
 import { navRoutes } from "@/config/routes";
 import { NavButton } from "@/components/layout/nav-button";
 import { MobileMenu } from "@/components/layout/mobile-menu";
-import { WalletManagerDialog } from "@/components/wallet-manager-dialog";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { PrivyAuthButton } from "@/components/layout/privy-auth-button";
+import { NavTooltip } from "@/components/layout/nav-tooltip";
+import { WalletDialog } from "@/components/layout/wallet-dialog";
 
 export function Nav() {
+  const { connected } = useWallet();
   const [open, setOpen] = useState(false);
-  const { ready, authenticated } = usePrivy();
-
-  const handleWalletManagerClick = () => {
-    setOpen((prev) => !prev);
-  };
-
   return (
     <>
-      <WalletManagerDialog
-        open={open}
-        setOpen={setOpen}
-      />
-      <MobileMenu authenticated={authenticated} onAuthClick={() => null} />
-      <aside className="w-[60px] py-4 hidden md:flex flex-col border-r border-stone-300 dark:border-border sticky top-0 h-screen z-50">
-        <div className="flex flex-col flex-1">
-          <Link href="/" className="w-full h-12 mb-3">
+      <MobileMenu connected={connected} onAuthClick={() => null} />
+      <aside className="sticky top-0 z-50 hidden h-screen w-[60px] flex-col border-r border-stone-300 py-4 dark:border-border md:flex">
+        <div className="flex flex-1 flex-col">
+          <Link href="/" className="mb-3 h-12 w-full">
             <Image
               src="/img/branding/logo.webp"
               alt="DocuSol"
@@ -45,7 +36,7 @@ export function Nav() {
                 href={route.path}
                 icon={route.Icon}
                 label={route.name}
-                disabled={!authenticated}
+                disabled={!connected}
               />
             ))}
           </nav>
@@ -54,7 +45,9 @@ export function Nav() {
         <div className="mt-auto">
           <div className="border-t border-stone-300 dark:border-border">
             <ThemeToggle withTooltip />
-            <PrivyAuthButton ready={ready} onClick={handleWalletManagerClick} />
+            <NavTooltip content="Wallet">
+              <WalletDialog open={open} setOpen={setOpen} />
+            </NavTooltip>
           </div>
         </div>
       </aside>
