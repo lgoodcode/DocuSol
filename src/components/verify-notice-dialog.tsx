@@ -42,19 +42,19 @@ export function VerifyNoticeDialog() {
     <Dialog open={open}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader className="space-y-2.5">
-          <div className="flex gap-2 items-center">
+          <div className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-destructive" />
             <DialogTitle>Important Document Compatibility Notice</DialogTitle>
           </div>
           <DialogDescription>
-            A system update is scheduled for January 31st, 2025 that will affect document
-            verification
+            A system update is scheduled for January 31st, 2025 that will affect
+            document verification
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4">
+        <div className="flex flex-col gap-6 py-4">
           <p className="text-sm text-muted-foreground">
-            Documents uploaded prior to 8:30am PST January 31st, 2025 will not be
-            compatible with our new self-service verification system. Our
+            Documents uploaded prior to 8:30am PST January 31st, 2025 will not
+            be compatible with our new self-service verification system. Our
             database will undergo maintenance to implement these improvements.
           </p>
           <Alert variant="warning">

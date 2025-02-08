@@ -42,7 +42,7 @@ export function WalletNoticeDialog() {
     <Dialog open={open}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader className="space-y-2.5">
-          <div className="flex gap-2 items-center">
+          <div className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-destructive" />
             <DialogTitle>Wallet Integration Notice</DialogTitle>
           </div>
@@ -50,7 +50,7 @@ export function WalletNoticeDialog() {
             The wallet integration feature is currently under development
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4">
+        <div className="flex flex-col gap-6 py-4">
           <p className="text-sm text-muted-foreground">
             We are working on implementing wallet integration for document
             signing. Currently, this feature is not yet available and documents

@@ -1,6 +1,5 @@
 import { headers } from "next/headers";
 
-// import { PrivyProvider } from "@/components/providers/privy-provider";
 import { WalletProvider } from "@/components/providers/wallet-provider";
 import { Nav } from "@/components/layout/nav";
 import { ErrorPageContent } from "@/components/error-page-content";
