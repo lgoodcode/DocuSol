@@ -45,7 +45,11 @@ export function WalletDialog({
         </DialogTrigger>
       )}
       <DialogContent
-        onInteractOutside={(e) => e.preventDefault()}
+        onInteractOutside={(e) => {
+          if (connected) {
+            e.preventDefault();
+          }
+        }}
         // Suppresses the "aria-describedby" warning
         aria-describedby={undefined}
       >
