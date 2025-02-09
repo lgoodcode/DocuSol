@@ -1,24 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Wallet } from "lucide-react";
 
 import { SUPPORT_EMAIL, DISCORD_URL } from "@/constants";
 import { SkeletonContent } from "@/components/layout/skeleton-content";
-import { WalletDialog } from "@/components/layout/wallet-dialog";
 import { Button } from "@/components/ui/button";
 
 export function WalletAuthWrapper({ children }: { children: React.ReactNode }) {
   const { connected, connecting } = useWallet();
-  const [open, setOpen] = useState(false);
 
   if (connecting) {
     return <SkeletonContent />;
   } else if (connected) {
     return children;
   }
+
+  const triggerWalletDialog = () => {
+    const walletDialogTrigger = document.getElementById(
+      "wallet-dialog-trigger",
+    );
+    if (walletDialogTrigger) {
+      walletDialogTrigger.click();
+    }
+  };
 
   return (
     <div className="relative flex min-h-[calc(100dvh-200px)] items-center justify-center overflow-hidden">
@@ -59,11 +65,9 @@ export function WalletAuthWrapper({ children }: { children: React.ReactNode }) {
             .
           </p>
 
-          <WalletDialog open={open} setOpen={setOpen}>
-            <Button size="lg" className="mx-auto" onClick={() => setOpen(true)}>
-              Connect Wallet
-            </Button>
-          </WalletDialog>
+          <Button size="lg" className="mx-auto" onClick={triggerWalletDialog}>
+            Connect Wallet
+          </Button>
         </div>
       </div>
     </div>
