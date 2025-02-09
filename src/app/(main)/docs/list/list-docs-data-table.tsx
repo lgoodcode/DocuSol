@@ -34,19 +34,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import { useColumns } from "./columns";
-
+import { RenameDocDialog } from "./rename-doc-dialog";
 export function DataTable({
   data,
-  setData,
   isLoading,
 }: {
   data: ViewDocument[];
-  setData: React.Dispatch<React.SetStateAction<ViewDocument[]>>;
   isLoading: boolean;
 }) {
-  const columns = useColumns((id: string) => {
-    setData((prev) => prev.filter((doc) => doc.id !== id));
-  });
+  const [docToRename, setDocToRename] = useState<ViewDocument | null>(null);
+  const columns = useColumns(docToRename, setDocToRename);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -69,31 +66,37 @@ export function DataTable({
   });
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.3 }}
-    >
-      <div className="flex items-center gap-4 py-4">
-        <Input
-          placeholder="Filter documents..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("name")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              Columns
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) =>  (
+    <>
+      <RenameDocDialog
+        doc={docToRename}
+        isOpen={!!docToRename}
+        onClose={() => setDocToRename(null)}
+      />
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        <div className="flex items-center gap-4 py-4">
+          <Input
+            placeholder="Filter documents..."
+            value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+            onChange={(event) =>
+              table.getColumn("name")?.setFilterValue(event.target.value)
+            }
+            className="max-w-sm"
+          />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="ml-auto">
+                Columns
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {table
+                .getAllColumns()
+                .filter((column) => column.getCanHide())
+                .map((column) => (
                   <DropdownMenuCheckboxItem
                     key={column.id}
                     className="capitalize"
@@ -103,103 +106,107 @@ export function DataTable({
                     }
                   >
                     {column.id}
-                </DropdownMenuCheckboxItem>
+                  </DropdownMenuCheckboxItem>
+                ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        <div className="w-full max-w-[calc(100vw-48px)] overflow-x-auto border">
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    return (
+                      <TableHead key={header.id}>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
+                      </TableHead>
+                    );
+                  })}
+                </TableRow>
               ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-      <div className="w-full max-w-[calc(100vw-48px)] overflow-x-auto border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              Array.from({ length: 5 }).map((_, index) => (
-                <TableRow key={`loading-${index}`}>
-                  {table
-                    .getAllColumns()
-                    .slice(0, -1)
-                    .map((column: ColumnDef<ViewDocument>) => (
-                      <TableCell key={column.id}>
-                        <div
-                          className={cn("h-6 animate-pulse rounded bg-muted", {
-                            "w-[200px]": column.id === "name",
-                            "w-20":
-                              column.id === "status" ||
-                              column.id === "mimeType",
-                            "w-[120px]":
-                              column.id === "createdAt" ||
-                              column.id === "updatedAt",
-                            "w-8": column.id === "actions",
-                          })}
-                        />
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                Array.from({ length: 5 }).map((_, index) => (
+                  <TableRow key={`loading-${index}`}>
+                    {table
+                      .getAllColumns()
+                      .slice(0, -1)
+                      .map((column: ColumnDef<ViewDocument>) => (
+                        <TableCell key={column.id}>
+                          <div
+                            className={cn(
+                              "h-6 animate-pulse rounded bg-muted",
+                              {
+                                "w-[200px]": column.id === "name",
+                                "w-20":
+                                  column.id === "status" ||
+                                  column.id === "mimeType",
+                                "w-[120px]":
+                                  column.id === "createdAt" ||
+                                  column.id === "updatedAt",
+                                "w-8": column.id === "actions",
+                              },
+                            )}
+                          />
+                        </TableCell>
+                      ))}
+                  </TableRow>
+                ))
+              ) : table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
                       </TableCell>
                     ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={table.getTotalSize()}
+                    className="h-24 text-center"
+                  >
+                    No documents found.
+                  </TableCell>
                 </TableRow>
-              ))
-            ) : table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No documents found.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          Previous
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          Next
-        </Button>
-      </div>
-    </motion.div>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+        <div className="flex items-center justify-end space-x-2 py-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            Next
+          </Button>
+        </div>
+      </motion.div>
+    </>
   );
 }

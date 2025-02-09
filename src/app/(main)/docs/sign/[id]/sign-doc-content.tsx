@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
 import { useForm } from "react-hook-form";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next-nprogress-bar";
 import { captureException } from "@sentry/nextjs";
 import { Pencil, Trash2, FileText } from "lucide-react";
 
@@ -113,7 +113,7 @@ export function SignDocumentContent({
   const [typedSignature, setTypedSignature] = useState("");
   const [showDialog, setShowDialog] = useState(true);
   const [showPasswordDialog, setShowPasswordDialog] = useState(
-    Boolean(docPassword)
+    Boolean(docPassword),
   );
   const [results, setResults] = useState<SignedDocumentResult | null>(null);
   const passwordForm = useForm<z.infer<typeof passwordSchema>>({
@@ -175,7 +175,7 @@ export function SignDocumentContent({
       signedDoc = await sign(
         unsignedDoc,
         signatureType === "draw" ? getSignatureAsBlack() : null,
-        signatureType === "type" ? typedSignature : undefined
+        signatureType === "type" ? typedSignature : undefined,
       );
 
       if (!signedDoc) {
@@ -262,8 +262,8 @@ export function SignDocumentContent({
         }}
       >
         <div className="flex flex-col gap-2">
-          <h1 className="text-2xl md:text-3xl font-bold">Sign Document</h1>
-          <p className="text-sm md:text-base text-muted-foreground">
+          <h1 className="text-2xl font-bold md:text-3xl">Sign Document</h1>
+          <p className="text-sm text-muted-foreground md:text-base">
             Sign a document with your signature.
           </p>
         </div>
@@ -355,7 +355,7 @@ export function SignDocumentContent({
           {/* File Preview Card */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                 <FileText className="h-5 w-5" />
                 Preview Document
               </CardTitle>
@@ -373,9 +373,9 @@ export function SignDocumentContent({
         >
           {/* Signature Card */}
           <Card>
-            <CardHeader className="flex flex-col sm:flex-row items-start gap-4 sm:gap-0 sm:items-center justify-between">
-              <div className="flex flex-col gap-1 max-w-sm">
-                <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+            <CardHeader className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center sm:gap-0">
+              <div className="flex max-w-sm flex-col gap-1">
+                <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                   <Pencil className="h-5 w-5" />
                   Sign Document
                 </CardTitle>
@@ -410,7 +410,7 @@ export function SignDocumentContent({
             </CardHeader>
             <CardContent>
               {signatureType === "draw" ? (
-                <div className="relative aspect-[3/2] sm:aspect-[3/1] w-full border rounded-lg overflow-hidden bg-background dark:bg-background/60">
+                <div className="relative aspect-[3/2] w-full overflow-hidden rounded-lg border bg-background dark:bg-background/60 sm:aspect-[3/1]">
                   <canvas
                     ref={canvasRef}
                     width={900}
@@ -422,7 +422,7 @@ export function SignDocumentContent({
                     onTouchStart={startDrawing}
                     onTouchMove={draw}
                     onTouchEnd={stopDrawing}
-                    className="touch-none w-full h-full"
+                    className="h-full w-full touch-none"
                     aria-label="Signature canvas"
                   />
                 </div>

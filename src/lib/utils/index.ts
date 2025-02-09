@@ -38,7 +38,7 @@ const openDB = (): Promise<IDBDatabase> => {
 };
 
 export const storeNewDocument = async (
-  document: StoredDocument
+  document: StoredDocument,
 ): Promise<void> => {
   const db = await openDB();
   return new Promise((resolve, reject) => {
@@ -51,8 +51,19 @@ export const storeNewDocument = async (
   });
 };
 
+export const removeStoredDocument = async (id: string): Promise<void> => {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(["documents"], "readwrite");
+    const store = transaction.objectStore("documents");
+    const request = store.delete(id);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve();
+  });
+};
+
 export const getStoredDocument = async (
-  id: string
+  id: string,
 ): Promise<StoredDocument | null> => {
   const db = await openDB();
   return new Promise((resolve, reject) => {

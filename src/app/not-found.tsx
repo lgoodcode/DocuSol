@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next-nprogress-bar";
 
 import { Button } from "@/components/ui/button";
 
@@ -9,7 +9,7 @@ export default function NotFound() {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen w-full relative overflow-hidden">
+    <div className="relative min-h-screen w-full overflow-hidden">
       {/* Grid overlay */}
       <div
         className="absolute inset-0 from-background to-background"
@@ -21,19 +21,19 @@ export default function NotFound() {
       />
 
       <div className="absolute inset-0 flex items-center justify-center opacity-[0.07] dark:opacity-[0.05]">
-        <span className="text-[15rem] sm:text-[18rem] md:text-[22rem] lg:text-[35rem] font-bold select-none">
+        <span className="select-none text-[15rem] font-bold sm:text-[18rem] md:text-[22rem] lg:text-[35rem]">
           404
         </span>
       </div>
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-dvh px-4 text-center">
-        <h1 className="text-4xl font-bold mb-4">Page not found</h1>
-        <p className="text-muted-foreground mb-8 max-w-sm font-medium">
+      <div className="relative z-10 flex min-h-dvh flex-col items-center justify-center px-4 text-center">
+        <h1 className="mb-4 text-4xl font-bold">Page not found</h1>
+        <p className="mb-8 max-w-sm font-medium text-muted-foreground">
           We can&apos;t find the page that you&apos;re looking for. Probably the
           link is broken
         </p>
-        <div className="flex sm:flex-row gap-2">
+        <div className="flex gap-2 sm:flex-row">
           <Link href="/">
             <Button>Take me home</Button>
           </Link>
