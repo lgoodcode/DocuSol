@@ -35,6 +35,8 @@ import { Input } from "@/components/ui/input";
 
 import { useColumns } from "./columns";
 import { RenameDocDialog } from "./rename-doc-dialog";
+import { DeleteDocDialog } from "./delete-doc-dialog";
+
 export function DataTable({
   data,
   isLoading,
@@ -43,7 +45,17 @@ export function DataTable({
   isLoading: boolean;
 }) {
   const [docToRename, setDocToRename] = useState<ViewDocument | null>(null);
-  const columns = useColumns(docToRename, setDocToRename);
+  const [docToDelete, setDocToDelete] = useState<ViewDocument | null>(null);
+  const columns = useColumns({
+    renameDoc: {
+      docToRename,
+      setDocToRename,
+    },
+    deleteDoc: {
+      docToDelete,
+      setDocToDelete,
+    },
+  });
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -71,6 +83,11 @@ export function DataTable({
         doc={docToRename}
         isOpen={!!docToRename}
         onClose={() => setDocToRename(null)}
+      />
+      <DeleteDocDialog
+        doc={docToDelete}
+        isOpen={!!docToDelete}
+        onClose={() => setDocToDelete(null)}
       />
       <motion.div
         initial={{ opacity: 0, y: 10 }}

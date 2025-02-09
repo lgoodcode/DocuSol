@@ -1,11 +1,9 @@
 "use client";
 
-import { QueryClient } from "@tanstack/react-query";
-
-import { hexToBuffer, previewBlob, removeStoredDocument } from "@/lib/utils";
+import { hexToBuffer, previewBlob } from "@/lib/utils";
 import { getTransactionUrl } from "@/lib/utils/solana";
 
-import { getDocumentData, deleteDocument as deleteDocumentDb } from "./db";
+import { getDocumentData } from "./db";
 
 const getDocumentBlob = async (doc: ViewDocument): Promise<Blob> => {
   const documentData = await getDocumentData(doc.id);
@@ -60,18 +58,4 @@ export const downloadDocument = async (doc: ViewDocument): Promise<void> => {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-};
-
-export const deleteDocument = async (
-  doc: ViewDocument,
-  queryClient: QueryClient,
-): Promise<void> => {
-  await deleteDocumentDb(doc);
-  // TODO: remove once indexedDB is gone
-  await removeStoredDocument(doc.id);
-
-  queryClient.invalidateQueries({ queryKey: ["documents"] });
-  queryClient.setQueryData<ViewDocument[]>(["documents"], (oldData) => {
-    return oldData?.filter((d) => d.id !== doc.id) ?? [];
-  });
 };

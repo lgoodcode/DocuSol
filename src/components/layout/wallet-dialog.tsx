@@ -57,10 +57,18 @@ export function WalletDialog({
         <DialogHeader>
           {/* Suppresses the DialogTitle required warning */}
           <DialogTitle className="sr-only">
-            {wallet ? "Connected Wallet" : "Connect Wallet to Continue"}
+            {wallet
+              ? "Connected Wallet"
+              : connecting
+                ? "Connecting..."
+                : "Connect Wallet to Continue"}
           </DialogTitle>
           <h1 className="text-center text-2xl font-bold">
-            {wallet ? "Connected Wallet" : "Connect Wallet to Continue"}
+            {wallet
+              ? "Connected Wallet"
+              : connecting
+                ? "Connecting..."
+                : "Connect Wallet to Continue"}
           </h1>
         </DialogHeader>
 
