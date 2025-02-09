@@ -14,6 +14,7 @@ import {
   Compass,
   Copy,
   Link,
+  Share,
   Pencil,
 } from "lucide-react";
 
@@ -232,7 +233,7 @@ export function useColumns(
                       wrappedActions.handleCopyDocumentSignUrl(row.original)
                     }
                   >
-                    <Link className="mr-1 h-4 w-4" />
+                    <Share className="mr-1 h-4 w-4" />
                     Share Sign Link
                   </DropdownMenuItem>
                 )}
