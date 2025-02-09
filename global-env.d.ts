@@ -10,6 +10,7 @@ export declare global {
       HELIUS_API_URL: string;
       NEXT_PUBLIC_SUPABASE_URL: string;
       NEXT_PUBLIC_SUPABASE_ANON_KEY: string;
+      SUPABASE_SERVICE_ROLE_KEY: string;
       PRIVATE_KEY: string;
       UPSTASH_REDIS_REST_URL: string;
       UPSTASH_REDIS_REST_TOKEN: string;

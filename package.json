@@ -16,7 +16,7 @@
     "supabase:gen-types": "supabase gen types typescript --local > ./src/lib/supabase/database.ts",
     "supabase:reset": "supabase db reset && npm run supabase:gen-types",
     "supabase:dump": "supabase db dump --local --data-only > supabase/seed.sql",
-    "git:reset": "git stash && git checkout main && git pull && git branch -D staging && git checkout -b staging && git push -uf origin staging && git stash pop"
+    "git:reset": "git stash -u && git checkout main && git pull && git branch -D staging && git checkout -b staging && git push -uf origin staging && git stash pop"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
