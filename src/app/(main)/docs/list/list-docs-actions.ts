@@ -1,89 +1,77 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
-import { hexToBuffer, previewBlob } from "@/lib/utils";
+import { QueryClient } from "@tanstack/react-query";
+
+import { hexToBuffer, previewBlob, removeStoredDocument } from "@/lib/utils";
 import { getTransactionUrl } from "@/lib/utils/solana";
 
-const getDocument = async (id: string): Promise<Blob> => {
-  const supabase = createClient();
-  const { error, data } = await supabase
-    .from("documents")
-    .select("unsigned_document,signed_document,mime_type,name")
-    .eq("id", id)
-    .single();
+import { getDocumentData, deleteDocument as deleteDocumentDb } from "./db";
 
-  if (error) {
-    throw error;
-  }
-
-  if (!data) {
-    throw new Error("No document found");
-  }
-
-  const { unsigned_document, signed_document, mime_type } = data;
-  const documentDataString = unsigned_document || signed_document;
-
-  if (!documentDataString) {
-    throw new Error("No document data found");
-  }
-
-  const documentData = new Uint8Array(hexToBuffer(documentDataString));
-  return new Blob([documentData], { type: mime_type });
+const getDocumentBlob = async (doc: ViewDocument): Promise<Blob> => {
+  const documentData = await getDocumentData(doc.id);
+  const documentDataArray = new Uint8Array(
+    hexToBuffer(documentData.unsigned_document),
+  );
+  return new Blob([documentDataArray], { type: documentData.mime_type });
 };
 
-export const viewDocument = async (id: string): Promise<void> => {
-  const blob = await getDocument(id);
+export const viewDocument = async (doc: ViewDocument): Promise<void> => {
+  const blob = await getDocumentBlob(doc);
   previewBlob(blob);
 };
 
-export const viewTransaction = async (txSignature: string): Promise<void> => {
-  const url = getTransactionUrl(txSignature);
+export const viewTransaction = async (doc: ViewDocument): Promise<void> => {
+  const url = getTransactionUrl(
+    (doc.unsignedTxSignature || doc.signedTxSignature) as string,
+  );
   if (window) {
     window.open(url, "_blank");
   }
 };
 
-export const copyTxSignature = async (txSignature: string): Promise<string> => {
-  navigator.clipboard.writeText(txSignature);
-  return txSignature;
+export const copyTxSignature = async (doc: ViewDocument): Promise<string> => {
+  navigator.clipboard.writeText(
+    doc.unsignedTxSignature || doc.signedTxSignature || "",
+  );
+  return doc.unsignedTxSignature || doc.signedTxSignature || "";
 };
 
-export const copyDocumentSignUrl = async (id: string): Promise<string> => {
+export const copyDocumentSignUrl = async (
+  doc: ViewDocument,
+): Promise<string> => {
   const url = window.location.origin;
-  navigator.clipboard.writeText(`${url}/docs/sign/${id}`);
-  return `${url}/docs/sign/${id}`;
+  navigator.clipboard.writeText(`${url}/docs/sign/${doc.id}`);
+  return `${url}/docs/sign/${doc.id}`;
 };
 
-export const copyViewUrl = async (hash: string): Promise<string> => {
+export const copyViewUrl = async (doc: ViewDocument): Promise<string> => {
   const url = window.location.origin;
-  navigator.clipboard.writeText(`${url}/docs/view/${hash}`);
-  return `${url}/docs/view/${hash}`;
+  navigator.clipboard.writeText(`${url}/docs/view/${doc.id}`);
+  return `${url}/docs/view/${doc.id}`;
 };
 
-export const downloadDocument = async (id: string): Promise<void> => {
-  const supabase = createClient();
-  const { data } = await supabase
-    .from("documents")
-    .select("name")
-    .eq("id", id)
-    .single();
-
-  const blob = await getDocument(id);
+export const downloadDocument = async (doc: ViewDocument): Promise<void> => {
+  const blob = await getDocumentBlob(doc);
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = data?.name || `document-${id}`;
+  a.download = doc.name || `document-${doc.id}`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 };
 
-export const deleteDocument = async (id: string): Promise<void> => {
-  const supabase = createClient();
-  const { error } = await supabase.from("documents").delete().eq("id", id);
+export const deleteDocument = async (
+  doc: ViewDocument,
+  queryClient: QueryClient,
+): Promise<void> => {
+  await deleteDocumentDb(doc);
+  // TODO: remove once indexedDB is gone
+  await removeStoredDocument(doc.id);
 
-  if (error) {
-    throw error;
-  }
+  queryClient.invalidateQueries({ queryKey: ["documents"] });
+  queryClient.setQueryData<ViewDocument[]>(["documents"], (oldData) => {
+    return oldData?.filter((d) => d.id !== doc.id) ?? [];
+  });
 };

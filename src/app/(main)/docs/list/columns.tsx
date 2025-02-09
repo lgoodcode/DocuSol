@@ -3,6 +3,7 @@
 import { useMemo, useCallback } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { captureException } from "@sentry/nextjs";
+import { QueryClient, useQueryClient } from "@tanstack/react-query";
 import {
   MoreHorizontal,
   Download,
@@ -13,6 +14,8 @@ import {
   Compass,
   Copy,
   Link,
+  Share,
+  Pencil,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -26,7 +29,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
-import { removeDocument } from "@/lib/utils/db";
 
 import {
   viewDocument,
@@ -47,7 +49,10 @@ type ActionType =
   | "download"
   | "delete";
 
-const actionMap = {
+const actionMap: Record<
+  ActionType,
+  (doc: ViewDocument, queryClient: QueryClient) => Promise<void | string>
+> = {
   view: viewDocument,
   viewTransaction,
   copyTxSignature,
@@ -57,22 +62,19 @@ const actionMap = {
   delete: deleteDocument,
 } as const;
 
-export function useColumns(handleDelete: (id: string) => void) {
+export function useColumns(
+  docToRename: ViewDocument | null,
+  setDocToRename: (doc: ViewDocument | null) => void,
+) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const createActionHandler = useCallback((actionType: ActionType) => {
-    return async (id: string) => {
+    return async (doc: ViewDocument) => {
       try {
-        const result = await actionMap[actionType](id);
+        const result = await actionMap[actionType](doc, queryClient);
 
-        if (actionType === "delete") {
-          handleDelete(id);
-          // Remove from IndexedDB
-          removeDocument(id).catch((error) => {
-            console.error(error);
-            captureException(error);
-          });
-        } else if (
+        if (
           actionType === "copyTxSignature" ||
           actionType === "copyDocumentSignUrl" ||
           actionType === "copyViewUrl"
@@ -81,7 +83,7 @@ export function useColumns(handleDelete: (id: string) => void) {
             title: "Copied to Clipboard",
             description: (
               <span>
-                <span className="font-bold font-mono break-all">{result!}</span>{" "}
+                <span className="break-all font-mono font-bold">{result!}</span>{" "}
                 has been copied to your clipboard
               </span>
             ),
@@ -119,9 +121,9 @@ export function useColumns(handleDelete: (id: string) => void) {
         cell: ({ row }) => {
           const doc = row.original;
           return (
-            <div className="flex items-center gap-2 min-w-[200px]">
-              <span className="font-medium truncate">{doc.name}</span>
-              <div className="flex gap-1 flex-shrink-0">
+            <div className="flex min-w-[200px] items-center gap-2">
+              <span className="truncate font-medium">{doc.name}</span>
+              <div className="flex flex-shrink-0 gap-1">
                 {doc.password ? (
                   <Lock className="h-4 w-4 text-muted-foreground" />
                 ) : (
@@ -144,8 +146,8 @@ export function useColumns(handleDelete: (id: string) => void) {
                 status === "signed"
                   ? "success"
                   : status === "expired"
-                  ? "destructive"
-                  : "secondary"
+                    ? "destructive"
+                    : "secondary"
               }
             >
               {status}
@@ -203,7 +205,7 @@ export function useColumns(handleDelete: (id: string) => void) {
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                 <DropdownMenuItem
                   onClick={() =>
-                    wrappedActions.handleViewDocument(row.original.id)
+                    wrappedActions.handleViewDocument(row.original)
                   }
                 >
                   <Eye className="mr-1 h-4 w-4" />
@@ -211,10 +213,7 @@ export function useColumns(handleDelete: (id: string) => void) {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() =>
-                    wrappedActions.handleViewTransaction(
-                      row.original.signedTxSignature ||
-                        row.original.unsignedTxSignature
-                    )
+                    wrappedActions.handleViewTransaction(row.original)
                   }
                 >
                   <Compass className="mr-1 h-4 w-4" />
@@ -222,10 +221,7 @@ export function useColumns(handleDelete: (id: string) => void) {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() =>
-                    wrappedActions.handleCopyTxSignature(
-                      row.original.signedTxSignature ||
-                        row.original.unsignedTxSignature
-                    )
+                    wrappedActions.handleCopyTxSignature(row.original)
                   }
                 >
                   <Copy className="mr-1 h-4 w-4" />
@@ -234,26 +230,27 @@ export function useColumns(handleDelete: (id: string) => void) {
                 {!row.original.is_signed && (
                   <DropdownMenuItem
                     onClick={() =>
-                      wrappedActions.handleCopyDocumentSignUrl(row.original.id)
+                      wrappedActions.handleCopyDocumentSignUrl(row.original)
                     }
                   >
-                    <Link className="mr-1 h-4 w-4" />
+                    <Share className="mr-1 h-4 w-4" />
                     Share Sign Link
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem
-                  onClick={() =>
-                    wrappedActions.handleCopyViewUrl(
-                      row.original.signedHash || row.original.unsignedHash
-                    )
-                  }
+                  onClick={() => wrappedActions.handleCopyViewUrl(row.original)}
                 >
                   <Link className="mr-1 h-4 w-4" />
                   Copy View Link
                 </DropdownMenuItem>
+
+                <DropdownMenuItem onClick={() => setDocToRename(row.original)}>
+                  <Pencil className="mr-1 h-4 w-4" />
+                  Rename
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() =>
-                    wrappedActions.handleDownloadDocument(row.original.id)
+                    wrappedActions.handleDownloadDocument(row.original)
                   }
                 >
                   <Download className="mr-1 h-4 w-4" />
@@ -262,7 +259,7 @@ export function useColumns(handleDelete: (id: string) => void) {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() =>
-                    wrappedActions.handleDeleteDocument(row.original.id)
+                    wrappedActions.handleDeleteDocument(row.original)
                   }
                   className="text-destructive"
                 >
@@ -276,7 +273,7 @@ export function useColumns(handleDelete: (id: string) => void) {
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [],
   );
 
   return columns;

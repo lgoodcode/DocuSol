@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next-nprogress-bar";
 
+import { QueryClient, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,41 +10,42 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
+  DialogPortal,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { createClient } from "@/lib/supabase/client";
+
+import { renameDocument as renameDocumentDb } from "./db";
 
 interface RenameDocDialogProps {
-  docId: string;
-  currentName: string;
+  doc: ViewDocument | null;
   isOpen: boolean;
   onClose: () => void;
 }
 
-const updateDocumentName = async (id: string, name: string) => {
-  const supabase = createClient();
-  const { error } = await supabase
-    .from("documents")
-    .update({ name: name.trim() })
-    .eq("id", id);
+export const renameDocument = async (
+  doc: ViewDocument,
+  newName: string,
+  queryClient: QueryClient,
+): Promise<void> => {
+  await renameDocumentDb({
+    ...doc,
+    name: newName,
+  });
 
-  if (error) {
-    throw error;
-  }
-  return null;
+  queryClient.setQueryData<ViewDocument[]>(["documents"], (oldData) => {
+    return (
+      oldData?.map((d) => (d.id === doc.id ? { ...d, name: newName } : d)) ?? []
+    );
+  });
 };
 
-export function RenameDocDialog({
-  docId,
-  currentName,
-  isOpen,
-  onClose,
-}: RenameDocDialogProps) {
-  const { toast } = useToast();
-  const [name, setName] = useState(currentName);
-  const [isLoading, setIsLoading] = useState(false);
+export function RenameDocDialog({ doc, onClose }: RenameDocDialogProps) {
+  const queryClient = useQueryClient();
   const router = useRouter();
+  const { toast } = useToast();
+  const [name, setName] = useState(doc?.name ?? "");
+  const [isLoading, setIsLoading] = useState(false);
 
   async function handleRename(e: React.FormEvent) {
     e.preventDefault();
@@ -52,15 +54,9 @@ export function RenameDocDialog({
     setIsLoading(true);
 
     try {
-      await updateDocumentName(docId, name.trim());
-      toast({
-        title: "Document renamed successfully",
-        variant: "success",
-      });
-
+      await renameDocument(doc!, name.trim(), queryClient);
       router.refresh();
       onClose();
-      setIsLoading(false);
     } catch (err) {
       const error = err as Error;
       toast({
@@ -73,39 +69,43 @@ export function RenameDocDialog({
     }
   }
 
+  if (!doc) return null;
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Rename document</DialogTitle>
-          <DialogDescription>
-            Enter a new name for your document
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleRename}>
-          <div className="grid gap-6 py-4">
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Document name"
-              autoFocus
-            />
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={onClose}
-                disabled={isLoading}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isLoading || !name.trim()}>
-                Rename
-              </Button>
-            </DialogFooter>
-          </div>
-        </form>
-      </DialogContent>
+    <Dialog open={!!doc} onOpenChange={onClose}>
+      <DialogPortal>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rename document</DialogTitle>
+            <DialogDescription>
+              Enter a new name for your document
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleRename}>
+            <div className="grid gap-6 py-4">
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Document name"
+                autoFocus
+              />
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={onClose}
+                  disabled={isLoading}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isLoading || !name.trim()}>
+                  Rename
+                </Button>
+              </DialogFooter>
+            </div>
+          </form>
+        </DialogContent>
+      </DialogPortal>
     </Dialog>
   );
 }
