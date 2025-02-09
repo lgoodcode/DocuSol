@@ -13,6 +13,10 @@ const MEMO_PROGRAM_ID = new PublicKey(
   "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
 );
 
+export function isWalletAddress(address: string) {
+  return /^[A-HJ-NP-Za-km-z1-9]{32,44}$/.test(address);
+}
+
 export function getTransactionUrl(signature: string) {
   return `https://explorer.solana.com/tx/${signature}`;
 }

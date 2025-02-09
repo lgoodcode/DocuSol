@@ -17,6 +17,11 @@ export declare global {
     }
   }
 
+  interface Wallet {
+    user_id: string;
+    address: string;
+  }
+
   type DocumentDetails = Partial<
     Omit<Document, "password"> & {
       password: boolean;
