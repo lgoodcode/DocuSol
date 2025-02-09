@@ -37,7 +37,6 @@ import {
   copyDocumentSignUrl,
   copyViewUrl,
   downloadDocument,
-  deleteDocument,
 } from "./list-docs-actions";
 
 type ActionType =
@@ -46,8 +45,7 @@ type ActionType =
   | "copyTxSignature"
   | "copyDocumentSignUrl"
   | "copyViewUrl"
-  | "download"
-  | "delete";
+  | "download";
 
 const actionMap: Record<
   ActionType,
@@ -59,13 +57,21 @@ const actionMap: Record<
   copyDocumentSignUrl,
   copyViewUrl,
   download: downloadDocument,
-  delete: deleteDocument,
 } as const;
 
-export function useColumns(
-  docToRename: ViewDocument | null,
-  setDocToRename: (doc: ViewDocument | null) => void,
-) {
+export function useColumns({
+  renameDoc,
+  deleteDoc,
+}: {
+  renameDoc: {
+    docToRename: ViewDocument | null;
+    setDocToRename: (doc: ViewDocument | null) => void;
+  };
+  deleteDoc: {
+    docToDelete: ViewDocument | null;
+    setDocToDelete: (doc: ViewDocument | null) => void;
+  };
+}) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -109,7 +115,6 @@ export function useColumns(
     handleCopyDocumentSignUrl: createActionHandler("copyDocumentSignUrl"),
     handleCopyViewUrl: createActionHandler("copyViewUrl"),
     handleDownloadDocument: createActionHandler("download"),
-    handleDeleteDocument: createActionHandler("delete"),
   };
 
   const columns = useMemo<ColumnDef<ViewDocument>[]>(
@@ -244,7 +249,9 @@ export function useColumns(
                   Copy View Link
                 </DropdownMenuItem>
 
-                <DropdownMenuItem onClick={() => setDocToRename(row.original)}>
+                <DropdownMenuItem
+                  onClick={() => renameDoc.setDocToRename(row.original)}
+                >
                   <Pencil className="mr-1 h-4 w-4" />
                   Rename
                 </DropdownMenuItem>
@@ -258,9 +265,7 @@ export function useColumns(
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={() =>
-                    wrappedActions.handleDeleteDocument(row.original)
-                  }
+                  onClick={() => deleteDoc.setDocToDelete(row.original)}
                   className="text-destructive"
                 >
                   <Trash className="mr-1 h-4 w-4" />

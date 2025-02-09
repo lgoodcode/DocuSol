@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useRouter } from "next-nprogress-bar";
 
 import { QueryClient, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -42,7 +41,6 @@ export const renameDocument = async (
 
 export function RenameDocDialog({ doc, onClose }: RenameDocDialogProps) {
   const queryClient = useQueryClient();
-  const router = useRouter();
   const { toast } = useToast();
   const [name, setName] = useState(doc?.name ?? "");
   const [isLoading, setIsLoading] = useState(false);
@@ -55,7 +53,6 @@ export function RenameDocDialog({ doc, onClose }: RenameDocDialogProps) {
 
     try {
       await renameDocument(doc!, name.trim(), queryClient);
-      router.refresh();
       onClose();
     } catch (err) {
       const error = err as Error;
