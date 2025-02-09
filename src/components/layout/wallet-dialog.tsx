@@ -35,6 +35,7 @@ export function WalletDialog({
       {children || (
         <DialogTrigger asChild>
           <Button
+            id="wallet-dialog-trigger"
             variant="ghost"
             size="icon"
             className="h-12 w-full bg-primary-foreground/10 text-primary/60 hover:bg-primary hover:text-primary-foreground dark:hover:bg-white dark:hover:text-black"
@@ -46,7 +47,7 @@ export function WalletDialog({
       )}
       <DialogContent
         onInteractOutside={(e) => {
-          if (connected) {
+          if (!connecting && connected) {
             e.preventDefault();
           }
         }}
