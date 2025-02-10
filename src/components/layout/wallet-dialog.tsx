@@ -69,14 +69,14 @@ export function WalletDialog({
               ? "Connected Wallet"
               : isConnecting
                 ? "Connecting..."
-                : "Connect Wallet to Continue"}
+                : "Connect Wallet"}
           </DialogTitle>
           <h1 className="text-center text-2xl font-bold">
             {isConnected
               ? "Connected Wallet"
               : isConnecting
                 ? "Connecting..."
-                : "Connect Wallet to Continue"}
+                : "Connect Wallet"}
           </h1>
         </DialogHeader>
 
@@ -96,7 +96,7 @@ export function WalletDialog({
 
               {!walletsInstalled.length && (
                 <p className="text-muted-foreground">
-                  No wallets installed. Please install a wallet to continue.
+                  No wallets installed. Please install a wallet to use the app.
                 </p>
               )}
 
