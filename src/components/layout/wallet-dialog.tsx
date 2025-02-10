@@ -1,8 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { Wallet } from "lucide-react";
+import { Wallet, AlertCircle } from "lucide-react";
 
 import {
   Dialog,
@@ -14,6 +13,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useConnectWallet } from "@/hooks/use-connect-wallet";
 
 export function WalletDialog({
   open,
@@ -24,8 +25,15 @@ export function WalletDialog({
   setOpen: (open: boolean) => void;
   children?: React.ReactNode;
 }) {
-  const { select, wallets, disconnect, wallet, connected, connecting } =
-    useWallet();
+  const {
+    error,
+    selectWallet,
+    wallets,
+    disconnect,
+    wallet,
+    isConnected,
+    isConnecting,
+  } = useConnectWallet();
   const walletsInstalled = wallets.filter(
     (wallet) => wallet.readyState === "Installed",
   );
@@ -47,7 +55,7 @@ export function WalletDialog({
       )}
       <DialogContent
         onInteractOutside={(e) => {
-          if (!connecting && connected) {
+          if (!isConnecting && isConnected) {
             e.preventDefault();
           }
         }}
@@ -57,37 +65,48 @@ export function WalletDialog({
         <DialogHeader>
           {/* Suppresses the DialogTitle required warning */}
           <DialogTitle className="sr-only">
-            {wallet
+            {isConnected
               ? "Connected Wallet"
-              : connecting
+              : isConnecting
                 ? "Connecting..."
-                : "Connect Wallet to Continue"}
+                : "Connect Wallet"}
           </DialogTitle>
           <h1 className="text-center text-2xl font-bold">
-            {wallet
+            {isConnected
               ? "Connected Wallet"
-              : connecting
+              : isConnecting
                 ? "Connecting..."
-                : "Connect Wallet to Continue"}
+                : "Connect Wallet"}
           </h1>
         </DialogHeader>
 
         {/* Content */}
         <div className="flex flex-col gap-6">
-          {!connected && connecting && (
+          {/* Connecting */}
+          {!error && !isConnected && isConnecting && (
             <div className="flex flex-col items-center gap-12 py-6">
               <Wallet className="h-12 w-12 animate-pulse text-muted-foreground" />
             </div>
           )}
 
-          {!connected && !connecting && (
-            <div className="flex flex-col items-center gap-12 py-6">
+          {/* No wallet adapters installed */}
+          {!isConnected && !isConnecting && (
+            <div className="flex flex-col items-center gap-4 py-6">
               <Wallet className="h-12 w-12" />
 
               {!walletsInstalled.length && (
                 <p className="text-muted-foreground">
-                  No wallets installed. Please install a wallet to continue.
+                  No wallets installed. Please install a wallet to use the app.
                 </p>
+              )}
+
+              {error && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-5 w-5" />
+                  <AlertDescription className="text-base">
+                    {error}
+                  </AlertDescription>
+                </Alert>
               )}
 
               {walletsInstalled.length && (
@@ -96,7 +115,7 @@ export function WalletDialog({
                     <Button
                       key={wallet.adapter.name}
                       variant="ghost"
-                      onClick={() => select(wallet.adapter.name)}
+                      onClick={() => selectWallet(wallet.adapter.name)}
                       className="w-full justify-start gap-4 px-4 py-6 text-left text-lg"
                     >
                       <Image
@@ -113,7 +132,8 @@ export function WalletDialog({
             </div>
           )}
 
-          {connected && (
+          {/* Connected */}
+          {!error && isConnected && (
             <>
               <div className="space-y-4">
                 {wallet && (
