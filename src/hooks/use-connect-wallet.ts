@@ -1,7 +1,26 @@
-import { useWallet, Wallet } from "@solana/wallet-adapter-react";
+import { create } from "zustand";
 import { useEffect, useState } from "react";
+import { useWallet, Wallet } from "@solana/wallet-adapter-react";
 import { WalletName } from "@solana/wallet-adapter-base";
 import { captureException } from "@sentry/nextjs";
+
+type WalletStore = {
+  wallet: Wallet | null;
+  isConnected: boolean;
+  isConnecting: boolean;
+  setWallet: (wallet: Wallet | null) => void;
+  setIsConnected: (connected: boolean) => void;
+  setIsConnecting: (connecting: boolean) => void;
+};
+
+const useWalletStore = create<WalletStore>((set) => ({
+  wallet: null,
+  isConnected: false,
+  isConnecting: false,
+  setWallet: (wallet: Wallet | null) => set({ wallet }),
+  setIsConnected: (connected: boolean) => set({ isConnected: connected }),
+  setIsConnecting: (connecting: boolean) => set({ isConnecting: connecting }),
+}));
 
 const createWalletIfNotExists = async (address: string) => {
   const response = await fetch("/api/wallet/connect", {
@@ -15,10 +34,14 @@ const createWalletIfNotExists = async (address: string) => {
 
 export function useConnectWallet() {
   const [error, setError] = useState<string | null>();
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [isConnected, setIsConnected] = useState(false);
-  const [wallet, setWallet] = useState<Wallet | null>(null);
-  const { select, wallets, disconnect, connected } = useWallet();
+  const { select, wallets, disconnect, wallet, connected } = useWallet();
+  const {
+    isConnected,
+    isConnecting,
+    setWallet,
+    setIsConnected,
+    setIsConnecting,
+  } = useWalletStore();
 
   // select is synchronous, so we start connecting once the wallet is selected
   const selectWallet = (wallet: WalletName) => {
