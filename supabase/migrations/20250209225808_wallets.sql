@@ -1,16 +1,13 @@
 CREATE TABLE wallets (
     address TEXT PRIMARY KEY NOT NULL UNIQUE,
-    user_id UUID NOT NULL DEFAULT gen_random_uuid(),
     created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 
 ALTER TABLE wallets OWNER TO postgres;
 
--- No RLS so we only use the service role key
-
--- Create an index on the address column for faster lookups
-CREATE INDEX wallets_user_id_idx ON wallets(user_id);
+-- No RLS policies so we only use the service role key
+ALTER TABLE wallets ENABLE ROW LEVEL SECURITY;
 
 -- Add a trigger to automatically update the updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()

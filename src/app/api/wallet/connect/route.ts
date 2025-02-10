@@ -39,22 +39,25 @@ const createErrorResponse = (error: unknown) => {
   return NextResponse.json({ error: "Internal server error" }, { status: 500 });
 };
 
-const createWallet = async (address: string): Promise<Wallet> => {
+const createWalletIfNotExists = async (address: string) => {
   const supabase = await createServerClient({ useServiceRole: true });
-  const { error, data } = await supabase
+
+  const { error: fetchError, data } = await supabase
     .from("wallets")
-    .insert({ address })
-    .select("user_id")
+    .select("address")
+    .eq("address", address)
     .single();
 
-  if (error) {
-    throw new Error(ERRORS.DATABASE_ERROR(error.message));
-  }
+  if (!fetchError || fetchError.code === "PGRST116") {
+    if (data) return;
 
-  return {
-    user_id: data.user_id,
-    address,
-  };
+    const { error: insertError } = await supabase
+      .from("wallets")
+      .insert({ address });
+
+    if (!insertError) return;
+  }
+  throw new Error(ERRORS.DATABASE_ERROR(fetchError.message));
 };
 
 export async function POST(request: Request) {
@@ -62,9 +65,9 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { address } = RequestSchema.parse(body);
 
-    const data = await createWallet(address);
+    await createWalletIfNotExists(address);
 
-    return NextResponse.json<Wallet>(data);
+    return NextResponse.json({ success: true });
   } catch (error) {
     return createErrorResponse(error);
   }

@@ -1,19 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useWallet } from "@solana/wallet-adapter-react";
 import { Wallet } from "lucide-react";
 
 import { SUPPORT_EMAIL, DISCORD_URL } from "@/constants";
+import { useConnectWallet } from "@/hooks/use-connect-wallet";
 import { SkeletonContent } from "@/components/layout/skeleton-content";
 import { Button } from "@/components/ui/button";
 
 export function WalletAuthWrapper({ children }: { children: React.ReactNode }) {
-  const { connected, connecting } = useWallet();
+  const { isConnected, isConnecting } = useConnectWallet();
 
-  if (connecting) {
+  if (isConnecting) {
     return <SkeletonContent />;
-  } else if (connected) {
+  } else if (isConnected) {
     return children;
   }
 
