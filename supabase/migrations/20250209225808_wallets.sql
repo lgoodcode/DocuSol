@@ -1,10 +1,14 @@
 CREATE TABLE wallets (
-    address TEXT PRIMARY KEY NOT NULL UNIQUE,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    address TEXT NOT NULL UNIQUE,
+    chain TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 
 ALTER TABLE wallets OWNER TO postgres;
+
+CREATE INDEX idx_wallets_address ON wallets(address);
 
 -- No RLS policies so we only use the service role key
 ALTER TABLE wallets ENABLE ROW LEVEL SECURITY;

@@ -1,25 +1,31 @@
 import { PDFDocument, rgb } from "pdf-lib";
 
+import { useWalletAddress } from "@/hooks/use-connect-wallet";
 
-export async function uploadNewDocument(newDocument: NewDocument) {
-  const formData = new FormData();
-  Object.entries(newDocument).forEach(([key, value]) => {
-    formData.append(key, value || "");
-  });
+export function useUploadNewDocument() {
+  const walletAddress = useWalletAddress();
 
-  const response = await fetch("/api/docs/new", {
-    method: "POST",
-    body: formData,
-    headers: {
-      "Cache-Control": "no-cache",
-    },
-  });
+  return async function uploadNewDocument(newDocument: NewDocument) {
+    const formData = new FormData();
+    Object.entries(newDocument).forEach(([key, value]) => {
+      formData.append(key, value || "");
+    });
 
-  if (!response.ok) {
-    throw new Error(`Upload failed: ${await response.text()}`);
-  }
+    const response = await fetch("/api/docs/new", {
+      method: "POST",
+      body: formData,
+      headers: {
+        "Cache-Control": "no-cache",
+        "x-wallet-address": walletAddress,
+      },
+    });
 
-  return response.json() as Promise<NewDocumentResponse>;
+    if (!response.ok) {
+      throw new Error(`Upload failed: ${await response.text()}`);
+    }
+
+    return response.json() as Promise<NewDocumentResponse>;
+  };
 }
 
 export async function uploadSignedDocument(signedDocument: SignedDocument) {
@@ -47,7 +53,7 @@ export async function sign(
   file: File | Blob,
   signatureCanvas: HTMLCanvasElement | null,
   typedSignature?: string,
-  position?: { x: number; y: number }
+  position?: { x: number; y: number },
 ): Promise<Blob | null> {
   try {
     if (file.type === "application/pdf") {
@@ -57,7 +63,7 @@ export async function sign(
       file,
       signatureCanvas,
       typedSignature,
-      position
+      position,
     );
   } catch (error) {
     console.error("Error in sign:", error);
@@ -83,7 +89,7 @@ function calculateSignatureDimensions(
   sigHeight: number,
   imageWidth: number,
   imageHeight: number,
-  position: { x: number; y: number }
+  position: { x: number; y: number },
 ) {
   // Calculate maximum dimensions (25% of image width/height)
   const maxWidth = imageWidth * 0.25;
@@ -113,15 +119,11 @@ function calculateSignatureDimensions(
   return { width, height, x, y };
 }
 
-const getFont = (fontSize: number) => {
-  return `italic ${fontSize}px 'Brush Script MT', 'Dancing Script', cursive`;
-};
-
 async function overlayImageSignature(
   file: File | Blob,
   signatureCanvas: HTMLCanvasElement | null,
   typedSignature?: string,
-  position?: { x: number; y: number }
+  position?: { x: number; y: number },
 ): Promise<Blob | null> {
   const image = await createImageBitmap(file);
   const canvas = document.createElement("canvas");
@@ -179,7 +181,7 @@ async function overlayImageSignature(
     sigCanvas.height,
     image.width,
     image.height,
-    defaultPosition
+    defaultPosition,
   );
 
   const width = signatureCanvas ? baseWidth * 1.5 : baseWidth;
@@ -202,7 +204,7 @@ async function overlayImageSignature(
 
 async function getSignatureAsImage(
   signatureCanvas: HTMLCanvasElement | null,
-  typedSignature?: string
+  typedSignature?: string,
 ): Promise<Blob | null> {
   if (!signatureCanvas && !typedSignature) return null;
 
@@ -237,13 +239,13 @@ async function signPdf(
   file: File | Blob,
   signatureCanvas: HTMLCanvasElement | null,
   typedSignature?: string,
-  position?: { x: number; y: number }
+  position?: { x: number; y: number },
 ): Promise<Blob | null> {
   try {
     // Get signature image first
     const signatureBlob = await getSignatureAsImage(
       signatureCanvas,
-      typedSignature
+      typedSignature,
     );
     if (!signatureBlob) return null;
 
@@ -273,7 +275,7 @@ async function signPdf(
         sigHeight,
         pageWidth,
         pageHeight,
-        position || { x: pageWidth * 0.6, y: pageHeight * 0.75 }
+        position || { x: pageWidth * 0.6, y: pageHeight * 0.75 },
       );
 
       // Draw white background

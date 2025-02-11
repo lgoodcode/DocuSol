@@ -1,26 +1,56 @@
 import { create } from "zustand";
 import { useEffect, useState } from "react";
-import { useWallet, Wallet } from "@solana/wallet-adapter-react";
+import bs58 from "bs58";
+import {
+  useWallet as useWalletAdapter,
+  Wallet,
+} from "@solana/wallet-adapter-react";
 import { WalletName } from "@solana/wallet-adapter-base";
 import { captureException } from "@sentry/nextjs";
 
 type WalletStore = {
   wallet: Wallet | null;
+  signature: string | null;
   isConnected: boolean;
   isConnecting: boolean;
   setWallet: (wallet: Wallet | null) => void;
+  setSignature: (signature: string) => void;
   setIsConnected: (connected: boolean) => void;
   setIsConnecting: (connecting: boolean) => void;
 };
 
+const generateNonce = (): string => {
+  const nonce = crypto.getRandomValues(new Uint8Array(32));
+  return bs58.encode(nonce);
+};
+
+export const generateSignature = async (
+  signMessage: (message: Uint8Array) => Promise<Uint8Array>,
+) => {
+  const signature = await signMessage(
+    new TextEncoder().encode(generateNonce()),
+  );
+  return bs58.encode(signature);
+};
+
 const useWalletStore = create<WalletStore>((set) => ({
   wallet: null,
+  signature: null,
   isConnected: false,
   isConnecting: false,
   setWallet: (wallet: Wallet | null) => set({ wallet }),
+  setSignature: (signature: string | null) => set({ signature }),
   setIsConnected: (connected: boolean) => set({ isConnected: connected }),
   setIsConnecting: (connecting: boolean) => set({ isConnecting: connecting }),
 }));
+
+export const useWallet = () => useWalletStore((state) => state.wallet);
+
+export const useWalletAddress = () =>
+  useWalletStore((state) => state.wallet?.adapter.publicKey?.toBase58() ?? "");
+
+export const useWalletSignature = () =>
+  useWalletStore((state) => state.signature);
 
 const createWalletIfNotExists = async (address: string) => {
   const response = await fetch("/api/wallet/connect", {
@@ -34,17 +64,23 @@ const createWalletIfNotExists = async (address: string) => {
 
 export function useConnectWallet() {
   const [error, setError] = useState<string | null>();
-  const { select, wallets, disconnect, wallet, connected } = useWallet();
+  const [walletConnecting, setWalletConnecting] = useState(false);
+  const [walletConnected, setWalletConnected] = useState(false);
+  const { select, wallets, disconnect, wallet, signMessage } =
+    useWalletAdapter();
   const {
     isConnected,
     isConnecting,
     setWallet,
+    setSignature,
     setIsConnected,
     setIsConnecting,
   } = useWalletStore();
 
   // select is synchronous, so we start connecting once the wallet is selected
   const selectWallet = (wallet: WalletName) => {
+    setWalletConnecting(true);
+    setWalletConnected(false);
     setIsConnecting(true);
     setIsConnected(false);
     setError(null);
@@ -55,14 +91,14 @@ export function useConnectWallet() {
   // so we use the useEffect hook to check if the wallet is connected and then
   // check if the wallet exists in the database
   useEffect(() => {
-    if (connected && wallet) {
-      const address = wallet.adapter.publicKey?.toBase58() ?? "";
+    if (!walletConnected && walletConnecting && wallet?.adapter.publicKey) {
+      const address = wallet.adapter.publicKey.toBase58();
 
       if (address) {
-        setIsConnecting(true);
         createWalletIfNotExists(address)
           .then(() => {
             setWallet(wallet);
+            setWalletConnected(true);
             setIsConnected(true);
           })
           .catch((error) => {
@@ -70,13 +106,25 @@ export function useConnectWallet() {
             captureException(error);
             setError("Failed to connect wallet");
           })
-          .finally(() => setIsConnecting(false));
+          .finally(() => {
+            setIsConnecting(false);
+          });
       }
     } else {
       setIsConnected(false);
       setWallet(null);
     }
-  }, [connected, wallet, setIsConnecting, setIsConnected, setWallet]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isConnecting, wallet]);
+
+  // Once connected, we need to generate a signature for the wallet to
+  // store as an auth token
+  useEffect(() => {
+    if (walletConnected && signMessage) {
+      generateSignature(signMessage).then(setSignature);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [walletConnected, signMessage]);
 
   return {
     selectWallet,

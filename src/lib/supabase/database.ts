@@ -70,16 +70,19 @@ export type Database = {
         Row: {
           address: string
           created_at: string
+          id: string
           updated_at: string
         }
         Insert: {
           address: string
           created_at?: string
+          id?: string
           updated_at?: string
         }
         Update: {
           address?: string
           created_at?: string
+          id?: string
           updated_at?: string
         }
         Relationships: []
