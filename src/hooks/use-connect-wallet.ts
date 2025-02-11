@@ -10,11 +10,9 @@ import { captureException } from "@sentry/nextjs";
 
 type WalletStore = {
   wallet: Wallet | null;
-  signature: string | null;
   isConnected: boolean;
   isConnecting: boolean;
   setWallet: (wallet: Wallet | null) => void;
-  setSignature: (signature: string) => void;
   setIsConnected: (connected: boolean) => void;
   setIsConnecting: (connecting: boolean) => void;
 };
@@ -35,11 +33,9 @@ export const generateSignature = async (
 
 const useWalletStore = create<WalletStore>((set) => ({
   wallet: null,
-  signature: null,
   isConnected: false,
   isConnecting: false,
   setWallet: (wallet: Wallet | null) => set({ wallet }),
-  setSignature: (signature: string | null) => set({ signature }),
   setIsConnected: (connected: boolean) => set({ isConnected: connected }),
   setIsConnecting: (connecting: boolean) => set({ isConnecting: connecting }),
 }));
@@ -48,9 +44,6 @@ export const useWallet = () => useWalletStore((state) => state.wallet);
 
 export const useWalletAddress = () =>
   useWalletStore((state) => state.wallet?.adapter.publicKey?.toBase58() ?? "");
-
-export const useWalletSignature = () =>
-  useWalletStore((state) => state.signature);
 
 const createWalletIfNotExists = async (address: string) => {
   const response = await fetch("/api/wallet/connect", {
@@ -66,13 +59,11 @@ export function useConnectWallet() {
   const [error, setError] = useState<string | null>();
   const [walletConnecting, setWalletConnecting] = useState(false);
   const [walletConnected, setWalletConnected] = useState(false);
-  const { select, wallets, disconnect, wallet, signMessage } =
-    useWalletAdapter();
+  const { select, wallets, disconnect, wallet } = useWalletAdapter();
   const {
     isConnected,
     isConnecting,
     setWallet,
-    setSignature,
     setIsConnected,
     setIsConnecting,
   } = useWalletStore();
@@ -116,15 +107,6 @@ export function useConnectWallet() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConnecting, wallet]);
-
-  // Once connected, we need to generate a signature for the wallet to
-  // store as an auth token
-  useEffect(() => {
-    if (walletConnected && signMessage) {
-      generateSignature(signMessage).then(setSignature);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [walletConnected, signMessage]);
 
   return {
     selectWallet,
