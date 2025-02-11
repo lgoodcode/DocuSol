@@ -101,9 +101,6 @@ export function useConnectWallet() {
             setIsConnecting(false);
           });
       }
-    } else {
-      setIsConnected(false);
-      setWallet(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConnecting, wallet]);

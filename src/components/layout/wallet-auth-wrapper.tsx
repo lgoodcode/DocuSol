@@ -10,7 +10,10 @@ import { Button } from "@/components/ui/button";
 
 export function WalletAuthWrapper({ children }: { children: React.ReactNode }) {
   const { isConnected, isConnecting } = useConnectWallet();
-
+  console.log({
+    isConnecting,
+    isConnected,
+  });
   if (isConnecting) {
     return <SkeletonContent />;
   } else if (isConnected) {
