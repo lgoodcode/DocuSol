@@ -1,3 +1,5 @@
+"use client";
+
 import { create } from "zustand";
 import { useEffect, useState } from "react";
 import bs58 from "bs58";
@@ -34,7 +36,7 @@ export const generateSignature = async (
 const useWalletStore = create<WalletStore>((set) => ({
   wallet: null,
   isConnected: false,
-  isConnecting: false,
+  isConnecting: true,
   setWallet: (wallet: Wallet | null) => set({ wallet }),
   setIsConnected: (connected: boolean) => set({ isConnected: connected }),
   setIsConnecting: (connecting: boolean) => set({ isConnecting: connecting }),
@@ -57,6 +59,7 @@ const createWalletIfNotExists = async (address: string) => {
 
 export function useConnectWallet() {
   const [error, setError] = useState<string | null>();
+  const [isMounted, setIsMounted] = useState(false);
   const [walletConnecting, setWalletConnecting] = useState(false);
   const [walletConnected, setWalletConnected] = useState(false);
   const { select, wallets, disconnect, wallet } = useWalletAdapter();
@@ -77,6 +80,29 @@ export function useConnectWallet() {
     setError(null);
     select(wallet);
   };
+
+  const handleDisconnect = () => {
+    setWalletConnected(false);
+    setWallet(null);
+    setIsConnected(false);
+    setIsConnecting(false);
+    setError(null);
+    disconnect();
+  };
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isMounted) {
+      if (wallet) {
+        setIsConnected(true);
+      }
+      setIsConnecting(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMounted, wallet]);
 
   // Once connected, we need to check if the wallet exists in the database
   // so we use the useEffect hook to check if the wallet is connected and then
@@ -108,7 +134,7 @@ export function useConnectWallet() {
   return {
     selectWallet,
     wallets,
-    disconnect,
+    disconnect: handleDisconnect,
     wallet,
     isConnected,
     isConnecting,
