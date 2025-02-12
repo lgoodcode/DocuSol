@@ -14,6 +14,7 @@ export declare global {
       PRIVATE_KEY: string;
       UPSTASH_REDIS_REST_URL: string;
       UPSTASH_REDIS_REST_TOKEN: string;
+      JWT_SECRET: string;
     }
   }
 

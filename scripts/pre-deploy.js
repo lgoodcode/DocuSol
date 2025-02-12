@@ -10,6 +10,7 @@ const requiredEnvList = [
   "PRIVATE_KEY",
   "UPSTASH_REDIS_REST_URL",
   "UPSTASH_REDIS_REST_TOKEN",
+  "JWT_SECRET",
 ];
 
 // Skip checking environment variables if in local development or running on CI
