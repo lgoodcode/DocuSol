@@ -6,9 +6,10 @@ import { handleRateLimit, rateLimit } from "@/lib/utils/ratelimiter";
 export async function middleware(request: NextRequest) {
   // Prevent direct requests to the error pages
   if (request.nextUrl.pathname.startsWith("/error")) {
-    return new NextResponse(null, {
-      status: 404,
-      statusText: "Not Found",
+    return NextResponse.rewrite(new URL("/not-found", request.url), {
+      headers: {
+        "x-middleware-rewrite": "/not-found",
+      },
     });
   }
 
@@ -28,7 +29,7 @@ export async function middleware(request: NextRequest) {
     const response = NextResponse.rewrite(new URL("/error", request.url), {
       status: 500,
     });
-    response.headers.set("X-Error-Rewrite", "true");
+    response.headers.set("x-error-rewrite", "true");
     return response;
   }
 }
