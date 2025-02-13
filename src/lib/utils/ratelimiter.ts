@@ -1,5 +1,25 @@
+import { NextResponse } from "next/server";
 import { Ratelimit } from "@upstash/ratelimit";
+import { NextRequest } from "next/server";
 import { Redis } from "@upstash/redis";
+
+type RateLimitErrorResponse = {
+  error: string;
+  code: (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
+  retryAfter: string;
+};
+
+const RETRY_AFTER = "60s";
+
+const ERROR_MESSAGES = {
+  RATE_LIMIT: "Too many requests",
+  INTERNAL_ERROR: "Internal server error",
+} as const;
+
+const ERROR_CODES = {
+  RATE_LIMIT: "RATE_LIMIT",
+  INTERNAL_ERROR: "INTERNAL_SERVER_ERROR",
+} as const;
 
 // Separate limits for API calls and page views
 const RATE_LIMITERS = {
@@ -57,5 +77,58 @@ export const rateLimit = async (request: Request) => {
     headers.set("X-RateLimit-Reset", Math.ceil(reset / 1000).toString());
     return headers;
   }
-  return null;
+};
+
+const apiRateLimitResponse = (
+  headers: Headers,
+): NextResponse<RateLimitErrorResponse> => {
+  return NextResponse.json(
+    {
+      error: ERROR_MESSAGES.RATE_LIMIT,
+      code: ERROR_CODES.RATE_LIMIT,
+      retryAfter: RETRY_AFTER,
+    },
+    { status: 429, headers },
+  );
+};
+
+const errorApiRateLimitResponse = (): NextResponse<RateLimitErrorResponse> => {
+  return NextResponse.json(
+    {
+      error: ERROR_MESSAGES.INTERNAL_ERROR,
+      code: ERROR_CODES.INTERNAL_ERROR,
+      retryAfter: RETRY_AFTER,
+    },
+    { status: 500 },
+  );
+};
+
+export const handleRateLimit = async (
+  request: NextRequest,
+  rateLimitHeaders: Headers,
+) => {
+  const isApi = isApiRoute(request);
+  try {
+    if (isApi) {
+      return apiRateLimitResponse(rateLimitHeaders);
+    }
+
+    const response = NextResponse.rewrite(
+      new URL("/error/rate-limit", request.url),
+      {
+        status: 429,
+      },
+    );
+    rateLimitHeaders.forEach((value, key) => {
+      response.headers.set(key, value);
+    });
+    response.headers.set("X-Error-Rewrite", "true");
+
+    return response;
+  } catch (error) {
+    if (isApi) {
+      return errorApiRateLimitResponse();
+    }
+    throw error;
+  }
 };
