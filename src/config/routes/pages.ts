@@ -21,7 +21,7 @@ export type Route = {
   protected?: boolean;
 };
 
-export const navRoutes: Route[] = [
+export const pageRoutes: Route[] = [
   {
     name: "New Document",
     path: "/docs/new",

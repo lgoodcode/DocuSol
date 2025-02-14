@@ -1,7 +1,6 @@
 import { JWTPayload, jwtVerify, SignJWT } from "jose";
 import { PublicKey } from "@solana/web3.js";
 import { Redis } from "@upstash/redis";
-import { captureException } from "@sentry/nextjs";
 
 import {
   ACCESS_TOKEN_EXPIRATION,
@@ -14,6 +13,8 @@ const ACCESS_TOKEN_SECRET =
   process.env.ACCESS_TOKEN_SECRET || "your-access-secret";
 const REFRESH_TOKEN_SECRET =
   process.env.REFRESH_TOKEN_SECRET || "your-refresh-secret";
+
+const REDIS_PREFIX = "@docusol/session";
 
 const JWT_ALGORITHM = "HS256";
 
@@ -53,7 +54,7 @@ export async function generateTokens(publicKey: PublicKey) {
   // Key: refresh_token:{jti}, Value: { publicKey }
   // Expire after the refresh token expiration
   await redis.set(
-    `@docusol/session/refresh_token:${refreshTokenId}`,
+    `${REDIS_PREFIX}/refresh_token:${refreshTokenId}`,
     { publicKey: publicKey.toBase58() },
     { ex: REFRESH_TOKEN_EXPIRATION_SECONDS },
   );
@@ -111,7 +112,7 @@ export async function verifyRefreshToken(
  * @throws an error if the refresh token is not found or cannot be deleted
  */
 export async function revokeRefreshToken(refreshToken: string) {
-  await redis.del(`refresh_token:${refreshToken}`);
+  await redis.del(`${REDIS_PREFIX}/refresh_token:${refreshToken}`);
 }
 
 /**
@@ -122,7 +123,7 @@ export async function revokeRefreshToken(refreshToken: string) {
  */
 export async function getRefreshTokenPublicKey(refreshToken: string) {
   const tokenData = await redis.get<{ publicKey: string }>(
-    `refresh_token:${refreshToken}`,
+    `${REDIS_PREFIX}/refresh_token:${refreshToken}`,
   );
   return tokenData?.publicKey;
 }
@@ -149,32 +150,25 @@ function isTokenExpired(token: JWTPayload) {
  * Verify and refresh tokens. If the access token is valid but close to expiry, it will be refreshed.
  * @param accessToken the access token
  * @param refreshToken the refresh token
- * @returns the new access and refresh tokens
- * @throws an error if boths tokens are invalid
+ * @returns the current tokens if not expired, or the new access and refresh tokens
+ * @throws an error if boths tokens are invalid or failed to refresh
  */
 export async function verifyAndRefreshTokens(
   accessToken: string,
   refreshToken: string,
 ) {
   try {
-    try {
-      const accessPayload = await verifyAccessToken(accessToken);
+    const accessPayload = await verifyAccessToken(accessToken);
 
-      // If access token is valid but close to expiry, refresh both tokens
-      if (isTokenExpired(accessPayload)) {
-        return await refreshTokens(refreshToken);
-      }
-
-      // Access token is valid and not close to expiry
-      return { accessToken, refreshToken };
-    } catch {
-      // Access token verification failed - try to use refresh token
+    // If access token is valid but close to expiry, refresh both tokens
+    if (isTokenExpired(accessPayload)) {
       return await refreshTokens(refreshToken);
     }
-  } catch (error) {
-    const authError = error as Error;
-    console.error(authError.message);
-    captureException(authError);
-    throw new Error("Failed to verify and refresh tokens");
+
+    // Access token is valid and not close to expiry
+    return { accessToken, refreshToken };
+  } catch {
+    // Access token verification failed - try to use refresh token
+    return await refreshTokens(refreshToken);
   }
 }

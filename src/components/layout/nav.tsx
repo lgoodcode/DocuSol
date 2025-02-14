@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 
-import { navRoutes } from "@/config/routes/pages";
+import { pageRoutes } from "@/config/routes/pages";
 import { NavButton } from "@/components/layout/nav-button";
 import { MobileMenu } from "@/components/layout/mobile-menu";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -30,7 +30,7 @@ export function Nav() {
           </Link>
 
           <nav className="grid gap-0">
-            {navRoutes.map((route) => (
+            {pageRoutes.map((route) => (
               <NavButton
                 key={route.name}
                 href={route.path}

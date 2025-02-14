@@ -1,7 +1,16 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { captureException } from "@sentry/nextjs";
+
 import { handleRateLimit, rateLimit } from "@/lib/utils/ratelimiter";
+import { apiRoutes, pageRoutes, accountRoute } from "@/config/routes";
+import { validateSession } from "@/lib/auth/session";
+
+const PROTECTED_ROUTES: string[] = [
+  accountRoute.path,
+  ...apiRoutes.filter((r) => !!r?.protected).map((r) => r.path),
+  ...pageRoutes.filter((r) => !!r?.protected).map((r) => r.path),
+];
 
 export async function middleware(request: NextRequest) {
   // Prevent direct requests to the error pages
@@ -22,7 +31,7 @@ export async function middleware(request: NextRequest) {
   } catch (error) {
     console.error("Middleware rate limit error:", error);
     captureException(error, {
-      tags: { context: "middleware" },
+      tags: { context: "middleware-rate-limit" },
       extra: { url: request.url },
     });
 
@@ -34,11 +43,21 @@ export async function middleware(request: NextRequest) {
   }
 
   // Validate session if visiting a protected route
-  if (request.nextUrl.pathname.startsWith("/api/auth")) {
-    const session = await getSession(request);
-    if (!session) {
-      return NextResponse.redirect(new URL("/api/auth/login", request.url));
+  if (PROTECTED_ROUTES.includes(request.nextUrl.pathname)) {
+    try {
+      const sessionValid = await validateSession(request);
+      if (sessionValid) {
+        return NextResponse.next();
+      }
+    } catch (error) {
+      console.error("Session verification error:", error);
+      captureException(error, {
+        tags: { context: "middleware-session" },
+        extra: { url: request.url },
+      });
     }
+
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 }
 
