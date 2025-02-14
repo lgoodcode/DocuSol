@@ -122,7 +122,7 @@ export const handleRateLimit = async (
     rateLimitHeaders.forEach((value, key) => {
       response.headers.set(key, value);
     });
-    response.headers.set("X-Error-Rewrite", "true");
+    response.headers.set("x-error-rewrite", "true");
 
     return response;
   } catch (error) {

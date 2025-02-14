@@ -4,19 +4,24 @@ import Link from "next/link";
 import { Wallet } from "lucide-react";
 
 import { SUPPORT_EMAIL, DISCORD_URL } from "@/constants";
-import { useConnectWallet } from "@/hooks/use-connect-wallet";
+import { useWalletAuth } from "@/hooks/use-connect-wallet";
 import { SkeletonContent } from "@/components/layout/skeleton-content";
 import { Button } from "@/components/ui/button";
 
-export function WalletAuthWrapper({ children }: { children: React.ReactNode }) {
-  const { isConnected, isConnecting } = useConnectWallet();
-  console.log({
-    isConnecting,
-    isConnected,
-  });
-  if (isConnecting) {
+export function WalletAuthWrapper({
+  children,
+  error,
+}: {
+  children: React.ReactNode;
+  error: string | null;
+}) {
+  const { authenticated, authenticating } = useWalletAuth();
+
+  if (error) {
+    return children;
+  } else if (authenticating) {
     return <SkeletonContent />;
-  } else if (isConnected) {
+  } else if (authenticated) {
     return children;
   }
 

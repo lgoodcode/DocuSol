@@ -1,45 +1,38 @@
 "use client";
 
 import { create } from "zustand";
-import { useEffect, useState } from "react";
-import bs58 from "bs58";
+import { useCallback, useEffect, useState } from "react";
 import {
   useWallet as useWalletAdapter,
   Wallet,
 } from "@solana/wallet-adapter-react";
 import { WalletName } from "@solana/wallet-adapter-base";
-import { captureException } from "@sentry/nextjs";
+
+import { createMessageAndSign, authenticateWallet } from "@/lib/auth/wallet";
+import { useToast } from "@/hooks/use-toast";
 
 type WalletStore = {
   wallet: Wallet | null;
-  isConnected: boolean;
-  isConnecting: boolean;
+  authenticated: boolean;
+  authenticating: boolean;
   setWallet: (wallet: Wallet | null) => void;
-  setIsConnected: (connected: boolean) => void;
-  setIsConnecting: (connecting: boolean) => void;
+  setAuthenticated: (authenticated: boolean) => void;
+  setAuthenticating: (authenticating: boolean) => void;
 };
 
-const generateNonce = (): string => {
-  const nonce = crypto.getRandomValues(new Uint8Array(32));
-  return bs58.encode(nonce);
-};
-
-export const generateSignature = async (
-  signMessage: (message: Uint8Array) => Promise<Uint8Array>,
-) => {
-  const signature = await signMessage(
-    new TextEncoder().encode(generateNonce()),
-  );
-  return bs58.encode(signature);
-};
+/**
+ * Stupid hack because React state update is garbo - otherwise it
+ * trigger duplicate calls to the useEffect hook and double authentications
+ */
+let IS_AUTHENTICATING = false;
 
 const useWalletStore = create<WalletStore>((set) => ({
   wallet: null,
-  isConnected: false,
-  isConnecting: true,
+  authenticated: false,
+  authenticating: false,
   setWallet: (wallet: Wallet | null) => set({ wallet }),
-  setIsConnected: (connected: boolean) => set({ isConnected: connected }),
-  setIsConnecting: (connecting: boolean) => set({ isConnecting: connecting }),
+  setAuthenticated: (authenticated: boolean) => set({ authenticated }),
+  setAuthenticating: (authenticating: boolean) => set({ authenticating }),
 }));
 
 export const useWallet = () => useWalletStore((state) => state.wallet);
@@ -47,97 +40,152 @@ export const useWallet = () => useWalletStore((state) => state.wallet);
 export const useWalletAddress = () =>
   useWalletStore((state) => state.wallet?.adapter.publicKey?.toBase58() ?? "");
 
-const createWalletIfNotExists = async (address: string) => {
-  const response = await fetch("/api/wallet/connect", {
-    method: "POST",
-    body: JSON.stringify({ address }),
-  });
-  if (!response.ok) {
-    throw new Error("An error occurred while connecting the wallet");
-  }
-};
-
-export function useConnectWallet() {
+export function useWalletAuth(serverAuthenticated = false) {
+  const { toast } = useToast();
   const [error, setError] = useState<string | null>();
-  const [isMounted, setIsMounted] = useState(false);
-  const [walletConnecting, setWalletConnecting] = useState(false);
-  const [walletConnected, setWalletConnected] = useState(false);
-  const { select, wallets, disconnect, wallet } = useWalletAdapter();
   const {
-    isConnected,
-    isConnecting,
+    select,
+    wallets,
+    disconnect,
+    wallet,
+    signMessage,
+    connected,
+    connecting,
+  } = useWalletAdapter();
+  const {
+    authenticated,
+    authenticating,
     setWallet,
-    setIsConnected,
-    setIsConnecting,
+    setAuthenticated,
+    setAuthenticating,
   } = useWalletStore();
 
   // select is synchronous, so we start connecting once the wallet is selected
   const selectWallet = (wallet: WalletName) => {
-    setWalletConnecting(true);
-    setWalletConnected(false);
-    setIsConnecting(true);
-    setIsConnected(false);
+    setAuthenticated(false);
+    setAuthenticating(true);
     setError(null);
     select(wallet);
   };
 
-  const handleDisconnect = () => {
-    setWalletConnected(false);
+  const handleDisconnect = useCallback(() => {
     setWallet(null);
-    setIsConnected(false);
-    setIsConnecting(false);
     setError(null);
+    setAuthenticated(false);
+    setAuthenticating(false);
     disconnect();
-  };
+  }, [disconnect, setAuthenticated, setAuthenticating, setError, setWallet]);
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (isMounted) {
-      if (wallet) {
-        setIsConnected(true);
+  const connectAndAuthenticateWallet = useCallback(async () => {
+    try {
+      if (!signMessage) {
+        throw new Error("Wallet not connected");
       }
-      setIsConnecting(false);
+
+      const publicKey = wallet?.adapter.publicKey;
+      if (!publicKey) {
+        throw new Error("Wallet not connected");
+      }
+
+      const { message, signature } = await createMessageAndSign(signMessage);
+      await authenticateWallet(publicKey, message, signature);
+      debugger;
+      setWallet(wallet);
+      setAuthenticated(true);
+    } catch (error) {
+      console.error(error);
+      setError("Failed to connect wallet");
+      toast({
+        title: "Failed to connect wallet",
+        description: "An error occurred while connecting your wallet",
+        variant: "destructive",
+      });
+      handleDisconnect();
+    } finally {
+      setAuthenticating(false);
+      IS_AUTHENTICATING = false;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isMounted, wallet]);
+  }, [
+    signMessage,
+    wallet,
+    handleDisconnect,
+    setAuthenticating,
+    setWallet,
+    setAuthenticated,
+    toast,
+  ]);
+
+  // // If the user is not authenticated, we need to disconnect the wallet
+  // // and have them reconnect to ensure they actually have the wallet
+  // useEffect(() => {
+  //   if (!authenticated && !hasAttempted) {
+  //     if (!wallet) {
+  //       handleDisconnect();
+  //     } else if (
+  //       // !attempted &&
+  //       !authenticating &&
+  //       wallet &&
+  //       connected &&
+  //       signMessage
+  //     ) {
+  //       debugger;
+  //       // attempted = true;
+  //       setHasAttempted(true);
+  //       setAuthenticating(true);
+  //       await connectAndAuthenticateWallet();
+  //     }
+  //   }
+  //   //  else if (wallet) {
+  //   //   debugger;
+  //   //   setAuthenticated(true);
+  //   // }
+  //   setAuthenticating(false);
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [
+  //   hasAttempted,
+  //   wallet,
+  //   authenticated,
+  //   authenticating,
+  //   connected,
+  //   signMessage,
+  //   connectAndAuthenticateWallet,
+  // ]);
+
+  // If the server has already authenticated the user, we need to set the
+  // authenticated state to true
+  useEffect(() => {
+    if (serverAuthenticated) {
+      setAuthenticated(true);
+    }
+  }, [serverAuthenticated, setAuthenticated]);
 
   // Once connected, we need to check if the wallet exists in the database
   // so we use the useEffect hook to check if the wallet is connected and then
   // check if the wallet exists in the database
   useEffect(() => {
-    if (!walletConnected && walletConnecting && wallet?.adapter.publicKey) {
-      const address = wallet.adapter.publicKey.toBase58();
-
-      if (address) {
-        createWalletIfNotExists(address)
-          .then(() => {
-            setWallet(wallet);
-            setWalletConnected(true);
-            setIsConnected(true);
-          })
-          .catch((error) => {
-            console.error(error);
-            captureException(error);
-            setError("Failed to connect wallet");
-          })
-          .finally(() => {
-            setIsConnecting(false);
-          });
-      }
+    // Once the wallet is connected, begin the authentication process
+    if (
+      !IS_AUTHENTICATING &&
+      !authenticated &&
+      connected &&
+      wallet?.adapter.publicKey &&
+      signMessage
+    ) {
+      IS_AUTHENTICATING = true;
+      setAuthenticating(true);
+      connectAndAuthenticateWallet();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isConnecting, wallet]);
+  }, [authenticated, connected, wallet, signMessage]);
 
   return {
     selectWallet,
     wallets,
     disconnect: handleDisconnect,
     wallet,
-    isConnected,
-    isConnecting,
+    connecting,
+    authenticated,
+    authenticating,
     error,
   };
 }

@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useConnectWallet } from "@/hooks/use-connect-wallet";
+import { useWalletAuth } from "@/hooks/use-connect-wallet";
 
 export function WalletDialog({
   open,
@@ -31,15 +31,17 @@ export function WalletDialog({
     wallets,
     disconnect,
     wallet,
-    isConnected,
-    isConnecting,
-  } = useConnectWallet();
+    connecting,
+    authenticated,
+    authenticating,
+  } = useWalletAuth();
+  const isLoading = authenticating || connecting;
   const walletsInstalled = wallets.filter(
     (wallet) => wallet.readyState === "Installed",
   );
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open || authenticating} onOpenChange={setOpen}>
       {children || (
         <DialogTrigger asChild>
           <Button
@@ -55,42 +57,46 @@ export function WalletDialog({
       )}
       <DialogContent
         onInteractOutside={(e) => {
-          if (!isConnecting && isConnected) {
+          if (!authenticating && authenticated) {
             e.preventDefault();
           }
         }}
         // Suppresses the "aria-describedby" warning
         aria-describedby={undefined}
       >
-        <DialogHeader>
+        <DialogHeader className="flex flex-col gap-2">
           {/* Suppresses the DialogTitle required warning */}
           <DialogTitle className="sr-only">
-            {isConnected
+            {authenticated
               ? "Connected Wallet"
-              : isConnecting
+              : isLoading
                 ? "Connecting..."
                 : "Connect Wallet"}
           </DialogTitle>
           <h1 className="text-center text-2xl font-bold">
-            {isConnected
+            {authenticated
               ? "Connected Wallet"
-              : isConnecting
+              : isLoading
                 ? "Connecting..."
                 : "Connect Wallet"}
           </h1>
+          <p className="text-center text-muted-foreground">
+            Please sign the message to authenticate your wallet in the wallet
+            provider popup window
+          </p>
         </DialogHeader>
 
         {/* Content */}
         <div className="flex flex-col gap-6">
           {/* Connecting */}
-          {!error && !isConnected && isConnecting && (
+          {!error && !authenticated && isLoading && (
             <div className="flex flex-col items-center gap-12 py-6">
               <Wallet className="h-12 w-12 animate-pulse text-muted-foreground" />
             </div>
           )}
 
           {/* No wallet adapters installed */}
-          {!isConnected && !isConnecting && (
+          {!authenticated && !isLoading && (
             <div className="flex flex-col items-center gap-4 py-6">
               <Wallet className="h-12 w-12" />
 
@@ -116,7 +122,7 @@ export function WalletDialog({
                       key={wallet.adapter.name}
                       variant="ghost"
                       onClick={() => selectWallet(wallet.adapter.name)}
-                      className="w-full justify-start gap-4 px-4 py-6 text-left text-lg"
+                      className="w-full justify-start gap-6 px-4 py-6 text-left text-lg"
                     >
                       <Image
                         src={wallet.adapter.icon}
@@ -133,7 +139,7 @@ export function WalletDialog({
           )}
 
           {/* Connected */}
-          {!error && isConnected && (
+          {!error && authenticated && !isLoading && (
             <>
               <div className="space-y-4">
                 {wallet && (

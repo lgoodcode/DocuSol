@@ -10,7 +10,7 @@ ALTER TABLE wallets OWNER TO postgres;
 
 CREATE INDEX idx_wallets_address ON wallets(address);
 
--- No RLS policies so we only use the service role key
+-- No RLS policies so only the service role key can access the table
 ALTER TABLE wallets ENABLE ROW LEVEL SECURITY;
 
 -- Add a trigger to automatically update the updated_at timestamp

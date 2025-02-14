@@ -27,6 +27,7 @@ export type Database = {
           unsigned_hash: string
           unsigned_transaction_signature: string
           updated_at: string
+          wallet_id: string
         }
         Insert: {
           created_at: string
@@ -45,6 +46,7 @@ export type Database = {
           unsigned_hash: string
           unsigned_transaction_signature: string
           updated_at?: string
+          wallet_id: string
         }
         Update: {
           created_at?: string
@@ -63,24 +65,36 @@ export type Database = {
           unsigned_hash?: string
           unsigned_transaction_signature?: string
           updated_at?: string
+          wallet_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "documents_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       wallets: {
         Row: {
           address: string
+          chain: string
           created_at: string
           id: string
           updated_at: string
         }
         Insert: {
           address: string
+          chain: string
           created_at?: string
           id?: string
           updated_at?: string
         }
         Update: {
           address?: string
+          chain?: string
           created_at?: string
           id?: string
           updated_at?: string
