@@ -32,6 +32,14 @@ export async function middleware(request: NextRequest) {
     response.headers.set("x-error-rewrite", "true");
     return response;
   }
+
+  // Validate session if visiting a protected route
+  if (request.nextUrl.pathname.startsWith("/api/auth")) {
+    const session = await getSession(request);
+    if (!session) {
+      return NextResponse.redirect(new URL("/api/auth/login", request.url));
+    }
+  }
 }
 
 export const config = {

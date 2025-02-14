@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Sun, Moon, LogOut, User } from "lucide-react";
 
-import { navRoutes } from "@/config/routes";
+import { navRoutes } from "@/config/routes/pages";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
