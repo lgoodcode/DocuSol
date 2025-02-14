@@ -52,17 +52,17 @@ const limiters = {
   }),
 };
 
-const isApiRoute = (request: Request): boolean => {
-  return request.url.startsWith("/api/");
+const isApiRoute = (request: NextRequest): boolean => {
+  return request.nextUrl.pathname.startsWith("/api/");
 };
 
-const getClientIp = (request: Request): string => {
+const getClientIp = (request: NextRequest): string => {
   const xff =
     request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip");
   return xff ? xff.split(",")[0].trim() : "127.0.0.1";
 };
 
-export const rateLimit = async (request: Request) => {
+export const rateLimit = async (request: NextRequest) => {
   const ip = getClientIp(request);
   const isApi = isApiRoute(request);
   const rateLimiter = isApi ? limiters.api : limiters.pages;
@@ -79,8 +79,65 @@ export const rateLimit = async (request: Request) => {
   }
 };
 
+/**
+ * Handle rate limit responses for both API and page requests
+ *
+ * @param request - The incoming Next.js request
+ * @param rateLimitHeaders - Headers containing rate limit information
+ * @returns NextResponse with appropriate status and headers
+ * @throws Error for non-API routes when rewrite fails
+ */
+export const handleRateLimit = async (
+  request: NextRequest,
+  rateLimitHeaders: Headers,
+): Promise<NextResponse> => {
+  const isApi = isApiRoute(request);
+
+  try {
+    if (isApi) {
+      return apiRateLimitResponse(rateLimitHeaders);
+    }
+
+    // Handle page rate limiting
+    const errorUrl = new URL("/error/rate-limit", request.url);
+    const response = NextResponse.rewrite(errorUrl, {
+      status: 429,
+      headers: {
+        "Cache-Control": "no-store, must-revalidate",
+        "Content-Type": "text/html; charset=utf-8",
+      },
+    });
+
+    rateLimitHeaders.forEach((value, key) => {
+      response.headers.set(key, value);
+    });
+
+    // Add custom header for middleware identification
+    response.headers.set("x-error-rewrite", "true");
+    response.headers.set("x-rate-limit-type", "page");
+
+    return response;
+  } catch (error) {
+    if (isApi) {
+      return apiRateLimitResponse(rateLimitHeaders, 500);
+    }
+
+    // For page errors, throw to be handled by error boundary
+    const errorMessage =
+      error instanceof Error ? error.message : "Rate limit handling failed";
+    throw new Error(`Rate limit error: ${errorMessage}`, { cause: error });
+  }
+};
+
+/**
+ * Create an API rate limit response with appropriate headers and status
+ *
+ * @param headers - Rate limit headers to include in response
+ * @returns NextResponse for API rate limit
+ */
 const apiRateLimitResponse = (
   headers: Headers,
+  status = 429,
 ): NextResponse<RateLimitErrorResponse> => {
   return NextResponse.json(
     {
@@ -88,47 +145,13 @@ const apiRateLimitResponse = (
       code: ERROR_CODES.RATE_LIMIT,
       retryAfter: RETRY_AFTER,
     },
-    { status: 429, headers },
-  );
-};
-
-const errorApiRateLimitResponse = (): NextResponse<RateLimitErrorResponse> => {
-  return NextResponse.json(
     {
-      error: ERROR_MESSAGES.INTERNAL_ERROR,
-      code: ERROR_CODES.INTERNAL_ERROR,
-      retryAfter: RETRY_AFTER,
-    },
-    { status: 500 },
-  );
-};
-
-export const handleRateLimit = async (
-  request: NextRequest,
-  rateLimitHeaders: Headers,
-) => {
-  const isApi = isApiRoute(request);
-  try {
-    if (isApi) {
-      return apiRateLimitResponse(rateLimitHeaders);
-    }
-
-    const response = NextResponse.rewrite(
-      new URL("/error/rate-limit", request.url),
-      {
-        status: 429,
+      status,
+      headers: {
+        ...Object.fromEntries(headers.entries()),
+        "Cache-Control": "no-store, must-revalidate",
+        "Content-Type": "application/json",
       },
-    );
-    rateLimitHeaders.forEach((value, key) => {
-      response.headers.set(key, value);
-    });
-    response.headers.set("x-error-rewrite", "true");
-
-    return response;
-  } catch (error) {
-    if (isApi) {
-      return errorApiRateLimitResponse();
-    }
-    throw error;
-  }
+    },
+  );
 };

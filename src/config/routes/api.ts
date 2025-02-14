@@ -26,7 +26,7 @@ export const apiRoutes: ApiRoute[] = [
   },
   {
     name: "Docs - Create",
-    path: "/api/docs/create",
+    path: "/api/docs/new",
     description: "Create a new document",
     protected: true,
   },

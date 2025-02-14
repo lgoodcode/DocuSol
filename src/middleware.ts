@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { captureException } from "@sentry/nextjs";
 
-import { handleRateLimit, rateLimit } from "@/lib/utils/ratelimiter";
+import { handleRateLimit, rateLimit } from "@/lib/auth/ratelimiter";
 import { apiRoutes, pageRoutes, accountRoute } from "@/config/routes";
 import { validateSession } from "@/lib/auth/session";
 
@@ -11,6 +11,10 @@ const PROTECTED_ROUTES: string[] = [
   ...apiRoutes.filter((r) => !!r?.protected).map((r) => r.path),
   ...pageRoutes.filter((r) => !!r?.protected).map((r) => r.path),
 ];
+
+const isApiRoute = (request: NextRequest): boolean => {
+  return request.nextUrl.pathname.startsWith("/api/");
+};
 
 export async function middleware(request: NextRequest) {
   // Prevent direct requests to the error pages
@@ -57,6 +61,9 @@ export async function middleware(request: NextRequest) {
       });
     }
 
+    if (isApiRoute(request)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     return NextResponse.redirect(new URL("/login", request.url));
   }
 }
