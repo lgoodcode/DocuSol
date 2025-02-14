@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useWalletAuth } from "@/hooks/use-connect-wallet";
+import { useWalletAuth } from "@/lib/auth/use-wallet-auth";
 
 export function WalletDialog({
   open,
@@ -31,11 +31,9 @@ export function WalletDialog({
     wallets,
     disconnect,
     wallet,
-    connecting,
     authenticated,
     authenticating,
   } = useWalletAuth();
-  const isLoading = authenticating || connecting;
   const walletsInstalled = wallets.filter(
     (wallet) => wallet.readyState === "Installed",
   );
@@ -69,14 +67,14 @@ export function WalletDialog({
           <DialogTitle className="sr-only">
             {authenticated
               ? "Connected Wallet"
-              : isLoading
+              : authenticating
                 ? "Connecting..."
                 : "Connect Wallet"}
           </DialogTitle>
           <h1 className="text-center text-2xl font-bold">
             {authenticated
               ? "Connected Wallet"
-              : isLoading
+              : authenticating
                 ? "Connecting..."
                 : "Connect Wallet"}
           </h1>
@@ -89,14 +87,14 @@ export function WalletDialog({
         {/* Content */}
         <div className="flex flex-col gap-6">
           {/* Connecting */}
-          {!error && !authenticated && isLoading && (
+          {!error && !authenticated && authenticating && (
             <div className="flex flex-col items-center gap-12 py-6">
               <Wallet className="h-12 w-12 animate-pulse text-muted-foreground" />
             </div>
           )}
 
           {/* No wallet adapters installed */}
-          {!authenticated && !isLoading && (
+          {!authenticated && !authenticating && (
             <div className="flex flex-col items-center gap-4 py-6">
               <Wallet className="h-12 w-12" />
 
@@ -139,7 +137,7 @@ export function WalletDialog({
           )}
 
           {/* Connected */}
-          {!error && authenticated && !isLoading && (
+          {!error && authenticated && !authenticating && (
             <>
               <div className="space-y-4">
                 {wallet && (

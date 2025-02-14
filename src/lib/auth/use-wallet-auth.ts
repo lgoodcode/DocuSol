@@ -183,9 +183,8 @@ export function useWalletAuth(serverAuthenticated = false) {
     wallets,
     disconnect: handleDisconnect,
     wallet,
-    connecting,
     authenticated,
-    authenticating,
+    authenticating: authenticating || connecting,
     error,
   };
 }

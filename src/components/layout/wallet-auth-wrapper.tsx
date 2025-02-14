@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Wallet } from "lucide-react";
 
 import { SUPPORT_EMAIL, DISCORD_URL } from "@/constants";
-import { useWalletAuth } from "@/hooks/use-connect-wallet";
+import { useWalletAuth } from "@/lib/auth/use-wallet-auth";
 import { SkeletonContent } from "@/components/layout/skeleton-content";
 import { Button } from "@/components/ui/button";
 
