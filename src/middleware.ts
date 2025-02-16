@@ -5,6 +5,7 @@ import { captureException } from "@sentry/nextjs";
 import { handleRateLimit, rateLimit } from "@/lib/auth/ratelimiter";
 import { apiRoutes, pageRoutes, accountRoute } from "@/config/routes";
 import { validateSession } from "@/lib/auth/session";
+import { AUTHENTICATED_REDIRECT_TO } from "@/constants";
 
 const PROTECTED_ROUTES: string[] = [
   accountRoute.path,
@@ -51,6 +52,13 @@ export async function middleware(request: NextRequest) {
     try {
       const sessionValid = await validateSession(request);
       if (sessionValid) {
+        // If visiting the login page, redirect to the home page
+        if (request.nextUrl.pathname === "/login") {
+          return NextResponse.redirect(
+            new URL(AUTHENTICATED_REDIRECT_TO, request.url),
+          );
+        }
+
         return NextResponse.next();
       }
     } catch (error) {
