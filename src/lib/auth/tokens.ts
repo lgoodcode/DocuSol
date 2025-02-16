@@ -133,12 +133,25 @@ export async function getRefreshTokenPublicKey(refreshToken: string) {
  *
  * @param refreshToken the refresh token
  * @returns the new access and refresh tokens
+ * @throws an error if the refresh token is invalid, expired, or invalid payload
  */
 export async function refreshTokens(refreshToken: string) {
-  const publicKey = await getRefreshTokenPublicKey(refreshToken);
-  if (!publicKey) {
-    throw new Error("Refresh token not found");
+  // Decode the token to get the jti (JWT ID)
+  const { payload } = await jwtVerify(
+    refreshToken,
+    new TextEncoder().encode(REFRESH_TOKEN_SECRET),
+  );
+
+  const tokenId = payload.jti;
+  if (!tokenId) {
+    throw new Error("Invalid refresh token: missing jti claim");
   }
+
+  const publicKey = await getRefreshTokenPublicKey(tokenId);
+  if (!publicKey) {
+    throw new Error(`Refresh token: ${tokenId} not found`);
+  }
+
   return generateTokens(new PublicKey(publicKey));
 }
 
@@ -167,7 +180,12 @@ export async function verifyAndRefreshTokens(
 
     // Access token is valid and not close to expiry
     return { accessToken, refreshToken };
-  } catch {
+  } catch (err) {
+    // If the token is invalid, throw and don't attempt to refresh again
+    const error = err as Error;
+    if (error.message.includes("JWSInvalid")) {
+      throw error;
+    }
     // Access token verification failed - try to use refresh token
     return await refreshTokens(refreshToken);
   }

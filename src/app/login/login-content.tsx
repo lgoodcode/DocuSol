@@ -5,7 +5,6 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next-nprogress-bar";
 import { motion } from "framer-motion";
-import { captureException } from "@sentry/nextjs";
 import { Loader2, Wallet } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -14,21 +13,42 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useWalletAuth } from "@/lib/auth/use-wallet-auth";
 import { WalletDialog } from "@/components/layout/wallet-dialog";
 import { BoxBackground } from "@/components/layout/box-background";
+import { DockerContainer } from "@/components/home/docker";
+
+const contentVariants = {
+  hidden: {
+    opacity: 0,
+    transition: { duration: 0 },
+  },
+  visible: {
+    opacity: 1,
+    transition: {
+      duration: 1.2,
+      ease: [0.4, 0, 0.2, 1],
+      when: "beforeChildren",
+      staggerChildren: 0.3,
+    },
+  },
+};
+
 export function LoginContent() {
   const router = useRouter();
-  const { authenticating, authenticated } = useWalletAuth();
   const [open, setOpen] = useState(false);
-  const [serverError, setServerError] = useState("");
+  const { authenticating, authenticated, error } = useWalletAuth();
 
   useEffect(() => {
     if (authenticated) {
-      router.push("/home");
+      router.push("/docs/list");
     }
   }, [authenticated, router]);
 
   return (
     <main className="relative">
       <BoxBackground />
+      <motion.div variants={contentVariants} initial="hidden" animate="visible">
+        <DockerContainer delay={0.5} />
+      </motion.div>
+
       <div className="z-30 flex min-h-dvh items-center justify-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
@@ -73,9 +93,9 @@ export function LoginContent() {
                   </p>
                 </div>
 
-                {serverError && (
+                {error && (
                   <Alert variant="destructive">
-                    <AlertTitle>{serverError}</AlertTitle>
+                    <AlertTitle>{error}</AlertTitle>
                   </Alert>
                 )}
 

@@ -6,7 +6,7 @@ import {
   useWallet as useWalletAdapter,
   Wallet,
 } from "@solana/wallet-adapter-react";
-import { WalletName } from "@solana/wallet-adapter-base";
+import { WalletName, WalletError } from "@solana/wallet-adapter-base";
 
 import { createMessageAndSign, authenticateWallet } from "@/lib/auth/wallet";
 import { useToast } from "@/hooks/use-toast";
@@ -43,6 +43,7 @@ export const useWalletAddress = () =>
 export function useWalletAuth(serverAuthenticated = false) {
   const { toast } = useToast();
   const [error, setError] = useState<string | null>();
+  const [hasSelected, setHasSelected] = useState(false);
   const {
     select,
     wallets,
@@ -62,6 +63,7 @@ export function useWalletAuth(serverAuthenticated = false) {
 
   // select is synchronous, so we start connecting once the wallet is selected
   const selectWallet = (wallet: WalletName) => {
+    setHasSelected(true);
     setAuthenticated(false);
     setAuthenticating(true);
     setError(null);
@@ -70,11 +72,17 @@ export function useWalletAuth(serverAuthenticated = false) {
 
   const handleDisconnect = useCallback(() => {
     setWallet(null);
-    setError(null);
+    setHasSelected(false);
     setAuthenticated(false);
     setAuthenticating(false);
     disconnect();
-  }, [disconnect, setAuthenticated, setAuthenticating, setError, setWallet]);
+  }, [
+    disconnect,
+    setAuthenticated,
+    setAuthenticating,
+    setWallet,
+    setHasSelected,
+  ]);
 
   const connectAndAuthenticateWallet = useCallback(async () => {
     try {
@@ -89,17 +97,20 @@ export function useWalletAuth(serverAuthenticated = false) {
 
       const { message, signature } = await createMessageAndSign(signMessage);
       await authenticateWallet(publicKey, message, signature);
-      debugger;
+
       setWallet(wallet);
       setAuthenticated(true);
     } catch (error) {
-      console.error(error);
-      setError("Failed to connect wallet");
-      toast({
-        title: "Failed to connect wallet",
-        description: "An error occurred while connecting your wallet",
-        variant: "destructive",
-      });
+      if (error instanceof WalletError) {
+        setError(error.message);
+      } else {
+        toast({
+          title: "Failed to connect wallet",
+          description: "An error occurred while connecting your wallet",
+          variant: "destructive",
+        });
+      }
+
       handleDisconnect();
     } finally {
       setAuthenticating(false);
@@ -165,6 +176,7 @@ export function useWalletAuth(serverAuthenticated = false) {
   useEffect(() => {
     // Once the wallet is connected, begin the authentication process
     if (
+      hasSelected &&
       !IS_AUTHENTICATING &&
       !authenticated &&
       connected &&
@@ -176,15 +188,16 @@ export function useWalletAuth(serverAuthenticated = false) {
       connectAndAuthenticateWallet();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authenticated, connected, wallet, signMessage]);
+  }, [authenticated, connected, wallet, signMessage, hasSelected]);
 
   return {
     selectWallet,
     wallets,
     disconnect: handleDisconnect,
     wallet,
+    connecting,
     authenticated,
-    authenticating: authenticating || connecting,
+    authenticating,
     error,
   };
 }

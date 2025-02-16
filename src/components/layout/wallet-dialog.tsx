@@ -39,7 +39,10 @@ export function WalletDialog({
   );
 
   return (
-    <Dialog open={open || authenticating} onOpenChange={setOpen}>
+    <Dialog
+      open={!authenticated && (open || authenticating)}
+      onOpenChange={setOpen}
+    >
       {children || (
         <DialogTrigger asChild>
           <Button
@@ -78,10 +81,12 @@ export function WalletDialog({
                 ? "Connecting..."
                 : "Connect Wallet"}
           </h1>
-          <p className="text-center text-muted-foreground">
-            Please sign the message to authenticate your wallet in the wallet
-            provider popup window
-          </p>
+          {!authenticated && (
+            <p className="text-center text-muted-foreground">
+              Please sign the message to authenticate your wallet in the wallet
+              provider popup window
+            </p>
+          )}
         </DialogHeader>
 
         {/* Content */}
@@ -99,9 +104,13 @@ export function WalletDialog({
               <Wallet className="h-12 w-12" />
 
               {!walletsInstalled.length && (
-                <p className="text-muted-foreground">
-                  No wallets installed. Please install a wallet to use the app.
-                </p>
+                <Alert variant="destructive">
+                  <AlertCircle className="h-5 w-5" />
+                  <AlertDescription>
+                    No wallets installed. Please install a wallet to use the
+                    app.
+                  </AlertDescription>
+                </Alert>
               )}
 
               {error && (
@@ -113,7 +122,7 @@ export function WalletDialog({
                 </Alert>
               )}
 
-              {walletsInstalled.length && (
+              {!!walletsInstalled.length && (
                 <div className="flex w-full flex-col gap-2">
                   {walletsInstalled.map((wallet) => (
                     <Button

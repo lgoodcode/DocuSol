@@ -54,7 +54,7 @@ export async function middleware(request: NextRequest) {
         return NextResponse.next();
       }
     } catch (error) {
-      console.error("Session verification error:", error);
+      console.error("Middleware session verification error:", error);
       captureException(error, {
         tags: { context: "middleware-session" },
         extra: { url: request.url },
