@@ -3,11 +3,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { useWallet as useWalletAdapter } from "@solana/wallet-adapter-react";
 import { WalletName, WalletError } from "@solana/wallet-adapter-base";
+import { useRouter } from "next-nprogress-bar";
 
 import { createMessageAndSign, authenticateWallet } from "@/lib/auth/wallet";
 import { useToast } from "@/hooks/use-toast";
 
 export function useWallet() {
+  const router = useRouter();
   const { toast } = useToast();
   const [error, setError] = useState<string | null>(null);
   const [hasSelected, setHasSelected] = useState(false);
@@ -38,7 +40,8 @@ export function useWallet() {
     setAuthenticating(false);
     setAuthenticated(false);
     disconnect();
-  }, [disconnect, setHasSelected]);
+    router.push("/login");
+  }, [disconnect, router]);
 
   const connectAndAuthenticateWallet = useCallback(async () => {
     try {
@@ -95,6 +98,7 @@ export function useWallet() {
     authenticating,
     authenticated,
     connecting,
+    connected,
     error,
   };
 }

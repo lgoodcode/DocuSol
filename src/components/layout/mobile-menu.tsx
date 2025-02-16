@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Sun, Moon, LogOut, User } from "lucide-react";
+import { Menu, X, Sun, Moon, User } from "lucide-react";
 
 import { pageRoutes } from "@/config/routes/pages";
 import { cn } from "@/lib/utils";
@@ -25,11 +25,9 @@ const useIsFirstRender = () => {
 };
 
 export function MobileMenu({
-  connected,
-  onAuthClick,
+  setAccountDialogOpen,
 }: {
-  connected: boolean;
-  onAuthClick: () => void;
+  setAccountDialogOpen: (open: boolean) => void;
 }) {
   const pathname = usePathname();
   const isFirstRender = useIsFirstRender();
@@ -230,31 +228,17 @@ export function MobileMenu({
                   <button
                     onClick={() => {
                       setOpen(false);
-                      onAuthClick();
+                      setAccountDialogOpen(true);
                     }}
                     className="flex w-full items-center gap-4 rounded-none px-4 py-3 text-sm font-medium transition-colors hover:bg-accent"
                   >
-                    {connected ? (
-                      <>
-                        <LogOut className="h-6 w-6" />
-                        <div className="flex w-full flex-col gap-1 text-left">
-                          <span>Logout</span>
-                          <span className="text-xs font-normal text-muted-foreground">
-                            Sign out of your account
-                          </span>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <User className="h-6 w-6" />
-                        <div className="flex w-full flex-col gap-1 text-left">
-                          <span>Login</span>
-                          <span className="text-xs font-normal text-muted-foreground">
-                            Sign in to your account
-                          </span>
-                        </div>
-                      </>
-                    )}
+                    <User className="h-6 w-6" />
+                    <div className="flex w-full flex-col gap-1 text-left">
+                      <span>Account</span>
+                      <span className="text-xs font-normal text-muted-foreground">
+                        Manage your account
+                      </span>
+                    </div>
                   </button>
                 </motion.div>
               </div>
