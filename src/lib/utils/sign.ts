@@ -1,11 +1,15 @@
 import { PDFDocument, rgb } from "pdf-lib";
 
-import { useWalletAddress } from "@/hooks/use-connect-wallet";
+import { useWallet } from "@/lib/auth/use-wallet";
 
 export function useUploadNewDocument() {
-  const walletAddress = useWalletAddress();
+  const { wallet } = useWallet();
 
   return async function uploadNewDocument(newDocument: NewDocument) {
+    if (!wallet) {
+      throw new Error("Wallet not connected");
+    }
+
     const formData = new FormData();
     Object.entries(newDocument).forEach(([key, value]) => {
       formData.append(key, value || "");
@@ -16,7 +20,7 @@ export function useUploadNewDocument() {
       body: formData,
       headers: {
         "Cache-Control": "no-cache",
-        "x-wallet-address": walletAddress,
+        "x-wallet-address": wallet.adapter.publicKey!.toBase58(),
       },
     });
 
@@ -69,6 +73,17 @@ export async function sign(
     console.error("Error in sign:", error);
     throw error;
   }
+}
+
+/**
+ * Returns a font string for canvas context with the specified size
+ * Uses a cursive font for signature-like appearance, falling back to system fonts
+ *
+ * @param size - The font size in pixels
+ * @returns The complete font string for use with canvas context
+ */
+function getFont(size: number): string {
+  return `${size}px "Dancing Script", "Brush Script MT", cursive, sans-serif`;
 }
 
 /**
