@@ -74,6 +74,9 @@ export async function middleware(request: NextRequest) {
     }
     return NextResponse.redirect(new URL("/login", request.url));
   }
+
+  // Otherwise, visiting a public route
+  return NextResponse.next();
 }
 
 export const config = {
