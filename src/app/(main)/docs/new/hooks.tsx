@@ -5,19 +5,20 @@ import { captureException } from "@sentry/nextjs";
 
 import { PLATFORM_FEE } from "@/constants";
 import { useToast } from "@/hooks/use-toast";
-import { sign, useUploadNewDocument } from "@/lib/utils/sign";
+import { sign } from "@/lib/utils/sign";
 import { hasSufficientBalance } from "@/lib/utils/solana";
 
 export function useSignDoc() {
   const { toast } = useToast();
 
-  return async (
+  return async function signDocument(
     file: File,
     signatureType: "draw" | "type",
     hasDrawn: boolean,
     writtenSignature: HTMLCanvasElement | null,
     typedSignature: string,
-  ) => {
+  ) {
+    // TODO: revist this logic for improved signing flow
     const isSigned =
       (signatureType === "draw" && hasDrawn) ||
       (signatureType === "type" && typedSignature);
@@ -43,6 +44,7 @@ export function useSignDoc() {
         ? "The document is encrypted and cannot be modified"
         : "An error occurred while signing the document";
 
+      // Don't need to capture exceptions for encrypted documents
       if (!isEncrypted) {
         captureException(error);
       }
@@ -62,7 +64,7 @@ export function useUserHasSufficientBalance() {
   const { toast } = useToast();
   const { publicKey } = useWallet();
 
-  return async () => {
+  return async function userHasSufficientBalance() {
     try {
       if (!publicKey) {
         throw new Error("Wallet not connected");
@@ -75,8 +77,7 @@ export function useUserHasSufficientBalance() {
           description: (
             <span>
               You need at least <strong>{PLATFORM_FEE} SOL</strong> in your
-              wallet to upload a document for the platform fee. Please add more
-              SOL to continue.
+              wallet to upload a document for the platform fee.
             </span>
           ),
           variant: "destructive",
@@ -93,6 +94,7 @@ export function useUserHasSufficientBalance() {
       toast({
         title: "Error",
         description: "An error occurred while verifying your balance",
+        variant: "destructive",
       });
       return false;
     }

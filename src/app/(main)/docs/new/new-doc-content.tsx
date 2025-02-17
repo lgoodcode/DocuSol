@@ -6,12 +6,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { captureException } from "@sentry/nextjs";
-import { useWallet } from "@solana/wallet-adapter-react";
 import { UploadIcon, Pencil, Save, Trash2, Lock, FileText } from "lucide-react";
 
-import { MAX_FILE_SIZE, PLATFORM_FEE } from "@/constants";
-import { storeNewDocument } from "@/lib/utils";
-import { sign, useUploadNewDocument } from "@/lib/utils/sign";
+import { MAX_FILE_SIZE } from "@/constants";
+import { useUploadNewDocument } from "@/lib/utils/sign";
 import { formatFileSize } from "@/lib/utils/format-file-size";
 import { useDrawing } from "@/hooks/use-drawing";
 import { useToast } from "@/hooks/use-toast";
@@ -110,13 +108,20 @@ export function NewDocumentContent() {
       return;
     }
 
-    const signedDoc = await signDoc(
-      files[0],
-      signatureType,
-      hasDrawn,
-      getSignatureAsBlack(),
-      typedSignature,
-    );
+    const isSigned =
+      (signatureType === "draw" && hasDrawn) ||
+      (signatureType === "type" && typedSignature);
+
+    // TODO: revise this with improved pdf editor
+    const signedDoc = !isSigned
+      ? files[0]
+      : await signDoc(
+          files[0],
+          signatureType,
+          hasDrawn,
+          getSignatureAsBlack(),
+          typedSignature,
+        );
 
     if (!signedDoc) {
       return;
@@ -142,17 +147,6 @@ export function NewDocumentContent() {
       } else if (!id || !txSignature || !unsignedHash) {
         throw new Error("Failed to upload document");
       }
-
-      storeNewDocument({ id, txSignature, unsignedHash }).catch((error) => {
-        console.error("Error storing document:", error);
-        captureException(error, {
-          extra: {
-            id,
-            txSignature,
-            unsignedHash,
-          },
-        });
-      });
 
       setResults({ id, txSignature, unsignedHash });
       setShowDialog(true);
@@ -383,7 +377,9 @@ export function NewDocumentContent() {
                 <div className="flex items-center gap-2">
                   <Select
                     value={signatureType}
-                    onValueChange={setSignatureType}
+                    onValueChange={(value) =>
+                      setSignatureType(value as "draw" | "type")
+                    }
                     disabled={form.formState.isSubmitting}
                   >
                     <SelectTrigger className="w-32">
