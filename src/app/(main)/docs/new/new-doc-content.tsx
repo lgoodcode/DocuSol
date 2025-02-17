@@ -6,9 +6,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { captureException } from "@sentry/nextjs";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { UploadIcon, Pencil, Save, Trash2, Lock, FileText } from "lucide-react";
 
-import { MAX_FILE_SIZE } from "@/constants";
+import { MAX_FILE_SIZE, PLATFORM_FEE } from "@/constants";
 import { storeNewDocument } from "@/lib/utils";
 import { sign, useUploadNewDocument } from "@/lib/utils/sign";
 import { formatFileSize } from "@/lib/utils/format-file-size";
@@ -44,6 +45,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
+import { useSignDoc, useUserHasSufficientBalance } from "./hooks";
 import { NewDocumentDialog } from "./new-doc-dialog";
 
 const documentSchema = z
@@ -69,6 +71,8 @@ const documentSchema = z
 
 export function NewDocumentContent() {
   const { toast } = useToast();
+  const signDoc = useSignDoc();
+  const checkBalance = useUserHasSufficientBalance();
   const {
     canvasRef,
     startDrawing,
@@ -79,7 +83,7 @@ export function NewDocumentContent() {
     clearCanvas,
   } = useDrawing();
   const uploadNewDocument = useUploadNewDocument();
-  const [signatureType, setSignatureType] = useState("draw"); // "draw" or "type"
+  const [signatureType, setSignatureType] = useState<"draw" | "type">("draw");
   const [typedSignature, setTypedSignature] = useState("");
   const [showDialog, setShowDialog] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
@@ -106,38 +110,21 @@ export function NewDocumentContent() {
       return;
     }
 
-    const isSigned =
-      (signatureType === "draw" && hasDrawn) ||
-      (signatureType === "type" && typedSignature);
+    const signedDoc = await signDoc(
+      files[0],
+      signatureType,
+      hasDrawn,
+      getSignatureAsBlack(),
+      typedSignature,
+    );
 
-    let signedDoc: Blob | null = null;
-    if (isSigned) {
-      try {
-        signedDoc = await sign(
-          files[0],
-          signatureType === "draw" ? getSignatureAsBlack() : null,
-          signatureType === "type" ? typedSignature : undefined,
-        );
-      } catch (err) {
-        const error = err as Error;
-        console.error(error);
-        if (error.message.includes("encrypted")) {
-          toast({
-            title: "Error",
-            description: "The document is encrypted and cannot be modified",
-            variant: "destructive",
-          });
-          return;
-        }
+    if (!signedDoc) {
+      return;
+    }
 
-        captureException(error);
-        toast({
-          title: "Error",
-          description: "An error occurred while signing the document",
-          variant: "destructive",
-        });
-        return;
-      }
+    const hasSufficientBalance = await checkBalance();
+    if (!hasSufficientBalance) {
+      return;
     }
 
     try {

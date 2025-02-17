@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
-import { useWallet } from "@/lib/auth/use-wallet";
+import { useWalletAuth } from "@/lib/auth/use-wallet-auth";
 
 export function AccountDialog({
   open,
@@ -21,7 +21,7 @@ export function AccountDialog({
   open: boolean;
   setOpen: (open: boolean) => void;
 }) {
-  const { connected, wallet, disconnect } = useWallet();
+  const { connected, wallet, disconnect } = useWalletAuth();
 
   if (!connected || !wallet) return null;
 
