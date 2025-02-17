@@ -16,8 +16,6 @@ export const IS_MOBILE = () => {
 
 export const PLATFORM_FEE = 100.0001;
 
-export const AUTHENTICATED_REDIRECT_TO = "/docs/list";
-
 /** mime_type: [extensions] */
 export const ACCEPTED_FILE_TYPES: Record<string, string[]> = {
   "application/pdf": [".pdf"],
