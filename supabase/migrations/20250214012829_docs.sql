@@ -1,6 +1,6 @@
 CREATE TABLE documents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    wallet_id UUID NOT NULL REFERENCES wallets(id),
+    user_id UUID NOT NULL REFERENCES users(id),
     name TEXT NOT NULL,
     password TEXT,
     original_filename TEXT NOT NULL,
@@ -21,7 +21,7 @@ CREATE TABLE documents (
 
 ALTER TABLE documents OWNER TO postgres;
 
-CREATE INDEX idx_documents_wallet_id ON documents(wallet_id);
+CREATE INDEX idx_documents_user_id ON documents(user_id);
 CREATE INDEX idx_documents_created_at ON documents(created_at);
 
 ALTER TABLE documents ENABLE ROW LEVEL SECURITY;

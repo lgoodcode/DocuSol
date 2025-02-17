@@ -1,4 +1,5 @@
 import type { Document } from "@/lib/supabase/types";
+import type { JWTPayload } from "jose";
 
 export declare global {
   declare namespace NodeJS {
@@ -22,11 +23,9 @@ export declare global {
     }
   }
 
-  interface UserJwtPayload {
+  interface AccessTokenPayload extends JWTPayload {
+    id: string;
     publicKey: string;
-    jti: string;
-    iat: number;
-    exp: number;
   }
 
   type Tokens = {

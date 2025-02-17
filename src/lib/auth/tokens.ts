@@ -22,6 +22,63 @@ const redis = new Redis({
 });
 
 /**
+ * Store the refresh token in Redis. This is used to prevent reuse of refresh tokens
+ * and to allow for revocation of refresh tokens by deleting them from Redis and
+ * retrieving the payload data from the refresh token payload.
+ *
+ * It also has built-in TTL so it will be deleted automatically after the refresh token
+ * expiration.
+ *
+ * @param id the id of the wallet user
+ * @param publicKey the public key of the user
+ * @param refreshTokenId the id of the refresh token
+ */
+const storeRefreshTokenData = async ({
+  id,
+  publicKey,
+  refreshTokenId,
+}: {
+  id: string;
+  publicKey: PublicKey;
+  refreshTokenId: string;
+}) => {
+  await redis.set(
+    `${REDIS_PREFIX}/refresh_token:${refreshTokenId}`,
+    { id, publicKey: publicKey.toBase58() },
+    { ex: REFRESH_TOKEN_EXPIRATION_SECONDS },
+  );
+};
+
+/**
+ * Revoke a refresh token by deleting it from Redis
+ *
+ * @param refreshToken the refresh token
+ * @throws an error if the refresh token is not found or cannot be deleted
+ */
+export async function revokeRefreshToken(refreshToken: string) {
+  await redis.del(`${REDIS_PREFIX}/refresh_token:${refreshToken}`);
+}
+
+/**
+ * Get the refresh token data from Redis
+ *
+ * @param refreshTokenId the id of the refresh token
+ * @returns the refresh token data
+ * @throws an error if the refresh token is not found
+ */
+const getRefreshTokenData = async (refreshTokenId: string) => {
+  const tokenData = await redis.get<AccessTokenPayload>(
+    `${REDIS_PREFIX}/refresh_token:${refreshTokenId}`,
+  );
+
+  if (!tokenData) {
+    throw new Error("Refresh token not found");
+  }
+
+  return tokenData;
+};
+
+/**
  * Generate a pair of access and refresh tokens and store the refresh token in Redis
  * - prevents reuse of refresh tokens
  * - allows for refresh of access tokens
@@ -29,11 +86,12 @@ const redis = new Redis({
  * - can revoke refresh tokens by deleting them from Redis
  * - store the public key in the refresh token payload to retrieve it later for refreshing
  *
+ * @param id the id of the wallet user
  * @param publicKey the public key of the user
  * @returns the access and refresh tokens
  */
-export async function generateTokens(publicKey: PublicKey) {
-  const accessToken = await new SignJWT({ publicKey: publicKey.toBase58() })
+export async function generateTokens(id: string, publicKey: PublicKey) {
+  const accessToken = await new SignJWT({ id, publicKey: publicKey.toBase58() })
     .setProtectedHeader({ alg: JWT_ALGORITHM })
     .setIssuedAt()
     .setExpirationTime(ACCESS_TOKEN_EXPIRATION)
@@ -48,15 +106,7 @@ export async function generateTokens(publicKey: PublicKey) {
     .setJti(refreshTokenId)
     .sign(new TextEncoder().encode(REFRESH_TOKEN_SECRET));
 
-  // Store the refresh token info in Redis
-  // Key: refresh_token:{jti}, Value: { publicKey }
-  // Expire after the refresh token expiration
-  await redis.set(
-    `${REDIS_PREFIX}/refresh_token:${refreshTokenId}`,
-    { publicKey: publicKey.toBase58() },
-    { ex: REFRESH_TOKEN_EXPIRATION_SECONDS },
-  );
-
+  await storeRefreshTokenData({ id, publicKey, refreshTokenId });
   return { accessToken, refreshToken };
 }
 
@@ -69,8 +119,8 @@ export async function generateTokens(publicKey: PublicKey) {
  */
 export async function verifyAccessToken(
   accessToken: string,
-): Promise<UserJwtPayload & JWTPayload> {
-  const { payload: accessPayload } = await jwtVerify<UserJwtPayload>(
+): Promise<AccessTokenPayload> {
+  const { payload: accessPayload } = await jwtVerify<AccessTokenPayload>(
     accessToken,
     new TextEncoder().encode(ACCESS_TOKEN_SECRET),
   );
@@ -104,29 +154,6 @@ export async function verifyRefreshToken(
 }
 
 /**
- * Revoke a refresh token by deleting it from Redis
- *
- * @param refreshToken the refresh token
- * @throws an error if the refresh token is not found or cannot be deleted
- */
-export async function revokeRefreshToken(refreshToken: string) {
-  await redis.del(`${REDIS_PREFIX}/refresh_token:${refreshToken}`);
-}
-
-/**
- * Get the public key from the refresh token
- *
- * @param refreshToken the refresh token
- * @returns the public key of the user
- */
-export async function getRefreshTokenPublicKey(refreshToken: string) {
-  const tokenData = await redis.get<{ publicKey: string }>(
-    `${REDIS_PREFIX}/refresh_token:${refreshToken}`,
-  );
-  return tokenData?.publicKey;
-}
-
-/**
  * Refresh a pair of access and refresh tokens
  *
  * @param refreshToken the refresh token
@@ -145,12 +172,12 @@ export async function refreshTokens(refreshToken: string) {
     throw new Error("Invalid refresh token: missing jti claim");
   }
 
-  const publicKey = await getRefreshTokenPublicKey(tokenId);
+  const { id, publicKey } = await getRefreshTokenData(tokenId);
   if (!publicKey) {
     throw new Error(`Refresh token: ${tokenId} not found`);
   }
 
-  return generateTokens(new PublicKey(publicKey));
+  return generateTokens(id, new PublicKey(publicKey));
 }
 
 function isTokenExpired(token: JWTPayload) {

@@ -75,24 +75,33 @@ const createErrorResponse = (error: unknown) => {
  * Create a wallet if it doesn't exist in the database
  *
  * @param address the address of the wallet
+ * @returns the id of the wallet user
  * @throws if there is a database error
  */
 const createWalletIfNotExists = async (address: string) => {
   const supabase = await createServerClient({ useServiceRole: true });
-  const { error } = await supabase.from("wallets").upsert(
-    {
-      address,
-      chain: "solana", // TODO: once we support other chains modify this
-    },
-    {
-      onConflict: "address",
-      ignoreDuplicates: true,
-    },
-  );
+  const { error, data } = await supabase
+    .from("users")
+    .upsert(
+      {
+        wallet_address: address,
+        chain: "solana", // TODO: once we support other chains modify this
+      },
+      {
+        onConflict: "address",
+        ignoreDuplicates: true,
+      },
+    )
+    .select("id")
+    .single();
 
   if (error) {
     throw new Error(ERRORS.DATABASE_ERROR(error.message));
+  } else if (!data) {
+    throw new Error("No wallet id returned from database");
   }
+
+  return data.id;
 };
 
 const createSession = async (tokens: Tokens) => {
@@ -137,10 +146,10 @@ export async function POST(request: Request) {
     }
 
     // Verify wallet exists in database
-    await createWalletIfNotExists(publicKey.toBase58());
+    const id = await createWalletIfNotExists(publicKey.toBase58());
 
     // Create the user session
-    const tokens = await generateTokens(publicKey);
+    const tokens = await generateTokens(id, publicKey);
     await createSession(tokens);
     return NextResponse.json({ success: true });
   } catch (error) {
