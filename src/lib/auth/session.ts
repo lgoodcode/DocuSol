@@ -67,17 +67,18 @@ export async function validateSession(request: NextRequest) {
 }
 
 /**
- * Get the public key from the session
+ * Validate the session and return the payload of the access token
  *
  * @param request the request
- * @returns the public key
+ * @returns the payload of the access token
  */
 export async function getSession(request: NextRequest) {
-  const { accessToken } = getSessionTokens(request);
+  const { accessToken, refreshToken } = getSessionTokens(request);
 
-  if (!accessToken) {
-    throw new Error("No access token found");
+  if (!accessToken || !refreshToken) {
+    throw new Error("No access token or refresh token found");
   }
 
+  await verifyAndRefreshTokens(accessToken, refreshToken);
   return await verifyAccessToken(accessToken);
 }
