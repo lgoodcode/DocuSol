@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { cookies } from "next/headers";
+import { setUser as setSentryUser } from "@sentry/nextjs";
 
 import {
   ACCESS_TOKEN_EXPIRATION_SECONDS,
@@ -31,6 +32,13 @@ export const createSession = async (tokens: Tokens) => {
     path: "/",
     maxAge: REFRESH_TOKEN_EXPIRATION_SECONDS,
   });
+};
+
+export const clearSession = async () => {
+  const cookieStore = await cookies();
+  cookieStore.delete(ACCESS_TOKEN_COOKIE_NAME);
+  cookieStore.delete(REFRESH_TOKEN_COOKIE_NAME);
+  setSentryUser(null);
 };
 
 export function getSessionTokens(request: NextRequest) {
