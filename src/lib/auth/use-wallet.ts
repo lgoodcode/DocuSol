@@ -5,8 +5,19 @@ import { useWallet as useWalletAdapter } from "@solana/wallet-adapter-react";
 import { WalletName } from "@solana/wallet-adapter-base";
 import { useRouter } from "next-nprogress-bar";
 
-import { createMessageAndSign, authenticateWallet } from "@/lib/auth/wallet";
+import { API_PATHS } from "@/config/routes/api";
 import { useToast } from "@/hooks/use-toast";
+import { createMessageAndSign, authenticateWallet } from "@/lib/auth/wallet";
+
+const logout = async () => {
+  const response = await fetch(API_PATHS.AUTH.LOGOUT, {
+    method: "POST",
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to logout");
+  }
+};
 
 export function useWallet() {
   const router = useRouter();
@@ -35,13 +46,24 @@ export function useWallet() {
   };
 
   const handleDisconnect = useCallback(() => {
-    setHasSelected(false);
-    setSigning(false);
-    setAuthenticating(false);
-    setAuthenticated(false);
-    disconnect();
-    router.push("/login");
-  }, [disconnect, router]);
+    logout()
+      .then(() => {
+        setHasSelected(false);
+        setSigning(false);
+        setAuthenticating(false);
+        setAuthenticated(false);
+        disconnect();
+        router.push("/login");
+      })
+      .catch((err) => {
+        console.error("Failed to logout", err);
+        toast({
+          title: "Failed to logout",
+          description: "An error occurred while logging out",
+          variant: "destructive",
+        });
+      });
+  }, [disconnect, router, toast]);
 
   const connectAndAuthenticateWallet = useCallback(async () => {
     try {

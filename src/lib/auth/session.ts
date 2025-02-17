@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { cookies } from "next/headers";
+import { setUser as setSentryUser } from "@sentry/nextjs";
 
 import {
   ACCESS_TOKEN_EXPIRATION_SECONDS,
@@ -33,6 +34,13 @@ export const createSession = async (tokens: Tokens) => {
   });
 };
 
+export const clearSession = async () => {
+  const cookieStore = await cookies();
+  cookieStore.delete(ACCESS_TOKEN_COOKIE_NAME);
+  cookieStore.delete(REFRESH_TOKEN_COOKIE_NAME);
+  setSentryUser(null);
+};
+
 export function getSessionTokens(request: NextRequest) {
   const accessToken = request.cookies.get(ACCESS_TOKEN_COOKIE_NAME)?.value;
   const refreshToken = request.cookies.get(REFRESH_TOKEN_COOKIE_NAME)?.value;
@@ -59,17 +67,18 @@ export async function validateSession(request: NextRequest) {
 }
 
 /**
- * Get the public key from the session
+ * Validate the session and return the payload of the access token
  *
  * @param request the request
- * @returns the public key
+ * @returns the payload of the access token
  */
 export async function getSession(request: NextRequest) {
-  const { accessToken } = getSessionTokens(request);
+  const { accessToken, refreshToken } = getSessionTokens(request);
 
-  if (!accessToken) {
-    throw new Error("No access token found");
+  if (!accessToken || !refreshToken) {
+    throw new Error("No access token or refresh token found");
   }
 
+  await verifyAndRefreshTokens(accessToken, refreshToken);
   return await verifyAccessToken(accessToken);
 }

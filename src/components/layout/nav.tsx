@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 
-import { pageRoutes } from "@/config/routes/pages";
+import { PAGE_ROUTES } from "@/config/routes";
 import { NavButton } from "@/components/layout/nav-button";
 import { MobileMenu } from "@/components/layout/mobile-menu";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -33,7 +33,7 @@ export function Nav() {
           </Link>
 
           <nav className="grid gap-0">
-            {pageRoutes.map((route) => (
+            {Object.values(PAGE_ROUTES).map((route) => (
               <NavButton
                 key={route.name}
                 href={route.path}

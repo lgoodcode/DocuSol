@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Sun, Moon, User } from "lucide-react";
 
-import { pageRoutes } from "@/config/routes/pages";
+import { PAGE_ROUTES } from "@/config/routes";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
@@ -190,7 +190,7 @@ export function MobileMenu({
               </div> */}
               <ScrollArea className="flex-1">
                 <div className="space-y-2 p-4">
-                  {pageRoutes.map((route, i) => (
+                  {Object.values(PAGE_ROUTES).map((route, i) => (
                     <motion.div
                       key={route.path}
                       initial={{ opacity: 0, x: -20 }}

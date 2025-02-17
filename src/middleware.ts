@@ -1,17 +1,10 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { captureException } from "@sentry/nextjs";
+import { captureException, setUser } from "@sentry/nextjs";
 
 import { handleRateLimit, rateLimit } from "@/lib/auth/ratelimiter";
-import { apiRoutes, pageRoutes, accountRoute } from "@/config/routes";
-import { validateSession } from "@/lib/auth/session";
-import { AUTHENTICATED_REDIRECT_TO } from "@/constants";
-
-const PROTECTED_ROUTES: string[] = [
-  accountRoute.path,
-  ...apiRoutes.filter((r) => !!r?.protected).map((r) => r.path),
-  ...pageRoutes.filter((r) => !!r?.protected).map((r) => r.path),
-];
+import { PROTECTED_PATHS, PAGE_PATHS } from "@/config/routes";
+import { getSession, clearSession } from "@/lib/auth/session";
 
 const isApiRoute = (request: NextRequest): boolean => {
   return request.nextUrl.pathname.startsWith("/api/");
@@ -47,35 +40,53 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  // Validate session if visiting a protected route
-  if (PROTECTED_ROUTES.includes(request.nextUrl.pathname)) {
-    try {
-      const sessionValid = await validateSession(request);
-      if (sessionValid) {
-        // If visiting the login page, redirect to the home page
-        if (request.nextUrl.pathname === "/login") {
-          return NextResponse.redirect(
-            new URL(AUTHENTICATED_REDIRECT_TO, request.url),
-          );
-        }
+  /**
+   * Session handling
+   */
+  let session: AccessTokenPayload | null = null;
+  let redirectToLogin = false;
 
-        return NextResponse.next();
+  if (PROTECTED_PATHS.includes(request.nextUrl.pathname)) {
+    try {
+      session = await getSession(request);
+      if (!session) {
+        redirectToLogin = true;
+        await clearSession();
       }
     } catch (error) {
-      console.error("Middleware session verification error:", error);
-      captureException(error, {
-        tags: { context: "middleware-session" },
-        extra: { url: request.url },
-      });
+      if (
+        error instanceof Error &&
+        error.message !== "No access token or refresh token found"
+      ) {
+        console.error("Middleware session verification error:", error);
+        captureException(error, {
+          tags: { context: "middleware-session" },
+          extra: { url: request.url },
+        });
+      }
+      redirectToLogin = true;
     }
+  }
 
+  if (redirectToLogin) {
     if (isApiRoute(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // Otherwise, visiting a public route
+  if (session) {
+    setUser({
+      id: session.id,
+      publicKey: session.publicKey,
+    });
+
+    // If visiting the login page, redirect to the home page
+    if (request.nextUrl.pathname === "/login") {
+      return NextResponse.redirect(new URL(PAGE_PATHS.DOCS.LIST, request.url));
+    }
+  }
+
   return NextResponse.next();
 }
 
