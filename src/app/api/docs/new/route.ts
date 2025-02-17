@@ -1,9 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { captureException } from "@sentry/nextjs";
 import { z } from "zod";
 
 import { ACCEPTED_FILE_TYPES } from "@/constants";
 import { createServerClient } from "@/lib/supabase/server";
+import { getSession } from "@/lib/auth/session";
 import { getLatestBlockSlot, sendMemoTransaction } from "@/lib/utils/solana";
 import { bufferToHex } from "@/lib/utils";
 import { createFileHash } from "@/lib/utils/hashing";
@@ -81,6 +82,7 @@ const getErrorStatusCode = (message: string): number => {
 };
 
 async function processDocumentUpload(
+  userId: string,
   formData: z.infer<typeof FormDataSchema>,
 ): Promise<DocumentUploadResponse> {
   const blockSlot = await getLatestBlockSlot();
@@ -110,6 +112,7 @@ async function processDocumentUpload(
   const { error: insertError, data: insertData } = await supabase
     .from("documents")
     .insert({
+      user_id: userId,
       name: formData.name,
       password: formData.password,
       mime_type: formData.mime_type,
@@ -137,13 +140,14 @@ async function processDocumentUpload(
 /**
  * Main POST handler
  */
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const contentType = request.headers.get("content-type") || "";
     if (!contentType.includes("multipart/form-data")) {
       throw new Error(ERRORS.INVALID_CONTENT_TYPE);
     }
 
+    const { id } = await getSession(request);
     const formData = await request.formData();
     const validatedData = FormDataSchema.parse({
       name: formData.get("name"),
@@ -154,7 +158,7 @@ export async function POST(request: Request) {
       unsigned_document: formData.get("unsigned_document"),
     });
 
-    const result = await processDocumentUpload(validatedData);
+    const result = await processDocumentUpload(id, validatedData);
     return NextResponse.json(result);
   } catch (error) {
     return createErrorResponse(error);

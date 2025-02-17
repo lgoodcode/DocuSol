@@ -3,13 +3,18 @@ const requiredEnvList = [
   "SENTRY_ORG",
   "SENTRY_AUTH_TOKEN",
   "NEXT_PUBLIC_SENTRY_DSN",
-  "HELIUS_API_URL",
+
   "NEXT_PUBLIC_SUPABASE_URL",
   "NEXT_PUBLIC_SUPABASE_ANON_KEY",
   "SUPABASE_SERVICE_ROLE_KEY",
-  "PRIVATE_KEY",
+
+  "NEXT_PUBLIC_HELIUS_API_URL",
+
   "UPSTASH_REDIS_REST_URL",
   "UPSTASH_REDIS_REST_TOKEN",
+
+  "ACCESS_TOKEN_SECRET",
+  "REFRESH_TOKEN_SECRET",
 ];
 
 // Skip checking environment variables if in local development or running on CI

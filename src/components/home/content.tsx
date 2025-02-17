@@ -16,7 +16,7 @@ import { InteractiveHoverButton } from "@/components/home/interactive-hover-butt
 import { LoadingScreen } from "@/components/home/loading-screen";
 import { HeroImage } from "@/components/home/hero-image";
 import { MarqueeImages } from "@/components/home/marquee-images";
-import { Boxes } from "@/components/home/background-boxes";
+import { BoxBackground } from "@/components/layout/box-background";
 import { DockerContainer } from "@/components/home/docker";
 
 const contentVariants = {
@@ -133,20 +133,14 @@ export function HomeContent() {
         )}
       </AnimatePresence>
 
-      {/* Main Content */}
       {showContent && (
-        <motion.div
+        <motion.main
           className="relative flex max-w-[100vw]"
           initial="hidden"
           animate="visible"
           variants={contentVariants}
         >
-          {/* Background Elements */}
-          <div className="pointer-events-none fixed inset-0 bg-gradient-to-br from-background via-background to-background/50 dark:from-background dark:via-background dark:to-background/20" />
-          <div className="pointer-events-none fixed inset-0 bg-gradient-to-br from-transparent via-primary/5 to-primary/10 dark:from-transparent dark:via-primary/[0.03] dark:to-primary/[0.05]" />
-          <div className="pointer-events-none fixed inset-0 h-full w-full bg-transparent opacity-[0.23]">
-            <Boxes />
-          </div>
+          <BoxBackground />
 
           <motion.div
             variants={contentVariants}
@@ -403,7 +397,7 @@ export function HomeContent() {
               </motion.footer>
             </motion.div>
           </motion.div>
-        </motion.div>
+        </motion.main>
       )}
     </>
   );

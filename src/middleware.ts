@@ -1,90 +1,82 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { captureException } from "@sentry/nextjs";
-import { rateLimit } from "@/lib/utils/ratelimiter";
 
-const ERROR_MESSAGES = {
-  RATE_LIMIT: "Too many requests",
-  INTERNAL_ERROR: "Internal server error",
-} as const;
+import { handleRateLimit, rateLimit } from "@/lib/auth/ratelimiter";
+import { apiRoutes, pageRoutes, accountRoute } from "@/config/routes";
+import { validateSession } from "@/lib/auth/session";
+import { AUTHENTICATED_REDIRECT_TO } from "@/constants";
 
-const ERROR_CODES = {
-  RATE_LIMIT: "RATE_LIMIT",
-  INTERNAL_ERROR: "INTERNAL_SERVER_ERROR",
-} as const;
-
-type RateLimitErrorResponse = {
-  error: string;
-  code: (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
-  retryAfter: string;
-};
+const PROTECTED_ROUTES: string[] = [
+  accountRoute.path,
+  ...apiRoutes.filter((r) => !!r?.protected).map((r) => r.path),
+  ...pageRoutes.filter((r) => !!r?.protected).map((r) => r.path),
+];
 
 const isApiRoute = (request: NextRequest): boolean => {
   return request.nextUrl.pathname.startsWith("/api/");
 };
 
-const createRateLimitApiResponse = (
-  headers: Headers,
-  status: number = 429
-): NextResponse<RateLimitErrorResponse> => {
-  return NextResponse.json(
-    {
-      error: ERROR_MESSAGES.RATE_LIMIT,
-      code: ERROR_CODES.RATE_LIMIT,
-      retryAfter: headers.get("Retry-After") || "60",
-    },
-    { status, headers }
-  );
-};
-
 export async function middleware(request: NextRequest) {
-  const response = NextResponse.next();
-  const isApi = isApiRoute(request);
+  // Prevent direct requests to the error pages
+  if (request.nextUrl.pathname.startsWith("/error")) {
+    return NextResponse.rewrite(new URL("/not-found", request.url), {
+      headers: {
+        "x-middleware-rewrite": "/not-found",
+      },
+    });
+  }
 
+  // Rate limit
   try {
     const rateLimitHeaders = await rateLimit(request);
-    if (!rateLimitHeaders) {
-      return response;
+    if (rateLimitHeaders) {
+      return handleRateLimit(request, rateLimitHeaders);
     }
-    // Add current path to headers for layout handling
-    const currentPath = new URL(request.url).pathname;
-    rateLimitHeaders.set("x-invoke-path", currentPath);
-
-    // Handle API routes differently
-    if (isApi) {
-      return createRateLimitApiResponse(rateLimitHeaders);
-    }
-
-    // For page routes, add rate limit headers to response
-    rateLimitHeaders.forEach((value, key) => {
-      response.headers.set(key, value);
-    });
-
-    return response;
   } catch (error) {
-    console.error("Middleware error:", error);
+    console.error("Middleware rate limit error:", error);
     captureException(error, {
-      tags: { context: "middleware" },
+      tags: { context: "middleware-rate-limit" },
       extra: { url: request.url },
     });
 
-    // Set error header for debugging
-    response.headers.set("X-Middleware-Error", "true");
-
-    // For API routes, return error response
-    if (isApi) {
-      return NextResponse.json(
-        {
-          error: ERROR_MESSAGES.INTERNAL_ERROR,
-          code: ERROR_CODES.INTERNAL_ERROR,
-          retryAfter: "60",
-        },
-        { status: 500 }
-      );
-    }
-
+    const response = NextResponse.rewrite(new URL("/error", request.url), {
+      status: 500,
+    });
+    response.headers.set("x-error-rewrite", "true");
     return response;
   }
+
+  // Validate session if visiting a protected route
+  if (PROTECTED_ROUTES.includes(request.nextUrl.pathname)) {
+    try {
+      const sessionValid = await validateSession(request);
+      if (sessionValid) {
+        // If visiting the login page, redirect to the home page
+        if (request.nextUrl.pathname === "/login") {
+          return NextResponse.redirect(
+            new URL(AUTHENTICATED_REDIRECT_TO, request.url),
+          );
+        }
+
+        return NextResponse.next();
+      }
+    } catch (error) {
+      console.error("Middleware session verification error:", error);
+      captureException(error, {
+        tags: { context: "middleware-session" },
+        extra: { url: request.url },
+      });
+    }
+
+    if (isApiRoute(request)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  // Otherwise, visiting a public route
+  return NextResponse.next();
 }
 
 export const config = {

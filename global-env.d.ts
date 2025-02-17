@@ -1,4 +1,5 @@
 import type { Document } from "@/lib/supabase/types";
+import type { JWTPayload } from "jose";
 
 export declare global {
   declare namespace NodeJS {
@@ -7,15 +8,30 @@ export declare global {
       SENTRY_ORG: string;
       SENTRY_AUTH_TOKEN: string;
       NEXT_PUBLIC_SENTRY_DSN: string;
-      HELIUS_API_URL: string;
+
       NEXT_PUBLIC_SUPABASE_URL: string;
       NEXT_PUBLIC_SUPABASE_ANON_KEY: string;
       SUPABASE_SERVICE_ROLE_KEY: string;
-      PRIVATE_KEY: string;
+
+      NEXT_PUBLIC_HELIUS_API_URL: string;
+
       UPSTASH_REDIS_REST_URL: string;
       UPSTASH_REDIS_REST_TOKEN: string;
+
+      ACCESS_TOKEN_SECRET: string;
+      REFRESH_TOKEN_SECRET: string;
     }
   }
+
+  interface AccessTokenPayload extends JWTPayload {
+    id: string;
+    publicKey: string;
+  }
+
+  type Tokens = {
+    accessToken: string;
+    refreshToken: string;
+  };
 
   type DocumentDetails = Partial<
     Omit<Document, "password"> & {

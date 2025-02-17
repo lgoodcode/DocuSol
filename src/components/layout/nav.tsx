@@ -3,21 +3,24 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import { useWallet } from "@solana/wallet-adapter-react";
 
-import { navRoutes } from "@/config/routes";
+import { pageRoutes } from "@/config/routes/pages";
 import { NavButton } from "@/components/layout/nav-button";
 import { MobileMenu } from "@/components/layout/mobile-menu";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { NavTooltip } from "@/components/layout/nav-tooltip";
-import { WalletDialog } from "@/components/layout/wallet-dialog";
+import { AccountDialog } from "@/components/layout/account-dialog";
+import { useWallet } from "@/lib/auth/use-wallet";
+import { Button } from "../ui/button";
+import { User } from "lucide-react";
 
 export function Nav() {
   const { connected } = useWallet();
   const [open, setOpen] = useState(false);
   return (
     <>
-      <MobileMenu connected={connected} onAuthClick={() => null} />
+      <AccountDialog open={open} setOpen={setOpen} />
+      <MobileMenu setAccountDialogOpen={setOpen} />
       <aside className="sticky top-0 z-50 hidden h-screen w-[60px] flex-col border-r border-stone-300 py-4 dark:border-border md:flex">
         <div className="flex flex-1 flex-col">
           <Link href="/" className="mb-3 h-12 w-full">
@@ -30,7 +33,7 @@ export function Nav() {
           </Link>
 
           <nav className="grid gap-0">
-            {navRoutes.map((route) => (
+            {pageRoutes.map((route) => (
               <NavButton
                 key={route.name}
                 href={route.path}
@@ -45,8 +48,15 @@ export function Nav() {
         <div className="mt-auto">
           <div className="border-t border-stone-300 dark:border-border">
             <ThemeToggle withTooltip />
-            <NavTooltip content="Wallet">
-              <WalletDialog open={open} setOpen={setOpen} />
+            <NavTooltip content="Account">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-12 w-full bg-primary-foreground/10 text-primary/60 hover:bg-primary hover:text-primary-foreground dark:hover:bg-white dark:hover:text-black"
+                onClick={() => setOpen(true)}
+              >
+                <User className="h-5 w-5" />
+              </Button>
             </NavTooltip>
           </div>
         </div>

@@ -2,12 +2,19 @@ export const IS_PROD = process.env.NODE_ENV === "production";
 export const IS_PREVIEW = process.env.NEXT_PUBLIC_VERCEL_ENV === "preview";
 export const IS_CI = process.env.CI === "true";
 
+export const ACCESS_TOKEN_EXPIRATION = "1h";
+export const REFRESH_TOKEN_EXPIRATION = "14d";
+export const ACCESS_TOKEN_EXPIRATION_SECONDS = 60 * 60; // 1 hour in seconds
+export const REFRESH_TOKEN_EXPIRATION_SECONDS = 14 * 24 * 60 * 60; // 14 days in seconds
+
 export const IS_MOBILE = () => {
   if (typeof window === "undefined") return false;
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-    navigator.userAgent
+    navigator.userAgent,
   );
 };
+
+export const AUTHENTICATED_REDIRECT_TO = "/docs/list";
 
 /** mime_type: [extensions] */
 export const ACCEPTED_FILE_TYPES: Record<string, string[]> = {

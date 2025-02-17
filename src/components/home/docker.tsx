@@ -99,7 +99,7 @@ function Docker() {
   return (
     <StaticDock direction="middle">
       <StaticDockIcon>
-        <DockItem href="/docs/new" newTab={false} content="Get Started">
+        <DockItem href="/login" newTab={false} content="Get Started">
           <Rocket className="size-5" />
         </DockItem>
       </StaticDockIcon>

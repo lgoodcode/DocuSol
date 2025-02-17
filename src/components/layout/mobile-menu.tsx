@@ -5,9 +5,9 @@ import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Sun, Moon, LogOut, User } from "lucide-react";
+import { Menu, X, Sun, Moon, User } from "lucide-react";
 
-import { navRoutes } from "@/config/routes";
+import { pageRoutes } from "@/config/routes/pages";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
@@ -25,11 +25,9 @@ const useIsFirstRender = () => {
 };
 
 export function MobileMenu({
-  connected,
-  onAuthClick,
+  setAccountDialogOpen,
 }: {
-  connected: boolean;
-  onAuthClick: () => void;
+  setAccountDialogOpen: (open: boolean) => void;
 }) {
   const pathname = usePathname();
   const isFirstRender = useIsFirstRender();
@@ -192,7 +190,7 @@ export function MobileMenu({
               </div> */}
               <ScrollArea className="flex-1">
                 <div className="space-y-2 p-4">
-                  {navRoutes.map((route, i) => (
+                  {pageRoutes.map((route, i) => (
                     <motion.div
                       key={route.path}
                       initial={{ opacity: 0, x: -20 }}
@@ -230,31 +228,17 @@ export function MobileMenu({
                   <button
                     onClick={() => {
                       setOpen(false);
-                      onAuthClick();
+                      setAccountDialogOpen(true);
                     }}
                     className="flex w-full items-center gap-4 rounded-none px-4 py-3 text-sm font-medium transition-colors hover:bg-accent"
                   >
-                    {connected ? (
-                      <>
-                        <LogOut className="h-6 w-6" />
-                        <div className="flex w-full flex-col gap-1 text-left">
-                          <span>Logout</span>
-                          <span className="text-xs font-normal text-muted-foreground">
-                            Sign out of your account
-                          </span>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <User className="h-6 w-6" />
-                        <div className="flex w-full flex-col gap-1 text-left">
-                          <span>Login</span>
-                          <span className="text-xs font-normal text-muted-foreground">
-                            Sign in to your account
-                          </span>
-                        </div>
-                      </>
-                    )}
+                    <User className="h-6 w-6" />
+                    <div className="flex w-full flex-col gap-1 text-left">
+                      <span>Account</span>
+                      <span className="text-xs font-normal text-muted-foreground">
+                        Manage your account
+                      </span>
+                    </div>
                   </button>
                 </motion.div>
               </div>

@@ -10,7 +10,7 @@ import { UploadIcon, Pencil, Save, Trash2, Lock, FileText } from "lucide-react";
 
 import { MAX_FILE_SIZE } from "@/constants";
 import { storeNewDocument } from "@/lib/utils";
-import { uploadNewDocument, sign } from "@/lib/utils/sign";
+import { sign, useUploadNewDocument } from "@/lib/utils/sign";
 import { formatFileSize } from "@/lib/utils/format-file-size";
 import { useDrawing } from "@/hooks/use-drawing";
 import { useToast } from "@/hooks/use-toast";
@@ -78,6 +78,7 @@ export function NewDocumentContent() {
     stopDrawing,
     clearCanvas,
   } = useDrawing();
+  const uploadNewDocument = useUploadNewDocument();
   const [signatureType, setSignatureType] = useState("draw"); // "draw" or "type"
   const [typedSignature, setTypedSignature] = useState("");
   const [showDialog, setShowDialog] = useState(false);
@@ -115,7 +116,7 @@ export function NewDocumentContent() {
         signedDoc = await sign(
           files[0],
           signatureType === "draw" ? getSignatureAsBlack() : null,
-          signatureType === "type" ? typedSignature : undefined
+          signatureType === "type" ? typedSignature : undefined,
         );
       } catch (err) {
         const error = err as Error;
@@ -183,7 +184,7 @@ export function NewDocumentContent() {
         title: "Error",
         description: isTooLarge
           ? `The file is too large. Please try a smaller file. (Max file size: ${formatFileSize(
-              MAX_FILE_SIZE
+              MAX_FILE_SIZE,
             )})`
           : "An error occurred while uploading the document",
         variant: "destructive",
@@ -202,8 +203,8 @@ export function NewDocumentContent() {
         }}
       >
         <div className="flex flex-col gap-2">
-          <h1 className="text-2xl md:text-3xl font-bold">New Document</h1>
-          <p className="text-sm md:text-base text-muted-foreground">
+          <h1 className="text-2xl font-bold md:text-3xl">New Document</h1>
+          <p className="text-sm text-muted-foreground md:text-base">
             Sign your document with your signature.
           </p>
         </div>
@@ -226,7 +227,7 @@ export function NewDocumentContent() {
           >
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                   <UploadIcon className="h-5 w-5" />
                   Upload Document
                 </CardTitle>
@@ -252,7 +253,7 @@ export function NewDocumentContent() {
               >
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                       <FileText className="h-5 w-5" />
                       Document Preview
                     </CardTitle>
@@ -273,7 +274,7 @@ export function NewDocumentContent() {
             {/* Document Options Card */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                   <Lock className="h-5 w-5" />
                   Document Options
                 </CardTitle>
@@ -381,9 +382,9 @@ export function NewDocumentContent() {
           >
             {/* Signature Card */}
             <Card>
-              <CardHeader className="flex flex-col sm:flex-row items-start gap-4 sm:gap-0 sm:items-center justify-between">
-                <div className="flex flex-col gap-1 max-w-sm">
-                  <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+              <CardHeader className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center sm:gap-0">
+                <div className="flex max-w-sm flex-col gap-1">
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                     <Pencil className="h-5 w-5" />
                     Sign Document
                   </CardTitle>
@@ -422,7 +423,7 @@ export function NewDocumentContent() {
               </CardHeader>
               <CardContent>
                 {signatureType === "draw" ? (
-                  <div className="relative aspect-[3/2] sm:aspect-[3/1] w-full border rounded-lg overflow-hidden bg-background dark:bg-background/60">
+                  <div className="relative aspect-[3/2] w-full overflow-hidden rounded-lg border bg-background dark:bg-background/60 sm:aspect-[3/1]">
                     <canvas
                       ref={canvasRef}
                       width={900}
@@ -434,7 +435,7 @@ export function NewDocumentContent() {
                       onTouchStart={startDrawing}
                       onTouchMove={draw}
                       onTouchEnd={stopDrawing}
-                      className="touch-none w-full h-full"
+                      className="h-full w-full touch-none"
                       aria-label="Signature canvas"
                     />
                   </div>
