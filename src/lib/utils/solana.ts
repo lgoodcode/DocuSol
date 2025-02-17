@@ -7,8 +7,8 @@ import {
   TransactionInstruction,
 } from "@solana/web3.js";
 
-const RPC_URL = process.env.HELIUS_API_URL;
-const PRIVATE_KEY = process.env.PRIVATE_KEY;
+const RPC_URL = process.env.HELIUS_API_URL!;
+const PRIVATE_KEY = process.env.PRIVATE_KEY!;
 const MEMO_PROGRAM_ID = new PublicKey(
   "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
 );

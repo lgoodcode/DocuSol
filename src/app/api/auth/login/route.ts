@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { captureException } from "@sentry/nextjs";
 import { PublicKey } from "@solana/web3.js";
 import { z } from "zod";
@@ -7,10 +6,7 @@ import { z } from "zod";
 import { generateTokens } from "@/lib/auth/tokens";
 import { verifySignature } from "@/lib/auth/wallet";
 import { createServerClient } from "@/lib/supabase/server";
-import {
-  ACCESS_TOKEN_EXPIRATION_SECONDS,
-  REFRESH_TOKEN_EXPIRATION_SECONDS,
-} from "@/constants";
+import { createSession } from "@/lib/auth/session";
 
 const ERRORS = {
   INVALID_SIGNATURE: "Invalid wallet signature",
@@ -88,7 +84,7 @@ const createWalletIfNotExists = async (address: string) => {
         chain: "solana", // TODO: once we support other chains modify this
       },
       {
-        onConflict: "address",
+        onConflict: "wallet_address",
         ignoreDuplicates: true,
       },
     )
@@ -102,28 +98,6 @@ const createWalletIfNotExists = async (address: string) => {
   }
 
   return data.id;
-};
-
-const createSession = async (tokens: Tokens) => {
-  const cookieStore = await cookies();
-
-  // Set access token in an HTTP-only cookie
-  cookieStore.set("access_token", tokens.accessToken, {
-    httpOnly: true,
-    secure: true, // Always use HTTPS because we have self-signed certs in dev
-    sameSite: "strict",
-    path: "/",
-    maxAge: ACCESS_TOKEN_EXPIRATION_SECONDS,
-  });
-
-  // Set refresh token in an HTTP-only cookie
-  cookieStore.set("refresh_token", tokens.refreshToken, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "strict",
-    path: "/",
-    maxAge: REFRESH_TOKEN_EXPIRATION_SECONDS,
-  });
 };
 
 export async function POST(request: Request) {

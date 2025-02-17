@@ -1,10 +1,41 @@
 import { NextRequest } from "next/server";
+import { cookies } from "next/headers";
+
+import {
+  ACCESS_TOKEN_EXPIRATION_SECONDS,
+  REFRESH_TOKEN_EXPIRATION_SECONDS,
+} from "@/constants";
 
 import { verifyAndRefreshTokens, verifyAccessToken } from "./tokens";
 
+const ACCESS_TOKEN_COOKIE_NAME = "access_token";
+const REFRESH_TOKEN_COOKIE_NAME = "refresh_token";
+
+export const createSession = async (tokens: Tokens) => {
+  const cookieStore = await cookies();
+
+  // Set access token in an HTTP-only cookie
+  cookieStore.set(ACCESS_TOKEN_COOKIE_NAME, tokens.accessToken, {
+    httpOnly: true,
+    secure: true, // Always use HTTPS because we have self-signed certs in dev
+    sameSite: "strict",
+    path: "/",
+    maxAge: ACCESS_TOKEN_EXPIRATION_SECONDS,
+  });
+
+  // Set refresh token in an HTTP-only cookie
+  cookieStore.set(REFRESH_TOKEN_COOKIE_NAME, tokens.refreshToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "strict",
+    path: "/",
+    maxAge: REFRESH_TOKEN_EXPIRATION_SECONDS,
+  });
+};
+
 export function getSessionTokens(request: NextRequest) {
-  const accessToken = request.cookies.get("access_token")?.value;
-  const refreshToken = request.cookies.get("refresh_token")?.value;
+  const accessToken = request.cookies.get(ACCESS_TOKEN_COOKIE_NAME)?.value;
+  const refreshToken = request.cookies.get(REFRESH_TOKEN_COOKIE_NAME)?.value;
 
   return { accessToken, refreshToken };
 }
