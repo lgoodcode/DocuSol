@@ -2,16 +2,9 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { captureException, setUser } from "@sentry/nextjs";
 
-import { AUTHENTICATED_REDIRECT_TO } from "@/constants";
 import { handleRateLimit, rateLimit } from "@/lib/auth/ratelimiter";
-import { apiRoutes, pageRoutes, accountRoute } from "@/config/routes";
-import { getSession } from "@/lib/auth/session";
-
-const PROTECTED_ROUTES: string[] = [
-  accountRoute.path,
-  ...apiRoutes.filter((r) => !!r?.protected).map((r) => r.path),
-  ...pageRoutes.filter((r) => !!r?.protected).map((r) => r.path),
-];
+import { PROTECTED_PATHS, PAGE_PATHS } from "@/config/routes";
+import { getSession, clearSession } from "@/lib/auth/session";
 
 const isApiRoute = (request: NextRequest): boolean => {
   return request.nextUrl.pathname.startsWith("/api/");
@@ -51,20 +44,27 @@ export async function middleware(request: NextRequest) {
    * Session handling
    */
   let session: AccessTokenPayload | null = null;
-  let redirectToLogin = true;
+  let redirectToLogin = false;
 
-  if (PROTECTED_ROUTES.includes(request.nextUrl.pathname)) {
+  if (PROTECTED_PATHS.includes(request.nextUrl.pathname)) {
     try {
       session = await getSession(request);
-      if (session) {
-        redirectToLogin = false;
+      if (!session) {
+        redirectToLogin = true;
+        await clearSession();
       }
     } catch (error) {
-      console.error("Middleware session verification error:", error);
-      captureException(error, {
-        tags: { context: "middleware-session" },
-        extra: { url: request.url },
-      });
+      if (
+        error instanceof Error &&
+        error.message !== "No access token or refresh token found"
+      ) {
+        console.error("Middleware session verification error:", error);
+        captureException(error, {
+          tags: { context: "middleware-session" },
+          extra: { url: request.url },
+        });
+      }
+      redirectToLogin = true;
     }
   }
 
@@ -83,9 +83,7 @@ export async function middleware(request: NextRequest) {
 
     // If visiting the login page, redirect to the home page
     if (request.nextUrl.pathname === "/login") {
-      return NextResponse.redirect(
-        new URL(AUTHENTICATED_REDIRECT_TO, request.url),
-      );
+      return NextResponse.redirect(new URL(PAGE_PATHS.DOCS.LIST, request.url));
     }
   }
 
