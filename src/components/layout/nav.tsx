@@ -10,12 +10,10 @@ import { MobileMenu } from "@/components/layout/mobile-menu";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { NavTooltip } from "@/components/layout/nav-tooltip";
 import { AccountDialog } from "@/components/layout/account-dialog";
-import { useWallet } from "@/lib/auth/use-wallet";
 import { Button } from "../ui/button";
 import { User } from "lucide-react";
 
 export function Nav() {
-  const { connected } = useWallet();
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -39,7 +37,6 @@ export function Nav() {
                 href={route.path}
                 icon={route.Icon}
                 label={route.name}
-                disabled={!connected}
               />
             ))}
           </nav>
