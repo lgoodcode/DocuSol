@@ -72,6 +72,6 @@ export async function authenticateWallet(
     if (error.isZodError) {
       throw new Error("ZodError");
     }
-    throw new Error(error || "Authentication failed");
+    throw new Error(error.message || "Authentication failed");
   }
 }

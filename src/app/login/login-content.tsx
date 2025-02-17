@@ -75,7 +75,7 @@ const CONNECTION_STEPS: Record<ConnectionStep, StepConfig> = {
     className: "text-green-500",
   },
   error: {
-    step: 0,
+    step: -1,
     icon: XCircle,
     title: "Connection Failed",
     description: "Please try again",

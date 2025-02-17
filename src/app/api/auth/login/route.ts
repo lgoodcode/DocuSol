@@ -76,28 +76,17 @@ const createErrorResponse = (error: unknown) => {
  */
 const createWalletIfNotExists = async (address: string) => {
   const supabase = await createServerClient({ useServiceRole: true });
-  const { error, data } = await supabase
-    .from("users")
-    .upsert(
-      {
-        wallet_address: address,
-        chain: "solana", // TODO: once we support other chains modify this
-      },
-      {
-        onConflict: "wallet_address",
-        ignoreDuplicates: true,
-      },
-    )
-    .select("id")
-    .single();
+  const { error, data } = await supabase.rpc("get_or_create_wallet", {
+    p_wallet_address: address,
+    p_chain: "solana", // TODO: once we support other chains modify this
+  });
 
   if (error) {
     throw new Error(ERRORS.DATABASE_ERROR(error.message));
   } else if (!data) {
     throw new Error("No wallet id returned from database");
   }
-
-  return data.id;
+  return data;
 };
 
 export async function POST(request: Request) {

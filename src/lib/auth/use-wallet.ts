@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useWallet as useWalletAdapter } from "@solana/wallet-adapter-react";
-import { WalletName, WalletError } from "@solana/wallet-adapter-base";
+import { WalletName } from "@solana/wallet-adapter-base";
 import { useRouter } from "next-nprogress-bar";
 
 import { createMessageAndSign, authenticateWallet } from "@/lib/auth/wallet";
@@ -60,16 +60,15 @@ export function useWallet() {
       setAuthenticating(true);
       await authenticateWallet(publicKey, message, signature);
       setAuthenticated(true);
-    } catch (error) {
-      if (error instanceof WalletError) {
-        setError(error.message);
-      } else {
-        toast({
-          title: "Failed to connect wallet",
-          description: "An error occurred while connecting your wallet",
-          variant: "destructive",
-        });
-      }
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message);
+
+      toast({
+        title: "Failed to connect wallet",
+        description: "An error occurred while connecting your wallet",
+        variant: "destructive",
+      });
 
       handleDisconnect();
     } finally {

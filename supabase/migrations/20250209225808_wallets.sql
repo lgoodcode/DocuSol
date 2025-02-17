@@ -26,3 +26,38 @@ CREATE TRIGGER update_users_updated_at
     BEFORE UPDATE ON users
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
+
+
+CREATE OR REPLACE FUNCTION get_or_create_wallet(
+    p_wallet_address text,
+    p_chain text
+)
+RETURNS uuid
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_wallet_id uuid;
+BEGIN
+    -- Try inserting first - optimistic approach
+    INSERT INTO users (
+        wallet_address,
+        chain
+    )
+    VALUES (
+        LOWER(TRIM(p_wallet_address)),  -- Normalize wallet address
+        p_chain
+    )
+    ON CONFLICT (wallet_address) DO NOTHING
+    RETURNING id INTO v_wallet_id;
+
+    -- If insert failed (conflict), get existing record
+    IF v_wallet_id IS NULL THEN
+        SELECT id INTO v_wallet_id
+        FROM users
+        WHERE wallet_address = LOWER(TRIM(p_wallet_address));
+    END IF;
+
+    RETURN v_wallet_id;
+END;
+$$;
