@@ -162,9 +162,7 @@ export function LoginContent() {
   useEffect(() => {
     if (authenticated) {
       setStep("success");
-      setTimeout(() => {
-        router.push("/docs/list");
-      }, 1000);
+      router.push("/docs/list");
     } else if (signing) {
       setStep("signing");
     } else if (authenticating) {
