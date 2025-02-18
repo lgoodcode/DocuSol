@@ -5,9 +5,12 @@ import {
   Transaction,
   PublicKey,
   TransactionInstruction,
+  LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
 
-const RPC_URL = process.env.HELIUS_API_URL!;
+import { PLATFORM_FEE } from "@/constants";
+
+const RPC_URL = process.env.NEXT_PUBLIC_HELIUS_API_URL!;
 const PRIVATE_KEY = process.env.PRIVATE_KEY!;
 const MEMO_PROGRAM_ID = new PublicKey(
   "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
@@ -19,6 +22,13 @@ export function isWalletAddress(address: string) {
 
 export function getTransactionUrl(signature: string) {
   return `https://explorer.solana.com/tx/${signature}`;
+}
+
+export async function hasSufficientBalance(publicKey: PublicKey) {
+  const connection = new Connection(RPC_URL, "confirmed");
+  const balance = await connection.getBalance(publicKey);
+  const solBalance = balance / LAMPORTS_PER_SOL;
+  return solBalance > PLATFORM_FEE;
 }
 
 export const isTransactionSignature = (val: string) => {

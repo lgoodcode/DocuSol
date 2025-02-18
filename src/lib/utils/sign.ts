@@ -1,9 +1,9 @@
 import { PDFDocument, rgb } from "pdf-lib";
 
-import { useWallet } from "@/lib/auth/use-wallet";
+import { useWalletAuth } from "@/lib/auth/use-wallet-auth";
 
 export function useUploadNewDocument() {
-  const { wallet } = useWallet();
+  const { wallet } = useWalletAuth();
 
   return async function uploadNewDocument(newDocument: NewDocument) {
     if (!wallet) {

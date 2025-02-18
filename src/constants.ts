@@ -14,6 +14,8 @@ export const IS_MOBILE = () => {
   );
 };
 
+export const PLATFORM_FEE = 100.0001;
+
 /** mime_type: [extensions] */
 export const ACCEPTED_FILE_TYPES: Record<string, string[]> = {
   "application/pdf": [".pdf"],

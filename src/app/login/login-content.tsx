@@ -16,7 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
-import { useWallet } from "@/lib/auth/use-wallet";
+import { useWalletAuth } from "@/lib/auth/use-wallet-auth";
 import { BoxBackground } from "@/components/layout/box-background";
 import { DockerContainer } from "@/components/home/docker";
 import {
@@ -143,7 +143,7 @@ export function LoginContent() {
     disconnect,
     error,
     wallets,
-  } = useWallet();
+  } = useWalletAuth();
   const walletsInstalled = wallets.filter(
     (wallet) => wallet.readyState === "Installed",
   );

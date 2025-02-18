@@ -9,8 +9,7 @@ import { captureException } from "@sentry/nextjs";
 import { UploadIcon, Pencil, Save, Trash2, Lock, FileText } from "lucide-react";
 
 import { MAX_FILE_SIZE } from "@/constants";
-import { storeNewDocument } from "@/lib/utils";
-import { sign, useUploadNewDocument } from "@/lib/utils/sign";
+import { useUploadNewDocument } from "@/lib/utils/sign";
 import { formatFileSize } from "@/lib/utils/format-file-size";
 import { useDrawing } from "@/hooks/use-drawing";
 import { useToast } from "@/hooks/use-toast";
@@ -44,6 +43,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
+import { useSignDoc } from "./hooks";
 import { NewDocumentDialog } from "./new-doc-dialog";
 
 const documentSchema = z
@@ -69,6 +69,8 @@ const documentSchema = z
 
 export function NewDocumentContent() {
   const { toast } = useToast();
+  const signDoc = useSignDoc();
+  // const checkBalance = useUserHasSufficientBalance();
   const {
     canvasRef,
     startDrawing,
@@ -79,7 +81,7 @@ export function NewDocumentContent() {
     clearCanvas,
   } = useDrawing();
   const uploadNewDocument = useUploadNewDocument();
-  const [signatureType, setSignatureType] = useState("draw"); // "draw" or "type"
+  const [signatureType, setSignatureType] = useState<"draw" | "type">("draw");
   const [typedSignature, setTypedSignature] = useState("");
   const [showDialog, setShowDialog] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
@@ -110,35 +112,25 @@ export function NewDocumentContent() {
       (signatureType === "draw" && hasDrawn) ||
       (signatureType === "type" && typedSignature);
 
-    let signedDoc: Blob | null = null;
-    if (isSigned) {
-      try {
-        signedDoc = await sign(
+    // TODO: revise this with improved pdf editor
+    const signedDoc = !isSigned
+      ? files[0]
+      : await signDoc(
           files[0],
-          signatureType === "draw" ? getSignatureAsBlack() : null,
-          signatureType === "type" ? typedSignature : undefined,
+          signatureType,
+          hasDrawn,
+          getSignatureAsBlack(),
+          typedSignature,
         );
-      } catch (err) {
-        const error = err as Error;
-        console.error(error);
-        if (error.message.includes("encrypted")) {
-          toast({
-            title: "Error",
-            description: "The document is encrypted and cannot be modified",
-            variant: "destructive",
-          });
-          return;
-        }
 
-        captureException(error);
-        toast({
-          title: "Error",
-          description: "An error occurred while signing the document",
-          variant: "destructive",
-        });
-        return;
-      }
+    if (!signedDoc) {
+      return;
     }
+
+    // const hasSufficientBalance = await checkBalance();
+    // if (!hasSufficientBalance) {
+    //   return;
+    // }
 
     try {
       const { error, id, txSignature, unsignedHash } = await uploadNewDocument({
@@ -155,17 +147,6 @@ export function NewDocumentContent() {
       } else if (!id || !txSignature || !unsignedHash) {
         throw new Error("Failed to upload document");
       }
-
-      storeNewDocument({ id, txSignature, unsignedHash }).catch((error) => {
-        console.error("Error storing document:", error);
-        captureException(error, {
-          extra: {
-            id,
-            txSignature,
-            unsignedHash,
-          },
-        });
-      });
 
       setResults({ id, txSignature, unsignedHash });
       setShowDialog(true);
@@ -396,7 +377,9 @@ export function NewDocumentContent() {
                 <div className="flex items-center gap-2">
                   <Select
                     value={signatureType}
-                    onValueChange={setSignatureType}
+                    onValueChange={(value) =>
+                      setSignatureType(value as "draw" | "type")
+                    }
                     disabled={form.formState.isSubmitting}
                   >
                     <SelectTrigger className="w-32">

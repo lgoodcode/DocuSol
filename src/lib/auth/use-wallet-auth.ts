@@ -19,7 +19,7 @@ const logout = async () => {
   }
 };
 
-export function useWallet() {
+export function useWalletAuth() {
   const router = useRouter();
   const { toast } = useToast();
   const [error, setError] = useState<string | null>(null);
