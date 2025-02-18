@@ -43,7 +43,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-import { useSignDoc, useUserHasSufficientBalance } from "./hooks";
+import { useSignDoc } from "./hooks";
 import { NewDocumentDialog } from "./new-doc-dialog";
 
 const documentSchema = z
@@ -70,7 +70,7 @@ const documentSchema = z
 export function NewDocumentContent() {
   const { toast } = useToast();
   const signDoc = useSignDoc();
-  const checkBalance = useUserHasSufficientBalance();
+  // const checkBalance = useUserHasSufficientBalance();
   const {
     canvasRef,
     startDrawing,
@@ -127,10 +127,10 @@ export function NewDocumentContent() {
       return;
     }
 
-    const hasSufficientBalance = await checkBalance();
-    if (!hasSufficientBalance) {
-      return;
-    }
+    // const hasSufficientBalance = await checkBalance();
+    // if (!hasSufficientBalance) {
+    //   return;
+    // }
 
     try {
       const { error, id, txSignature, unsignedHash } = await uploadNewDocument({
