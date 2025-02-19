@@ -11,6 +11,7 @@ export class PDFMetadata {
    * Converts raw metadata from PDF to DocumentMetadata
    *
    * @param raw - Raw metadata from PDF
+   * @returns DocumentMetadata
    */
   static convertToDocumentMetadata(
     raw: Record<string, string>,
@@ -27,6 +28,7 @@ export class PDFMetadata {
    * Converts DocumentMetadata to PDF metadata
    *
    * @param metadata - DocumentMetadata to convert
+   * @returns PDF metadata
    */
   static convertToPDFMetadata(
     metadata: DocumentMetadata,
@@ -42,16 +44,22 @@ export class PDFMetadata {
   /**
    * Reads existing metadata from a PDF
    *
-   * @param pdfBuffer - Buffer containing PDF data
+   * @param file - PDF file as Buffer or Blob
    * @returns Metadata if found, null otherwise
    */
   static async readMetadata(
-    pdfBuffer: Buffer,
+    file: Buffer | Blob,
   ): Promise<DocumentMetadata | null> {
-    const pdfDoc = await PDFDocument.load(pdfBuffer, {
+    if (file instanceof Blob && !file.type.startsWith("application/pdf")) {
+      throw new Error(`Invalid file type: ${file.type}`);
+    }
+
+    const buffer =
+      file instanceof Blob ? Buffer.from(await file.arrayBuffer()) : file;
+
+    const pdfDoc = await PDFDocument.load(buffer, {
       updateMetadata: false,
     });
-    // Access document catalog dictionary
     const catalog = pdfDoc.context.lookup(
       pdfDoc.context.trailerInfo.Root,
       PDFDict,
@@ -92,15 +100,22 @@ export class PDFMetadata {
   /**
    * Embeds stamp information into PDF metadata
    *
-   * @param pdfBuffer - Buffer containing PDF data
-   * @param metadata - DocumentMetadata to embed
+   * @param file - PDF file as Buffer or Blob
+   * @param metadata - `DocumentMetadata` to embed
    * @returns Buffer containing updated PDF data
    */
   static async embedMetadata(
-    pdfBuffer: Buffer,
+    file: Buffer | Blob,
     metadata: DocumentMetadata,
   ): Promise<Buffer> {
-    const pdfDoc = await PDFDocument.load(pdfBuffer);
+    if (file instanceof Blob && !file.type.startsWith("application/pdf")) {
+      throw new Error(`Invalid file type: ${file.type}`);
+    }
+
+    const buffer =
+      file instanceof Blob ? Buffer.from(await file.arrayBuffer()) : file;
+
+    const pdfDoc = await PDFDocument.load(buffer);
     const catalog = pdfDoc.context.lookup(
       pdfDoc.context.trailerInfo.Root,
       PDFDict,
