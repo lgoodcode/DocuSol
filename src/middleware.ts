@@ -53,6 +53,13 @@ export async function middleware(request: NextRequest) {
         redirectToLogin = true;
         await clearSession();
       }
+
+      // If authenticated and visiting the login page, redirect to the home page
+      if (session && request.nextUrl.pathname === "/login") {
+        return NextResponse.redirect(
+          new URL(PAGE_PATHS.DOCS.LIST, request.url),
+        );
+      }
     } catch (error) {
       if (
         error instanceof Error &&
