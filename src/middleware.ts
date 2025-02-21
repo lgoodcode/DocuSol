@@ -44,38 +44,26 @@ export async function middleware(request: NextRequest) {
    * Session handling
    */
   let session: AccessTokenPayload | null = null;
-  let redirectToLogin = false;
-
-  if (PROTECTED_PATHS.includes(request.nextUrl.pathname)) {
-    try {
-      session = await getSession(request);
-      if (!session) {
-        redirectToLogin = true;
-        await clearSession();
-      }
-
-      // If authenticated and visiting the login page, redirect to the home page
-      if (session && request.nextUrl.pathname === "/login") {
-        return NextResponse.redirect(
-          new URL(PAGE_PATHS.DOCS.LIST, request.url),
-        );
-      }
-    } catch (error) {
-      if (
-        error instanceof Error &&
-        error.message !== "No access token or refresh token found"
-      ) {
-        console.error("Middleware session verification error:", error);
-        captureException(error, {
-          tags: { context: "middleware-session" },
-          extra: { url: request.url },
-        });
-      }
-      redirectToLogin = true;
+  try {
+    session = await getSession(request);
+    if (!session) {
+      await clearSession();
+    }
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message !== "No access token or refresh token found"
+    ) {
+      console.error("Middleware session verification error:", error);
+      captureException(error, {
+        tags: { context: "middleware-session" },
+        extra: { url: request.url },
+      });
     }
   }
 
-  if (redirectToLogin) {
+  // Protected routes
+  if (!session && PROTECTED_PATHS.includes(request.nextUrl.pathname)) {
     if (isApiRoute(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
