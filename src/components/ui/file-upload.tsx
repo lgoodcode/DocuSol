@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useDropzone } from "react-dropzone";
 import { UploadIcon, Trash2, FileIcon } from "lucide-react";
 
-import { MAX_FILE_SIZE, ACCEPTED_FILE_EXTENSIONS } from "@/constants";
+import { MAX_FILE_SIZE } from "@/constants";
 import { formatFileSize } from "@/lib/utils/format-file-size";
 import { Button } from "@/components/ui/button";
 
@@ -15,11 +15,13 @@ export const FileUpload = ({
   disabled,
 }: {
   file: File | null;
+  /** mime types */
   accept: string[];
   onChange: (file: File) => void;
   onRemove: (file: File) => void;
   disabled?: boolean;
 }) => {
+  const acceptedTypes = accept.map((type) => type.split("/")[1]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const trashRef = useRef<HTMLButtonElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -54,7 +56,7 @@ export const FileUpload = ({
 
     if (!accept.includes(file.type)) {
       setError(
-        `${file.type} type is not supported. Supported types are ${accept.join(", ")}`,
+        `${file.type} type is not supported. Supported types are ${acceptedTypes.join(", ")}`,
       );
       return;
     }
@@ -83,7 +85,10 @@ export const FileUpload = ({
   }, [file]);
 
   return (
-    <div className="w-full" {...getRootProps()}>
+    <div className="relative w-full" {...getRootProps()}>
+      <div className="absolute inset-0 [mask-image:radial-gradient(ellipse_at_center,white,transparent)]">
+        <GridPattern />
+      </div>
       <AnimatePresence mode="wait">
         {file === null ? (
           <motion.div
@@ -92,18 +97,15 @@ export const FileUpload = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={handleClick}
-            className="group/file relative block w-full cursor-pointer overflow-hidden rounded-lg border-2 border-dashed border-neutral-200 dark:border-neutral-800"
+            className="group/file relative block w-full cursor-pointer overflow-hidden rounded-lg border-2 border-dashed border-neutral-200 dark:border-neutral-800 [&_*]:z-30"
           >
-            <div className="absolute inset-0 [mask-image:radial-gradient(ellipse_at_center,white,transparent)]">
-              <GridPattern />
-            </div>
             <input
               ref={fileInputRef}
               type="file"
               id="file-upload-handle"
               onChange={handleFileUpload}
               className="hidden"
-              accept={ACCEPTED_FILE_EXTENSIONS.join(",")}
+              accept={accept.join(",")}
             />
             <div className="z-20 flex flex-col items-center justify-center p-6 sm:p-8">
               <div className="z-20 mb-4 rounded-full bg-neutral-100 p-3 dark:bg-neutral-900">
@@ -126,7 +128,7 @@ export const FileUpload = ({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
+            className="rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900 [&_*]:z-30"
           >
             <div className="flex items-center justify-between gap-4">
               <div className="flex min-w-0 items-center gap-3">
@@ -160,7 +162,7 @@ export const FileUpload = ({
         <motion.p
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mt-2 text-center text-sm text-red-500 dark:text-red-400"
+          className="z-30 mt-2 text-center text-sm text-red-500 dark:text-red-400"
         >
           {error}
         </motion.p>

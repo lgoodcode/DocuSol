@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { captureException } from "@sentry/nextjs";
 import { UploadIcon, Pencil, Save, Trash2, Lock, FileText } from "lucide-react";
 
-import { ACCEPTED_FILE_EXTENSIONS, MAX_FILE_SIZE } from "@/constants";
+import { ACCEPTED_FILE_TYPES, MAX_FILE_SIZE } from "@/constants";
 import { useUploadNewDocument } from "@/lib/utils/sign";
 import { formatFileSize } from "@/lib/utils/format-file-size";
 import { useDrawing } from "@/hooks/use-drawing";
@@ -243,7 +243,7 @@ export function NewDocumentContent() {
               <CardContent className="space-y-4">
                 <FileUpload
                   file={file}
-                  accept={ACCEPTED_FILE_EXTENSIONS}
+                  accept={Object.keys(ACCEPTED_FILE_TYPES)}
                   onChange={setFile}
                   onRemove={handleFileRemove}
                 />
