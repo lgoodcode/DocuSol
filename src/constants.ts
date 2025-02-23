@@ -19,9 +19,6 @@ export const PLATFORM_FEE = 100.0001;
 /** mime_type: [extensions] */
 export const ACCEPTED_FILE_TYPES: Record<string, string[]> = {
   "application/pdf": [".pdf"],
-  // "image/png": [".png"],
-  // "image/jpeg": [".jpeg"],
-  // "image/jpg": [".jpg"],
 };
 export const ACCEPTED_FILE_EXTENSIONS =
   Object.values(ACCEPTED_FILE_TYPES).flat();
