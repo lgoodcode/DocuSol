@@ -184,8 +184,6 @@ export interface DocumentRules extends BaseDocumentRules {
   requireAll: boolean;
   /** Allow documents to be revoked */
   allowRevocation: boolean;
-  /** Optional deadline timestamp */
-  deadline?: number;
 }
 
 /**
