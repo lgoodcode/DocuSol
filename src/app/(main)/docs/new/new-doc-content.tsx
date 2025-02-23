@@ -6,10 +6,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { captureException } from "@sentry/nextjs";
-import { Buffer } from "buffer";
 import { UploadIcon, Pencil, Save, Trash2, Lock, FileText } from "lucide-react";
 
-import { MAX_FILE_SIZE } from "@/constants";
+import { ACCEPTED_FILE_EXTENSIONS, MAX_FILE_SIZE } from "@/constants";
 import { useUploadNewDocument } from "@/lib/utils/sign";
 import { formatFileSize } from "@/lib/utils/format-file-size";
 import { useDrawing } from "@/hooks/use-drawing";
@@ -46,14 +45,6 @@ import {
 
 import { useSignDoc } from "./hooks";
 import { NewDocumentDialog } from "./new-doc-dialog";
-
-import { EncryptedPDFError } from "pdf-lib";
-
-import { previewBlob } from "@/lib/utils";
-
-import { PDFMetadata } from "@/lib/stamp/pdf-metadata";
-import { DocumentMetadata } from "@/lib/types/stamp";
-import { PDFHash } from "@/lib/stamp/hash-service";
 
 const documentSchema = z
   .object({
@@ -93,15 +84,15 @@ export function NewDocumentContent() {
   const [signatureType, setSignatureType] = useState<"draw" | "type">("draw");
   const [typedSignature, setTypedSignature] = useState("");
   const [showDialog, setShowDialog] = useState(false);
-  const [files, setFiles] = useState<File[]>([]);
+  const [file, setFile] = useState<File | null>(null);
   const [results, setResults] = useState<NewDocumentResult | null>(null);
   const form = useForm<z.infer<typeof documentSchema>>({
     resolver: zodResolver(documentSchema),
     mode: "onSubmit",
   });
 
-  const handleFileRemove = (file: File) => {
-    setFiles((prevFiles) => prevFiles.filter((f) => f.name !== file.name));
+  const handleFileRemove = () => {
+    setFile(null);
   };
 
   const handleCloseDialog = () => {
@@ -113,24 +104,38 @@ export function NewDocumentContent() {
     name,
     password,
   }: z.infer<typeof documentSchema>) => {
-    if (!files.length) {
+    if (!file) {
       return;
     }
 
+    let signedDoc: Blob | null = null;
     const isSigned =
       (signatureType === "draw" && hasDrawn) ||
       (signatureType === "type" && typedSignature);
 
-    // TODO: revise this with improved pdf editor
-    const signedDoc = !isSigned
-      ? files[0]
-      : await signDoc(
-          files[0],
-          signatureType,
-          hasDrawn,
-          getSignatureAsBlack(),
-          typedSignature,
-        );
+    try {
+      // TODO: revise this with improved pdf editor
+      signedDoc = !isSigned
+        ? file
+        : await signDoc(
+            file,
+            signatureType,
+            hasDrawn,
+            getSignatureAsBlack(),
+            typedSignature,
+          );
+    } catch (err) {
+      const error = err as Error;
+      console.error(error);
+
+      if (error.message.includes("encrypted")) {
+        toast({
+          title: "Invalid Document",
+          description: "This document is encrypted and cannot be processed.",
+          variant: "destructive",
+        });
+      }
+    }
 
     if (!signedDoc) {
       return;
@@ -145,39 +150,34 @@ export function NewDocumentContent() {
     if (!(signedDoc instanceof Blob) || signedDoc.type !== "application/pdf") {
       throw new Error("Invalid document type");
     }
-    try {
-      const metadata: DocumentMetadata = {
-        transaction: "123",
-        createdAt: Date.now(),
-        creator: "123",
-        documentId: "123",
-      };
-      debugger;
-      const hashBeforeEmbedMetadata =
-        await PDFHash.generateContentHash(signedDoc);
-      const pdfBufferWithMetadata = await PDFMetadata.embedMetadata(
-        signedDoc,
-        metadata,
-      );
-      const hashAfterEmbedMetadata = await PDFHash.generateContentHash(
-        pdfBufferWithMetadata,
-      );
 
-      console.log({
-        hashBeforeEmbedMetadata,
-        hashAfterEmbedMetadata,
-        contentHashMatches: PDFHash.verifyContentHash(
-          pdfBufferWithMetadata,
-          hashAfterEmbedMetadata,
-        ),
-        metadataHashMatches: PDFHash.verifyMetadataHash(
-          metadata,
-          hashAfterEmbedMetadata.metadataHash!,
-        ),
+    try {
+      const { error, id, txSignature, unsignedHash } = await uploadNewDocument({
+        name,
+        password: password || "",
+        original_filename: file.name,
+        mime_type: file.type,
+        original_document: file,
+        unsigned_document: signedDoc,
       });
+
+      if (error) {
+        throw new Error(error);
+      } else if (!id || !txSignature || !unsignedHash) {
+        throw new Error("Failed to upload document");
+      }
+
+      setResults({ id, txSignature, unsignedHash });
+      setShowDialog(true);
+
+      form.reset({ name: "", password: "", confirmPassword: "" });
+      setFile(null);
+      clearCanvas();
+      setTypedSignature("");
     } catch (err) {
       const error = err as Error;
       console.error(error);
+      captureException(error);
 
       if (error.message.includes("encrypted")) {
         toast({
@@ -186,47 +186,18 @@ export function NewDocumentContent() {
           variant: "destructive",
         });
       }
+
+      const isTooLarge = error.message.includes("Request Entity Too Large");
+      toast({
+        title: "Error",
+        description: isTooLarge
+          ? `The file is too large. Please try a smaller file. (Max file size: ${formatFileSize(
+              MAX_FILE_SIZE,
+            )})`
+          : "An error occurred while uploading the document",
+        variant: "destructive",
+      });
     }
-
-    // try {
-    //   const { error, id, txSignature, unsignedHash } = await uploadNewDocument({
-    //     name,
-    //     password: password || "",
-    //     original_filename: files[0].name,
-    //     mime_type: files[0].type,
-    //     original_document: files[0],
-    //     unsigned_document: signedDoc || files[0],
-    //   });
-
-    //   if (error) {
-    //     throw new Error(error);
-    //   } else if (!id || !txSignature || !unsignedHash) {
-    //     throw new Error("Failed to upload document");
-    //   }
-
-    //   setResults({ id, txSignature, unsignedHash });
-    //   setShowDialog(true);
-
-    //   form.reset({ name: "", password: "", confirmPassword: "" });
-    //   setFiles([]);
-    //   clearCanvas();
-    //   setTypedSignature("");
-    // } catch (err) {
-    //   const error = err as Error;
-    //   console.error(error);
-    //   captureException(error);
-
-    //   const isTooLarge = error.message.includes("Request Entity Too Large");
-    //   toast({
-    //     title: "Error",
-    //     description: isTooLarge
-    //       ? `The file is too large. Please try a smaller file. (Max file size: ${formatFileSize(
-    //           MAX_FILE_SIZE,
-    //         )})`
-    //       : "An error occurred while uploading the document",
-    //     variant: "destructive",
-    //   });
-    // }
   };
 
   return (
@@ -271,8 +242,9 @@ export function NewDocumentContent() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <FileUpload
-                  files={files}
-                  onChange={setFiles}
+                  file={file}
+                  accept={ACCEPTED_FILE_EXTENSIONS}
+                  onChange={setFile}
                   onRemove={handleFileRemove}
                 />
               </CardContent>
@@ -281,7 +253,7 @@ export function NewDocumentContent() {
 
           {/* File Preview Card */}
           <AnimatePresence mode="wait">
-            {files.length > 0 && (
+            {file && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -296,7 +268,7 @@ export function NewDocumentContent() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {files.length > 0 && <FilePreview file={files[0]} />}
+                    {file && <FilePreview file={file} />}
                   </CardContent>
                 </Card>
               </motion.div>
@@ -505,7 +477,7 @@ export function NewDocumentContent() {
                   type="submit"
                   className="ml-auto"
                   isLoading={form.formState.isSubmitting}
-                  disabled={!files.length}
+                  disabled={!file}
                 >
                   {!form.formState.isSubmitting && <Save className="h-4 w-4" />}
                   {form.formState.isSubmitting

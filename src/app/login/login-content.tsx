@@ -196,26 +196,28 @@ export function LoginContent() {
             transition={{ duration: 0.3 }}
             className="w-full max-w-md"
           >
-            <Card className="p-6">
-              <CardContent className="grid gap-6 p-0">
-                <div className="text-center">
-                  <h1 className="mb-2 text-2xl font-bold">Welcome Back</h1>
-                  <p className="text-sm text-muted-foreground">
-                    Connect your wallet to continue
-                  </p>
-                </div>
+            <div>
+              <Card className="p-6">
+                <CardContent className="grid gap-6 p-0">
+                  <div className="text-center">
+                    <h1 className="mb-2 text-2xl font-bold">Welcome Back</h1>
+                    <p className="text-sm text-muted-foreground">
+                      Connect your wallet to continue
+                    </p>
+                  </div>
 
-                <Button
-                  size="lg"
-                  onClick={() => setIsOpen(true)}
-                  disabled={step !== "idle" && step !== "error"}
-                  className="w-full"
-                >
-                  <Wallet className="mr-2 h-4 w-4" />
-                  Connect Wallet
-                </Button>
-              </CardContent>
-            </Card>
+                  <Button
+                    size="lg"
+                    onClick={() => setIsOpen(true)}
+                    disabled={step !== "idle" && step !== "error"}
+                    className="w-full"
+                  >
+                    <Wallet className="mr-2 h-4 w-4" />
+                    Connect Wallet
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           </motion.div>
         </div>
       </main>
