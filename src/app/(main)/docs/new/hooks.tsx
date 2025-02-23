@@ -4,6 +4,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { captureException } from "@sentry/nextjs";
 
 import { PLATFORM_FEE } from "@/constants";
+import { API_PATHS } from "@/config/routes/api";
 import { useToast } from "@/hooks/use-toast";
 import { sign } from "@/lib/utils/sign";
 import { hasSufficientBalance } from "@/lib/utils/solana";
@@ -98,5 +99,28 @@ export function useUserHasSufficientBalance() {
       });
       return false;
     }
+  };
+}
+
+export function useUploadNewDocument() {
+  return async function uploadNewDocument(newDocument: NewDocument) {
+    const formData = new FormData();
+    Object.entries(newDocument).forEach(([key, value]) => {
+      formData.append(key, value || "");
+    });
+
+    const response = await fetch(API_PATHS.DOCS.CREATE, {
+      method: "POST",
+      body: formData,
+      headers: {
+        "Cache-Control": "no-cache",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Upload failed: ${await response.text()}`);
+    }
+
+    return response.json() as Promise<NewDocumentResponse>;
   };
 }

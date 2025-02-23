@@ -189,7 +189,7 @@ function Docker() {
   );
 }
 
-export function DockerContainer({ delay }: { delay: number }) {
+export function DockerContainer({ delay }: { delay?: number }) {
   return (
     <motion.div
       className="fixed left-0 top-0 z-50 w-full"
