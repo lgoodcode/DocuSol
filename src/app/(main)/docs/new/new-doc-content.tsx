@@ -91,6 +91,20 @@ export function NewDocumentContent() {
     mode: "onSubmit",
   });
 
+  const handleFileSelect = (file: File) => {
+    // Check file size
+    if (file.size > MAX_FILE_SIZE) {
+      toast({
+        title: "File too large",
+        description: `The file is too large. Please try a smaller file. (Max file size: ${formatFileSize(MAX_FILE_SIZE)})`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setFile(file);
+  };
+
   const handleFileRemove = () => {
     setFile(null);
   };
@@ -113,29 +127,16 @@ export function NewDocumentContent() {
       (signatureType === "draw" && hasDrawn) ||
       (signatureType === "type" && typedSignature);
 
-    try {
-      // TODO: revise this with improved pdf editor
-      signedDoc = !isSigned
-        ? file
-        : await signDoc(
-            file,
-            signatureType,
-            hasDrawn,
-            getSignatureAsBlack(),
-            typedSignature,
-          );
-    } catch (err) {
-      const error = err as Error;
-      console.error(error);
-
-      if (error.message.includes("encrypted")) {
-        toast({
-          title: "Invalid Document",
-          description: "This document is encrypted and cannot be processed.",
-          variant: "destructive",
-        });
-      }
-    }
+    // TODO: revise this with improved pdf editor
+    signedDoc = !isSigned
+      ? file
+      : await signDoc(
+          file,
+          signatureType,
+          hasDrawn,
+          getSignatureAsBlack(),
+          typedSignature,
+        );
 
     if (!signedDoc) {
       return;
@@ -179,22 +180,9 @@ export function NewDocumentContent() {
       console.error(error);
       captureException(error);
 
-      if (error.message.includes("encrypted")) {
-        toast({
-          title: "Invalid Document",
-          description: "This document is encrypted and cannot be processed.",
-          variant: "destructive",
-        });
-      }
-
-      const isTooLarge = error.message.includes("Request Entity Too Large");
       toast({
         title: "Error",
-        description: isTooLarge
-          ? `The file is too large. Please try a smaller file. (Max file size: ${formatFileSize(
-              MAX_FILE_SIZE,
-            )})`
-          : "An error occurred while uploading the document",
+        description: "An error occurred while uploading the document",
         variant: "destructive",
       });
     }
@@ -244,7 +232,7 @@ export function NewDocumentContent() {
                 <FileUpload
                   file={file}
                   accept={Object.keys(ACCEPTED_FILE_TYPES)}
-                  onChange={setFile}
+                  onChange={handleFileSelect}
                   onRemove={handleFileRemove}
                 />
               </CardContent>

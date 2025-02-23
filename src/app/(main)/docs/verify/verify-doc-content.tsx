@@ -8,7 +8,11 @@ import { useForm } from "react-hook-form";
 import { captureException } from "@sentry/nextjs";
 import { ShieldCheck, XCircle, CheckCircle } from "lucide-react";
 
-import { ACCEPTED_FILE_EXTENSIONS, MAX_FILE_SIZE } from "@/constants";
+import {
+  ACCEPTED_FILE_EXTENSIONS,
+  ACCEPTED_FILE_TYPES,
+  MAX_FILE_SIZE,
+} from "@/constants";
 import { isTransactionSignature } from "@/lib/utils/solana";
 import { FileUpload } from "@/components/ui/file-upload";
 import { DocumentDetails } from "@/components/doc-details";
@@ -51,7 +55,7 @@ const searchSchema = z.object({
       },
       {
         message: "Invalid file type. Please upload a PDF or image file.",
-      }
+      },
     ),
 });
 
@@ -59,7 +63,7 @@ export function VerifyDocContent() {
   const { toast } = useToast();
   const [file, setFile] = useState<File | null>(null);
   const [documentDetails, setDocumentDetails] = useState<VerifyDocument | null>(
-    null
+    null,
   );
   const [success, setSuccess] = useState(false);
   const [errorResponseMessage, setErrorResponseMessage] = useState<
@@ -70,12 +74,8 @@ export function VerifyDocContent() {
     mode: "onSubmit",
   });
 
-  const handleFileChange = (files: File[] | null) => {
-    if (files && files.length > 0) {
-      setFile(files[0]);
-    } else {
-      setFile(null);
-    }
+  const handleFileChange = (file: File) => {
+    setFile(file);
   };
 
   const handleFileRemove = () => {
@@ -117,7 +117,7 @@ export function VerifyDocContent() {
         return;
       } else if (!data.matches) {
         setErrorResponseMessage(
-          "The file you provided does not match the file hash in the transaction signature provided."
+          "The file you provided does not match the file hash in the transaction signature provided.",
         );
         setDocumentDetails(null);
         return;
@@ -155,8 +155,8 @@ export function VerifyDocContent() {
         }}
       >
         <div className="flex flex-col gap-2">
-          <h1 className="text-2xl md:text-3xl font-bold">Verify Document</h1>
-          <p className="text-sm md:text-base text-muted-foreground">
+          <h1 className="text-2xl font-bold md:text-3xl">Verify Document</h1>
+          <p className="text-sm text-muted-foreground md:text-base">
             Verify a document that has been signed with DocuSol.
           </p>
         </div>
@@ -169,7 +169,7 @@ export function VerifyDocContent() {
       >
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
               <ShieldCheck className="h-5 w-5" />
               Verify Document
             </CardTitle>
@@ -188,7 +188,7 @@ export function VerifyDocContent() {
                     transition={{ duration: 0.3 }}
                   >
                     <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
-                      <p className="text-sm md:text-base text-destructive flex items-center gap-2">
+                      <p className="flex items-center gap-2 text-sm text-destructive md:text-base">
                         <XCircle className="h-4 w-4" />
                         {errorResponseMessage}
                       </p>
@@ -204,7 +204,7 @@ export function VerifyDocContent() {
                     transition={{ duration: 0.3 }}
                   >
                     <div className="rounded-lg border border-success/50 bg-success/10 p-4">
-                      <p className="text-sm md:text-base text-success flex items-center gap-2">
+                      <p className="flex items-center gap-2 text-sm text-success md:text-base">
                         <CheckCircle className="h-4 w-4" />
                         The document you provided matches the document in the
                         transaction signature.
@@ -239,9 +239,10 @@ export function VerifyDocContent() {
                       )}
                     />
                     <div className="flex flex-col gap-2">
-                      <div className="w-full flex flex-row gap-2">
+                      <div className="flex w-full flex-row gap-2">
                         <FileUpload
-                          files={file ? [file] : []}
+                          file={file}
+                          accept={Object.keys(ACCEPTED_FILE_TYPES)}
                           onChange={handleFileChange}
                           onRemove={handleFileRemove}
                           disabled={form.formState.isSubmitting}
