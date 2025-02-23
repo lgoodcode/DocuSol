@@ -113,29 +113,16 @@ export function NewDocumentContent() {
       (signatureType === "draw" && hasDrawn) ||
       (signatureType === "type" && typedSignature);
 
-    try {
-      // TODO: revise this with improved pdf editor
-      signedDoc = !isSigned
-        ? file
-        : await signDoc(
-            file,
-            signatureType,
-            hasDrawn,
-            getSignatureAsBlack(),
-            typedSignature,
-          );
-    } catch (err) {
-      const error = err as Error;
-      console.error(error);
-
-      if (error.message.includes("encrypted")) {
-        toast({
-          title: "Invalid Document",
-          description: "This document is encrypted and cannot be processed.",
-          variant: "destructive",
-        });
-      }
-    }
+    // TODO: revise this with improved pdf editor
+    signedDoc = !isSigned
+      ? file
+      : await signDoc(
+          file,
+          signatureType,
+          hasDrawn,
+          getSignatureAsBlack(),
+          typedSignature,
+        );
 
     if (!signedDoc) {
       return;
@@ -178,14 +165,6 @@ export function NewDocumentContent() {
       const error = err as Error;
       console.error(error);
       captureException(error);
-
-      if (error.message.includes("encrypted")) {
-        toast({
-          title: "Invalid Document",
-          description: "This document is encrypted and cannot be processed.",
-          variant: "destructive",
-        });
-      }
 
       const isTooLarge = error.message.includes("Request Entity Too Large");
       toast({
