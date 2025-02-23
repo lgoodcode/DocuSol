@@ -243,7 +243,7 @@ export function LoginContent() {
               e.preventDefault();
             }
           }}
-          className="sm:max-w-md"
+          className={`sm:max-w-md ${authenticated ? "[&_svg.close-dialog]:hidden" : ""}`}
           aria-describedby={undefined}
         >
           <DialogHeader>
