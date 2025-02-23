@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next-nprogress-bar";
 import { motion } from "framer-motion";
@@ -182,42 +183,55 @@ export function LoginContent() {
           transition={{
             duration: 1.2,
             ease: [0.4, 0, 0.2, 1],
-            when: "beforeChildren",
-            staggerChildren: 0.3,
           }}
         >
-          <DockerContainer delay={0.5} />
+          <DockerContainer delay={0} />
         </motion.div>
 
-        <div className="z-30 flex min-h-dvh items-center justify-center">
+        <div className="relative -top-10 z-30 flex min-h-dvh flex-col items-center justify-center gap-12">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            <Link href="/">
+              <Image
+                src="/img/branding/logo_full_light_1694x432.png"
+                alt="logo"
+                width={1694}
+                height={432}
+                priority
+                className="max-w-md px-6"
+              />
+            </Link>
+          </motion.div>
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
             className="w-full max-w-md"
           >
-            <div>
-              <Card className="p-6">
-                <CardContent className="grid gap-6 p-0">
-                  <div className="text-center">
-                    <h1 className="mb-2 text-2xl font-bold">Welcome Back</h1>
-                    <p className="text-sm text-muted-foreground">
-                      Connect your wallet to continue
-                    </p>
-                  </div>
+            <Card className="w-full p-6">
+              <CardContent className="grid gap-6 p-0">
+                <div className="text-center">
+                  <h1 className="mb-2 text-2xl font-bold">Welcome Back</h1>
+                  <p className="text-sm text-muted-foreground">
+                    Connect your wallet to continue
+                  </p>
+                </div>
 
-                  <Button
-                    size="lg"
-                    onClick={() => setIsOpen(true)}
-                    disabled={step !== "idle" && step !== "error"}
-                    className="w-full"
-                  >
-                    <Wallet className="mr-2 h-4 w-4" />
-                    Connect Wallet
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
+                <Button
+                  size="lg"
+                  onClick={() => setIsOpen(true)}
+                  disabled={step !== "idle" && step !== "error"}
+                  className="w-full"
+                >
+                  <Wallet className="mr-2 h-4 w-4" />
+                  Connect Wallet
+                </Button>
+              </CardContent>
+            </Card>
           </motion.div>
         </div>
       </main>
