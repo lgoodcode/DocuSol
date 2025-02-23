@@ -185,7 +185,7 @@ export function LoginContent() {
             ease: [0.4, 0, 0.2, 1],
           }}
         >
-          <DockerContainer delay={0} />
+          <DockerContainer />
         </motion.div>
 
         <div className="relative -top-10 z-30 flex min-h-dvh flex-col items-center justify-center gap-12">
