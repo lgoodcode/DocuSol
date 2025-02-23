@@ -100,6 +100,7 @@ async function processDocumentUpload(
     formData.password,
   );
 
+  // TODO: Generate document stamp here and use in the memo message
   const memoMessage = `FILE_HASH=${unsignedDocumentHash}`;
   let txSignature: string;
   try {

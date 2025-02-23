@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { captureException } from "@sentry/nextjs";
+import { Buffer } from "buffer";
 import { UploadIcon, Pencil, Save, Trash2, Lock, FileText } from "lucide-react";
 
 import { MAX_FILE_SIZE } from "@/constants";
@@ -45,6 +46,14 @@ import {
 
 import { useSignDoc } from "./hooks";
 import { NewDocumentDialog } from "./new-doc-dialog";
+
+import { EncryptedPDFError } from "pdf-lib";
+
+import { previewBlob } from "@/lib/utils";
+
+import { PDFMetadata } from "@/lib/stamp/pdf-metadata";
+import { DocumentMetadata } from "@/lib/types/stamp";
+import { PDFHash } from "@/lib/stamp/hash-service";
 
 const documentSchema = z
   .object({
@@ -132,45 +141,92 @@ export function NewDocumentContent() {
     //   return;
     // }
 
+    // PDF Metadata and file hashing
+    if (!(signedDoc instanceof Blob) || signedDoc.type !== "application/pdf") {
+      throw new Error("Invalid document type");
+    }
     try {
-      const { error, id, txSignature, unsignedHash } = await uploadNewDocument({
-        name,
-        password: password || "",
-        original_filename: files[0].name,
-        mime_type: files[0].type,
-        original_document: files[0],
-        unsigned_document: signedDoc || files[0],
+      const metadata: DocumentMetadata = {
+        transaction: "123",
+        createdAt: Date.now(),
+        creator: "123",
+        documentId: "123",
+      };
+      debugger;
+      const hashBeforeEmbedMetadata =
+        await PDFHash.generateContentHash(signedDoc);
+      const pdfBufferWithMetadata = await PDFMetadata.embedMetadata(
+        signedDoc,
+        metadata,
+      );
+      const hashAfterEmbedMetadata = await PDFHash.generateContentHash(
+        pdfBufferWithMetadata,
+      );
+
+      console.log({
+        hashBeforeEmbedMetadata,
+        hashAfterEmbedMetadata,
+        contentHashMatches: PDFHash.verifyContentHash(
+          pdfBufferWithMetadata,
+          hashAfterEmbedMetadata,
+        ),
+        metadataHashMatches: PDFHash.verifyMetadataHash(
+          metadata,
+          hashAfterEmbedMetadata.metadataHash!,
+        ),
       });
-
-      if (error) {
-        throw new Error(error);
-      } else if (!id || !txSignature || !unsignedHash) {
-        throw new Error("Failed to upload document");
-      }
-
-      setResults({ id, txSignature, unsignedHash });
-      setShowDialog(true);
-
-      form.reset({ name: "", password: "", confirmPassword: "" });
-      setFiles([]);
-      clearCanvas();
-      setTypedSignature("");
     } catch (err) {
       const error = err as Error;
       console.error(error);
-      captureException(error);
 
-      const isTooLarge = error.message.includes("Request Entity Too Large");
-      toast({
-        title: "Error",
-        description: isTooLarge
-          ? `The file is too large. Please try a smaller file. (Max file size: ${formatFileSize(
-              MAX_FILE_SIZE,
-            )})`
-          : "An error occurred while uploading the document",
-        variant: "destructive",
-      });
+      if (error.message.includes("encrypted")) {
+        toast({
+          title: "Invalid Document",
+          description: "This document is encrypted and cannot be processed.",
+          variant: "destructive",
+        });
+      }
     }
+
+    // try {
+    //   const { error, id, txSignature, unsignedHash } = await uploadNewDocument({
+    //     name,
+    //     password: password || "",
+    //     original_filename: files[0].name,
+    //     mime_type: files[0].type,
+    //     original_document: files[0],
+    //     unsigned_document: signedDoc || files[0],
+    //   });
+
+    //   if (error) {
+    //     throw new Error(error);
+    //   } else if (!id || !txSignature || !unsignedHash) {
+    //     throw new Error("Failed to upload document");
+    //   }
+
+    //   setResults({ id, txSignature, unsignedHash });
+    //   setShowDialog(true);
+
+    //   form.reset({ name: "", password: "", confirmPassword: "" });
+    //   setFiles([]);
+    //   clearCanvas();
+    //   setTypedSignature("");
+    // } catch (err) {
+    //   const error = err as Error;
+    //   console.error(error);
+    //   captureException(error);
+
+    //   const isTooLarge = error.message.includes("Request Entity Too Large");
+    //   toast({
+    //     title: "Error",
+    //     description: isTooLarge
+    //       ? `The file is too large. Please try a smaller file. (Max file size: ${formatFileSize(
+    //           MAX_FILE_SIZE,
+    //         )})`
+    //       : "An error occurred while uploading the document",
+    //     variant: "destructive",
+    //   });
+    // }
   };
 
   return (
