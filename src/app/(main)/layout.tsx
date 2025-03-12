@@ -20,9 +20,7 @@ export default function MainLayout({
         <WalletNoticeDialog />
 
         <Nav />
-        <main className="relative z-10 mt-[64px] flex-1 px-6 md:mt-0">
-          {children}
-        </main>
+        <main className="relative z-10 flex-1 px-6 md:mt-0">{children}</main>
       </div>
     </QueryProvider>
   );

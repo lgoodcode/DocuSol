@@ -17,9 +17,60 @@ export const hexToBuffer = (hex: string): Uint8Array => {
   if (!hex.startsWith("\\x")) {
     throw new Error("Invalid hex string format - must start with \\x");
   }
-  // Ignore the TS error - it's fine
   return new Uint8Array(Buffer.from(hex.slice(2), "hex"));
 };
+
+type RetryOptions = {
+  maxRetries?: number;
+  initialDelay?: number;
+  maxDelay?: number;
+  backoffFactor?: number;
+  retryOnError?: (error: Error) => boolean;
+  onRetry?: (error: Error, attempt: number, delay: number) => void;
+};
+
+/**
+ * Retries a function with exponential backoff
+ * @param fn The function to retry
+ * @param options Configuration options
+ * @returns Promise that resolves with the function result or rejects after all retries fail
+ */
+export async function withRetry<T>(
+  fn: () => Promise<T>,
+  options: RetryOptions = {},
+): Promise<T> {
+  const {
+    maxRetries = 3,
+    initialDelay = 100,
+    maxDelay = 10000,
+    backoffFactor = 2,
+    retryOnError = () => true,
+    onRetry = () => {},
+  } = options;
+
+  let attempt = 0;
+  let delay = initialDelay;
+
+  while (true) {
+    try {
+      return await fn();
+    } catch (err) {
+      const error = err as Error;
+      attempt++;
+
+      if (attempt > maxRetries || !retryOnError(error as Error)) {
+        throw error;
+      }
+
+      onRetry(error, attempt, delay);
+
+      await new Promise((resolve) => setTimeout(resolve, delay));
+
+      // Calculate next delay with exponential backoff
+      delay = Math.min(delay * backoffFactor, maxDelay);
+    }
+  }
+}
 
 const openDB = (): Promise<IDBDatabase> => {
   return new Promise((resolve, reject) => {
