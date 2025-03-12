@@ -2,23 +2,47 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useRouter } from "next-nprogress-bar";
+import { captureException } from "@sentry/nextjs";
+import { LogOutIcon } from "lucide-react";
 
 import { PAGE_ROUTES } from "@/config/routes";
+import { createClient } from "@/lib/supabase/client";
 import { NavButton } from "@/components/layout/nav-button";
 import { MobileMenu } from "@/components/layout/mobile-menu";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { NavTooltip } from "@/components/layout/nav-tooltip";
-import { AccountDialog } from "@/components/layout/account-dialog";
 import { Button } from "../ui/button";
-import { User } from "lucide-react";
+
+const LogoutButton = () => {
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    const supabase = createClient();
+    const { error: logoutError } = await supabase.auth.signOut();
+    if (logoutError) {
+      console.error(logoutError);
+      captureException(logoutError);
+    }
+    router.push("/login");
+  };
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="h-12 w-full bg-primary-foreground/10 text-primary/60 hover:bg-primary hover:text-primary-foreground dark:hover:bg-white dark:hover:text-black"
+      onClick={handleLogout}
+    >
+      <LogOutIcon className="h-5 w-5" />
+    </Button>
+  );
+};
 
 export function Nav() {
-  const [open, setOpen] = useState(false);
   return (
     <>
-      <AccountDialog open={open} setOpen={setOpen} />
-      <MobileMenu setAccountDialogOpen={setOpen} />
+      <MobileMenu />
       <aside className="sticky top-0 z-50 hidden h-screen w-[60px] flex-col border-r border-stone-300 py-4 dark:border-border md:flex">
         <div className="flex flex-1 flex-col">
           <Link href="/" className="mb-3 h-12 w-full">
@@ -45,15 +69,8 @@ export function Nav() {
         <div className="mt-auto">
           <div className="border-t border-stone-300 dark:border-border">
             <ThemeToggle withTooltip />
-            <NavTooltip content="Account">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-12 w-full bg-primary-foreground/10 text-primary/60 hover:bg-primary hover:text-primary-foreground dark:hover:bg-white dark:hover:text-black"
-                onClick={() => setOpen(true)}
-              >
-                <User className="h-5 w-5" />
-              </Button>
+            <NavTooltip content="Logout">
+              <LogoutButton />
             </NavTooltip>
           </div>
         </div>

@@ -4,10 +4,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { useRouter } from "next-nprogress-bar";
 import { motion, AnimatePresence } from "framer-motion";
+import { captureException } from "@sentry/nextjs";
 import { Menu, X, Sun, Moon, User } from "lucide-react";
 
 import { PAGE_ROUTES } from "@/config/routes";
+import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
@@ -24,11 +27,8 @@ const useIsFirstRender = () => {
   return isFirst.current;
 };
 
-export function MobileMenu({
-  setAccountDialogOpen,
-}: {
-  setAccountDialogOpen: (open: boolean) => void;
-}) {
+export function MobileMenu() {
+  const router = useRouter();
   const pathname = usePathname();
   const isFirstRender = useIsFirstRender();
   const headerRef = useRef<HTMLDivElement>(null);
@@ -37,6 +37,16 @@ export function MobileMenu({
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   const { theme, setTheme } = useTheme();
+
+  const handleLogout = async () => {
+    const supabase = createClient();
+    const { error: logoutError } = await supabase.auth.signOut();
+    if (logoutError) {
+      console.error(logoutError);
+      captureException(logoutError);
+    }
+    router.push("/login");
+  };
 
   const handleSheetOpenChange = (newOpen: boolean) => {
     if (window) {
@@ -228,7 +238,6 @@ export function MobileMenu({
                   <button
                     onClick={() => {
                       setOpen(false);
-                      setAccountDialogOpen(true);
                     }}
                     className="flex w-full items-center gap-4 rounded-none px-4 py-3 text-sm font-medium transition-colors hover:bg-accent"
                   >
@@ -237,6 +246,20 @@ export function MobileMenu({
                       <span>Account</span>
                       <span className="text-xs font-normal text-muted-foreground">
                         Manage your account
+                      </span>
+                    </div>
+                  </button>
+                </motion.div>
+                <motion.div>
+                  <button
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-4 rounded-none px-4 py-3 text-sm font-medium transition-colors hover:bg-accent"
+                  >
+                    <User className="h-6 w-6" />
+                    <div className="flex w-full flex-col gap-1 text-left">
+                      <span>Logout</span>
+                      <span className="text-xs font-normal text-muted-foreground">
+                        Logout from your account
                       </span>
                     </div>
                   </button>
