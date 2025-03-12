@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { captureException, setUser } from "@sentry/nextjs";
 
-import { createMiddlewareResponse } from "./lib/supabase/middleware";
 import { handleRateLimit, rateLimit } from "@/lib/auth/ratelimiter";
 import { PROTECTED_PATHS, PAGE_PATHS } from "@/config/routes";
+import { getSession, clearSession } from "@/lib/auth/session";
 
 const isApiRoute = (request: NextRequest): boolean => {
   return request.nextUrl.pathname.startsWith("/api/");
@@ -40,19 +40,40 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
+  /**
+   * Session handling
+   */
+  let session: AccessTokenPayload | null = null;
+  try {
+    session = await getSession(request);
+    if (!session) {
+      await clearSession();
+    }
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message !== "No access token or refresh token found"
+    ) {
+      console.error("Middleware session verification error:", error);
+      captureException(error, {
+        tags: { context: "middleware-session" },
+        extra: { url: request.url },
+      });
+    }
+  }
+
   // Protected routes
-  const { response, user } = await createMiddlewareResponse(request);
-  if (!user && PROTECTED_PATHS.includes(request.nextUrl.pathname)) {
+  if (!session && PROTECTED_PATHS.includes(request.nextUrl.pathname)) {
     if (isApiRoute(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  if (user) {
+  if (session) {
     setUser({
-      id: user.id,
-      email: user.email,
+      id: session.id,
+      publicKey: session.publicKey,
     });
 
     // If visiting the login page, redirect to the home page
@@ -61,7 +82,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  return response;
+  return NextResponse.next();
 }
 
 export const config = {
