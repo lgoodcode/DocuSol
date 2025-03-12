@@ -1,6 +1,5 @@
 import { captureException } from "@sentry/nextjs";
 
-import type { UploadResult } from "@/lib/types/upload";
 import { withRetry } from "@/lib/utils";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -41,11 +40,10 @@ export class StorageService {
     fileName: string,
     fileData: Buffer | Blob,
     contentType: string,
-  ): Promise<UploadResult> {
-    try {
-      return withRetry(async () => {
+  ) {
+    return withRetry(
+      async () => {
         const filePath = this.getFilePath(userId, fileName);
-
         const { error } = await this.supabase.storage
           .from(this.bucket)
           .upload(filePath, fileData, {
@@ -54,17 +52,12 @@ export class StorageService {
           });
 
         if (error) throw error;
-        return { success: true, filePath };
-      });
-    } catch (err) {
-      const error = err as Error;
-      console.error(error);
-      captureException(error);
-      return {
-        success: false,
-        error: `Upload failed: ${error.message}`,
-      };
-    }
+      },
+      {
+        cancelOnError: (error) =>
+          error.message === "The resource already exists",
+      },
+    );
   }
 
   async verifyFileExists(filePath: string): Promise<boolean> {
