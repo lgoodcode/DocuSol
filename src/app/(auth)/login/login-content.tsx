@@ -69,7 +69,7 @@ export function LoginContent() {
       captureException(loginError);
       setError(loginError.message);
     } else {
-      router.push("/docs/list");
+      router.push("/docs/new");
     }
   };
 

@@ -84,7 +84,7 @@ export function SignupContent() {
       captureException(signupError);
       setError(signupError.message);
     } else {
-      router.push("/");
+      router.push("/docs/new");
     }
   };
 
@@ -228,7 +228,7 @@ export function SignupContent() {
                       className="w-full"
                       isLoading={signupForm.formState.isSubmitting}
                     >
-                      Login
+                      Sign Up
                     </Button>
                   </form>
                 </Form>
