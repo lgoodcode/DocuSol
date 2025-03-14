@@ -243,6 +243,10 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
+[data-sonner-toast][data-visible="true"] {
+  opacity: 0.8 !important;
+}
+
 @keyframes blur-fade-in {
   0% {
     opacity: 0;

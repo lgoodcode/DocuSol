@@ -74,7 +74,6 @@ export type Database = {
           created_at: string
           created_by: string
           document_id: string | null
-          document_url: string
           hash: string
           id: string
           transaction_signature: string | null
@@ -84,7 +83,6 @@ export type Database = {
           created_at?: string
           created_by: string
           document_id?: string | null
-          document_url: string
           hash: string
           id?: string
           transaction_signature?: string | null
@@ -94,7 +92,6 @@ export type Database = {
           created_at?: string
           created_by?: string
           document_id?: string | null
-          document_url?: string
           hash?: string
           id?: string
           transaction_signature?: string | null
@@ -116,7 +113,6 @@ export type Database = {
           created_at: string
           current_version_id: string | null
           expired_at: string | null
-          filename: string
           id: string
           name: string
           password: string | null
@@ -130,7 +126,6 @@ export type Database = {
           created_at?: string
           current_version_id?: string | null
           expired_at?: string | null
-          filename: string
           id?: string
           name: string
           password?: string | null
@@ -144,7 +139,6 @@ export type Database = {
           created_at?: string
           current_version_id?: string | null
           expired_at?: string | null
-          filename?: string
           id?: string
           name?: string
           password?: string | null
@@ -190,11 +184,7 @@ export type Database = {
       }
       create_document_with_version: {
         Args: {
-          p_user_id: string
           p_name: string
-          p_filename: string
-          p_mime_type: string
-          p_document_url: string
           p_hash: string
           p_password?: string
         }

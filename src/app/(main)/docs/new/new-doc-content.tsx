@@ -43,7 +43,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-import { useSignDoc } from "./hooks";
+import { useSignDoc } from "./utils";
 import { NewDocumentDialog } from "./new-doc-dialog";
 
 const documentSchema = z

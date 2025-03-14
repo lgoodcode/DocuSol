@@ -10,6 +10,17 @@ export const previewBlob = (blob: Blob) => {
   window.open(url, "_blank");
 };
 
+/**
+ * Validates if the provided string is a valid email address
+ *
+ * @param email The email string to validate
+ * @returns Boolean indicating if the email is valid
+ */
+export const isValidEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
 // Convert Buffer/ArrayBuffer to hex string for BYTEA
 export const bufferToHex = (buffer: Buffer) => "\\x" + buffer.toString("hex");
 
@@ -26,6 +37,7 @@ type RetryOptions = {
   maxDelay?: number;
   backoffFactor?: number;
   retryOnError?: (error: Error) => boolean;
+  cancelOnError?: (error: Error) => boolean;
   onRetry?: (error: Error, attempt: number, delay: number) => void;
 };
 
@@ -45,6 +57,7 @@ export async function withRetry<T>(
     maxDelay = 10000,
     backoffFactor = 2,
     retryOnError = () => true,
+    cancelOnError = () => false,
     onRetry = () => {},
   } = options;
 
@@ -58,7 +71,11 @@ export async function withRetry<T>(
       const error = err as Error;
       attempt++;
 
-      if (attempt > maxRetries || !retryOnError(error as Error)) {
+      if (
+        attempt > maxRetries ||
+        !retryOnError(error as Error) ||
+        cancelOnError(error as Error)
+      ) {
         throw error;
       }
 

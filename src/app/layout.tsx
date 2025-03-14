@@ -10,8 +10,7 @@ import {
 import { Scan } from "@/components/dev/scan";
 import { ProgressBarProvider } from "@/components/providers/progress-bar-provider";
 import { WalletProvider } from "@/components/providers/wallet-provider";
-import { ToastProvider } from "@/components/ui/toast";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 
 import "./globals.css";
@@ -40,7 +39,7 @@ export default function RootLayout({
       >
         <SpeedInsights />
         <Analytics />
-        <Scan />
+        {/* <Scan /> */}
         <ProgressBarProvider />
         <NextThemesProvider
           attribute="class"
@@ -49,10 +48,14 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <WalletProvider>
-            <ToastProvider swipeDirection="right">
-              <Toaster />
-              {children}
-            </ToastProvider>
+            {children}
+            <Toaster
+              richColors
+              closeButton
+              toastOptions={{
+                className: "!backdrop-blur-sm",
+              }}
+            />
           </WalletProvider>
         </NextThemesProvider>
       </body>

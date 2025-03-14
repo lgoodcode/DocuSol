@@ -6,6 +6,7 @@ import { captureException } from "@sentry/nextjs";
 import { Loader2, XCircle } from "lucide-react";
 
 import { ACCEPTED_FILE_TYPES, MAX_FILE_SIZE } from "@/constants";
+import { PDFHash } from "@/lib/stamp/hash-service";
 import { formatFileSize } from "@/lib/utils/format-file-size";
 import { FileUpload } from "@/components/ui/file-upload";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,18 +14,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
-import { useUploadDocument } from "./utils";
+import { uploadInitialDocument } from "./utils";
+import { useDocumentStore } from "./useDocumentStore";
 
 export function UploadFileStep({
   onStepComplete,
 }: {
   onStepComplete: () => void;
 }) {
-  const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState<boolean>(false);
-  const [documentName, setDocumentName] = useState<string>("");
-  const uploadDocument = useUploadDocument();
+  const [isUploading, setIsUploading] = useState(false);
+  const {
+    documentFile,
+    documentName,
+    setDocumentFile,
+    setDocumentName,
+    setCurrentStep,
+    setDocumentId,
+  } = useDocumentStore();
 
   const handleFileChange = (file: File) => {
     if (file.size > MAX_FILE_SIZE) {
@@ -39,22 +46,36 @@ export function UploadFileStep({
       return;
     }
 
-    setFile(file);
+    setDocumentFile(file);
   };
 
   const handleFileRemove = () => {
-    setFile(null);
+    setDocumentFile(null);
   };
 
   const handleUpload = async () => {
-    if (!file) {
+    if (!documentFile) {
       return;
     }
 
     try {
       setError(null);
       setIsUploading(true);
-      await uploadDocument(documentName, file);
+
+      // Generate the content hash of the original document prior to modifications
+      const hash = await PDFHash.getFileHash(
+        Buffer.from(await documentFile.arrayBuffer()),
+      );
+
+      // Use the atomic upload function that handles both operations
+      const documentId = await uploadInitialDocument(
+        documentName,
+        documentFile,
+        hash,
+      );
+
+      setDocumentId(documentId);
+      setCurrentStep("signers");
       onStepComplete();
     } catch (err) {
       const error = err as Error;
@@ -62,7 +83,7 @@ export function UploadFileStep({
         setError("A document with this name already exists");
       } else {
         console.error(err);
-        captureException(err as Error);
+        captureException(err);
         setError("An error occurred while uploading the document");
       }
     } finally {
@@ -144,26 +165,26 @@ export function UploadFileStep({
                   </div>
 
                   <FileUpload
-                    file={file}
+                    file={documentFile || null}
                     accept={Object.keys(ACCEPTED_FILE_TYPES)}
                     onChange={handleFileChange}
                     onRemove={handleFileRemove}
                   />
-
-                  <div className="flex justify-end">
-                    <Button
-                      disabled={!file || !documentName}
-                      onClick={handleUpload}
-                    >
-                      Upload
-                    </Button>
-                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
           </CardContent>
         </Card>
       </motion.div>
+
+      <div className="mt-4 flex justify-end">
+        <Button
+          disabled={!documentFile || !documentName}
+          onClick={handleUpload}
+        >
+          Upload
+        </Button>
+      </div>
     </div>
   );
 }

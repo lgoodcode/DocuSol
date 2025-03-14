@@ -8,7 +8,7 @@ import { IS_PROD } from "@/constants";
 export function Scan() {
   useEffect(() => {
     if (IS_PROD) return;
-    scan({ enabled: true });
+    scan({ enabled: true, trackUnnecessaryRenders: true });
   }, []);
 
   return <></>;

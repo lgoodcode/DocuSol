@@ -1,89 +1,5 @@
 --
 --
--- document_versions
---
---
-
-/**
- * Document versions are used to track the history of a document. Each signature
- * creates a new version of the document. This allows us to track the history of
- * the document and to see the changes that have been made to it.
- *
- * id - The ID of the document version
- * document_id - The ID of the document
- * version_number - The version number of the document - this is automatically
- *   set by the set_document_version_number function
- * document_url - The URL of the document
- * hash - The hash of the document
- * transaction_signature - The transaction signature of the document
- * created_by - The ID of the user who created the document version
- * created_at - The timestamp when the document version was created
- */
-CREATE TABLE document_versions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    document_id UUID,
-    version_number INTEGER,
-    document_url TEXT NOT NULL,
-    hash TEXT NOT NULL,
-    transaction_signature TEXT,
-    created_by UUID NOT NULL REFERENCES auth.users(id),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-ALTER TABLE document_versions OWNER TO postgres;
-
--- Add indexes to the document versions table
-CREATE INDEX idx_document_versions_document_id ON document_versions(document_id);
--- This index is used to prevent duplicate document versions from being created
--- by the same user for the same document
-CREATE UNIQUE INDEX idx_document_versions_document_version
-  ON document_versions(document_id, version_number)
-  WHERE document_id IS NOT NULL;
-
--- No RLS policies - only server can access and modify
-ALTER TABLE document_versions ENABLE ROW LEVEL SECURITY;
-
--- Create a function to get the next version number for a document
-CREATE OR REPLACE FUNCTION get_next_document_version_number(doc_id UUID)
-RETURNS INTEGER AS $$
-DECLARE
-    next_version INTEGER;
-BEGIN
-    -- Get the highest version number for this document
-    SELECT COALESCE(MAX(version_number), 0) + 1
-    INTO next_version
-    FROM document_versions
-    WHERE document_id = doc_id;
-
-    RETURN next_version;
-END;
-$$ LANGUAGE plpgsql;
-
-ALTER FUNCTION get_next_document_version_number(UUID) OWNER TO postgres;
-
--- Create a function to automatically set the version number before insert
-CREATE OR REPLACE FUNCTION set_document_version_number()
-RETURNS TRIGGER AS $$
-BEGIN
-    -- Only set version_number if it's not already set
-    IF NEW.version_number IS NULL OR NEW.version_number <= 0 THEN
-        NEW.version_number := get_next_document_version_number(NEW.document_id);
-    END IF;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-ALTER FUNCTION set_document_version_number() OWNER TO postgres;
-
--- Create a trigger to automatically set the version number
-CREATE TRIGGER set_document_version_number_trigger
-    BEFORE INSERT ON document_versions
-    FOR EACH ROW
-    EXECUTE FUNCTION set_document_version_number();
-
---
---
 -- documents
 --
 --
@@ -123,27 +39,12 @@ CREATE TABLE documents (
     status document_status NOT NULL DEFAULT 'draft',
     name TEXT NOT NULL,
     password TEXT,
-    filename TEXT NOT NULL,
     completed_at TIMESTAMPTZ,
     expired_at TIMESTAMPTZ,
     rejected_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-
--- Add the foreign key constraints after the documents table is created
--- This is to prevent circular dependencies on the documents table
-ALTER TABLE document_versions
-ADD CONSTRAINT fk_document_versions_document
-FOREIGN KEY (document_id)
-REFERENCES documents(id)
-ON DELETE CASCADE;
-
-ALTER TABLE documents
-ADD CONSTRAINT fk_documents_current_version
-FOREIGN KEY (current_version_id)
-REFERENCES document_versions(id)
-ON DELETE SET NULL;
 
 -- Add the owner to the tables
 ALTER TABLE documents OWNER TO postgres;
@@ -153,8 +54,33 @@ CREATE INDEX idx_documents_user_id ON documents(user_id);
 CREATE INDEX idx_documents_status ON documents(status);
 CREATE INDEX idx_documents_created_at ON documents(created_at);
 
--- No RLS policies - only server can access and modify
-ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
+-- Users can view their own documents
+CREATE POLICY "Users can view their own documents"
+ON documents
+FOR SELECT
+TO authenticated
+USING (user_id = auth.uid());
+
+-- Users can insert their own documents
+CREATE POLICY "Users can insert their own documents"
+ON documents
+FOR INSERT
+TO authenticated
+WITH CHECK (user_id = auth.uid());
+
+-- Users can update their own documents
+CREATE POLICY "Users can update their own documents"
+ON documents
+FOR UPDATE
+TO authenticated
+USING (user_id = auth.uid());
+
+-- Users can delete their own documents
+CREATE POLICY "Users can delete their own documents"
+ON documents
+FOR DELETE
+TO authenticated
+USING (user_id = auth.uid());
 
 -- Create function to update updated_at timestamp for documents
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -172,6 +98,166 @@ CREATE TRIGGER update_documents_updated_at
     BEFORE UPDATE ON documents
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
+
+--
+--
+-- document_versions
+--
+--
+
+/**
+ * Document versions are used to track the history of a document. Each signature
+ * creates a new version of the document. This allows us to track the history of
+ * the document and to see the changes that have been made to it.
+ *
+ * id - The ID of the document version
+ * document_id - The ID of the document
+ * version_number - The version number of the document - this is automatically
+ *   set by the set_document_version_number function
+ * document_url - The URL of the document
+ * hash - The hash of the document
+ * transaction_signature - The transaction signature of the document
+ * created_by - The ID of the user who created the document version
+ * created_at - The timestamp when the document version was created
+ */
+CREATE TABLE document_versions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    document_id UUID,
+    version_number INTEGER NOT NULL DEFAULT 0,
+    hash TEXT NOT NULL,
+    transaction_signature TEXT,
+    created_by UUID NOT NULL REFERENCES auth.users(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Add the foreign key constraints after the documents table is created
+-- This is to prevent circular dependencies on the documents table
+ALTER TABLE document_versions
+ADD CONSTRAINT fk_document_versions_document
+FOREIGN KEY (document_id)
+REFERENCES documents(id)
+ON DELETE CASCADE;
+
+ALTER TABLE documents
+ADD CONSTRAINT fk_documents_current_version
+FOREIGN KEY (current_version_id)
+REFERENCES document_versions(id)
+ON DELETE SET NULL;
+
+ALTER TABLE document_versions OWNER TO postgres;
+
+-- Add indexes to the document versions table
+CREATE INDEX idx_document_versions_document_id ON document_versions(document_id);
+-- This index is used to prevent duplicate document versions from being created
+-- by the same user for the same document
+CREATE UNIQUE INDEX idx_document_versions_document_version
+  ON document_versions(document_id, version_number)
+  WHERE document_id IS NOT NULL;
+
+-- Users can view versions of documents they own
+CREATE POLICY "Users can view versions of their documents"
+ON document_versions
+FOR SELECT
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM documents
+    WHERE documents.id = document_versions.document_id
+    AND documents.user_id = auth.uid()
+  )
+);
+
+-- Users can insert versions for documents they own
+CREATE POLICY "Users can insert versions for their documents"
+ON document_versions
+FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM documents
+    WHERE documents.id = document_versions.document_id
+    AND documents.user_id = auth.uid()
+  )
+);
+
+-- Users can update versions of documents they own
+CREATE POLICY "Users can update versions of their documents"
+ON document_versions
+FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM documents
+    WHERE documents.id = document_versions.document_id
+    AND documents.user_id = auth.uid()
+  )
+);
+
+-- Users can delete versions of documents they own
+CREATE POLICY "Users can delete versions of their documents"
+ON document_versions
+FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM documents
+    WHERE documents.id = document_versions.document_id
+    AND documents.user_id = auth.uid()
+  )
+);
+
+-- Create a function to get the next version number for a document
+CREATE OR REPLACE FUNCTION get_next_document_version_number(doc_id UUID)
+RETURNS INTEGER AS $$
+DECLARE
+    next_version INTEGER;
+BEGIN
+    -- Get the highest version number for this document
+    SELECT COALESCE(MAX(version_number), 0) + 1
+    INTO next_version
+    FROM document_versions
+    WHERE document_id = doc_id;
+
+    RETURN next_version;
+END;
+$$ LANGUAGE plpgsql;
+
+ALTER FUNCTION get_next_document_version_number(UUID) OWNER TO postgres;
+
+-- Create a function to automatically set the version number before insert
+CREATE OR REPLACE FUNCTION set_document_version_number()
+RETURNS TRIGGER AS $$
+DECLARE
+    version_count INTEGER;
+BEGIN
+    -- Check if this is the first version for this document
+    SELECT COUNT(*)
+    INTO version_count
+    FROM document_versions
+    WHERE document_id = NEW.document_id;
+
+    -- Only set version_number if it's not already set AND this is not the first version
+    IF (NEW.version_number IS NULL OR NEW.version_number <= 0) THEN
+        IF version_count > 0 THEN
+            -- This is not the first version, so increment
+            NEW.version_number := get_next_document_version_number(NEW.document_id);
+        ELSE
+            -- This is the first version, keep it at 0
+            NEW.version_number := 0;
+        END IF;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+ALTER FUNCTION set_document_version_number() OWNER TO postgres;
+
+-- Create a trigger to automatically set the version number
+CREATE TRIGGER set_document_version_number_trigger
+    BEFORE INSERT ON document_versions
+    FOR EACH ROW
+    EXECUTE FUNCTION set_document_version_number();
 
 --
 --
@@ -225,8 +311,61 @@ CREATE INDEX idx_document_signers_user_id ON document_signers(user_id);
 CREATE INDEX idx_document_signers_status ON document_signers(status);
 CREATE INDEX idx_document_signers_version_id ON document_signers(version_id);
 
--- No RLS policies - only server can access and modify
-ALTER TABLE document_signers ENABLE ROW LEVEL SECURITY;
+-- Users can view signers for documents they own OR where they are a signer
+CREATE POLICY "Users can view signers for their documents or where they are a signer"
+ON document_signers
+FOR SELECT
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM documents
+    WHERE documents.id = document_signers.document_id
+    AND documents.user_id = auth.uid()
+  )
+  OR
+  document_signers.user_id = auth.uid()
+);
+
+-- Users can insert signers for documents they own
+CREATE POLICY "Users can insert signers for their documents"
+ON document_signers
+FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM documents
+    WHERE documents.id = document_signers.document_id
+    AND documents.user_id = auth.uid()
+  )
+);
+
+-- Users can update signers for documents they own OR update their own signing status
+CREATE POLICY "Users can update signers for their documents or their own signing status"
+ON document_signers
+FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM documents
+    WHERE documents.id = document_signers.document_id
+    AND documents.user_id = auth.uid()
+  )
+  OR
+  document_signers.user_id = auth.uid()
+);
+
+-- Users can delete signers for documents they own
+CREATE POLICY "Users can delete signers for their documents"
+ON document_signers
+FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM documents
+    WHERE documents.id = document_signers.document_id
+    AND documents.user_id = auth.uid()
+  )
+);
 
 -- Create trigger to automatically update updated_at
 CREATE TRIGGER update_document_signers_updated_at
@@ -294,21 +433,12 @@ CREATE TRIGGER update_document_status_on_signer_change
  * Creates a new document with its initial version.
  * This function handles the entire transaction to ensure data consistency.
  *
- * @param p_user_id - The ID of the user creating the document
  * @param p_name - The name of the document
- * @param p_filename - The original filename
- * @param p_mime_type - The MIME type of the document
- * @param p_document_url - The URL where the document is stored
- * @param p_hash - The hash of the document
  * @param p_password - Optional password for the document
  * @return RECORD - Returns the created document and version records
  */
 CREATE OR REPLACE FUNCTION create_document_with_version(
-    p_user_id UUID,
     p_name TEXT,
-    p_filename TEXT,
-    p_mime_type TEXT,
-    p_document_url TEXT,
     p_hash TEXT,
     p_password TEXT DEFAULT NULL
 )
@@ -318,23 +448,23 @@ RETURNS TABLE(
     version_number INTEGER
 ) AS $$
 DECLARE
+    v_user_id UUID;
     v_document_id UUID;
     v_version_id UUID;
     v_version_number INTEGER;
 BEGIN
+    -- Get the current user ID
+    v_user_id := auth.uid();
+
     -- Create the document
     INSERT INTO documents (
         user_id,
         name,
-        filename,
-        mime_type,
         password,
         status
     ) VALUES (
-        p_user_id,
+        v_user_id,
         p_name,
-        p_filename,
-        p_mime_type,
         p_password,
         'draft'
     ) RETURNING id INTO v_document_id;
@@ -342,14 +472,12 @@ BEGIN
     -- Create the initial version
     INSERT INTO document_versions (
         document_id,
-        document_url,
         hash,
         created_by
     ) VALUES (
         v_document_id,
-        p_document_url,
         p_hash,
-        p_user_id
+        v_user_id
     ) RETURNING id, version_number INTO v_version_id, v_version_number;
 
     -- Update the document with the current version
@@ -363,7 +491,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-ALTER FUNCTION create_document_with_version(UUID, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT) OWNER TO postgres;
+ALTER FUNCTION create_document_with_version(TEXT, TEXT, TEXT) OWNER TO postgres;
 
 /**
  * Adds signers to a document.

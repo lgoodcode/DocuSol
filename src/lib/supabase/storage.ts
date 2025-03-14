@@ -1,6 +1,5 @@
 import { captureException } from "@sentry/nextjs";
 
-import { withRetry } from "@/lib/utils";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 const BUCKET_NAME = "documents";
@@ -19,12 +18,16 @@ export class StorageService {
     return `users/${userId}`;
   }
 
-  private getFilePath(userId: string, fileName: string) {
-    return `${this.getUserPath(userId)}/${fileName}`;
+  getFilePath(userId: string, fileName: string, version: number) {
+    return `${this.getUserPath(userId)}/${fileName}_V${version}`;
   }
 
-  async getPresignedUrl(userId: string, fileName: string): Promise<string> {
-    const filePath = this.getFilePath(userId, fileName);
+  async getPresignedUrl(
+    userId: string,
+    fileName: string,
+    version: number,
+  ): Promise<string> {
+    const filePath = this.getFilePath(userId, fileName, version);
     const { error, data } = await this.supabase.storage
       .from(this.bucket)
       .createSignedUploadUrl(filePath);
@@ -40,24 +43,17 @@ export class StorageService {
     fileName: string,
     fileData: Buffer | Blob,
     contentType: string,
+    version: number,
   ) {
-    return withRetry(
-      async () => {
-        const filePath = this.getFilePath(userId, fileName);
-        const { error } = await this.supabase.storage
-          .from(this.bucket)
-          .upload(filePath, fileData, {
-            contentType,
-            upsert: false,
-          });
+    const filePath = this.getFilePath(userId, fileName, version);
+    const { error } = await this.supabase.storage
+      .from(this.bucket)
+      .upload(filePath, fileData, {
+        contentType,
+        upsert: false,
+      });
 
-        if (error) throw error;
-      },
-      {
-        cancelOnError: (error) =>
-          error.message === "The resource already exists",
-      },
-    );
+    if (error) throw error;
   }
 
   async verifyFileExists(filePath: string): Promise<boolean> {

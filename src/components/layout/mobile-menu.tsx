@@ -36,7 +36,7 @@ export function MobileMenu() {
   const themeButtonRef = useRef<HTMLButtonElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
-  const { theme, setTheme } = useTheme();
+  const { theme = "dark", setTheme } = useTheme();
 
   const handleLogout = async () => {
     const supabase = createClient();

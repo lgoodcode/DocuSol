@@ -23,6 +23,22 @@ export const API_ROUTES: Record<string, ApiRoute> = {
     description: "Create a new document",
     protected: true,
   },
+  "docs.upload.presigned-url": {
+    name: "Docs - Upload - Presigned URL",
+    path: "/api/docs/upload/presigned-url",
+    description: "Get a presigned URL for S3 storage",
+    protected: true,
+  },
+  "docs.upload.file": {
+    name: "Docs - Upload - File",
+    path: "/api/docs/upload/file",
+    description: `
+      Receive the file hash of the file to upload and metadata. Process the
+      information and get a presigned URL for S3 storage. This will return
+      a presigned URL for S3 storage.
+    `,
+    protected: true,
+  },
   "docs.search": {
     name: "Docs - Search",
     path: "/api/docs/search",
@@ -50,6 +66,10 @@ export const API_PATHS = {
     SESSION: API_ROUTES["auth.session"].path,
   },
   DOCS: {
+    UPLOAD: {
+      PRESIGNED_URL: API_ROUTES["docs.upload.presigned-url"].path,
+      FILE: API_ROUTES["docs.upload.file"].path,
+    },
     CREATE: API_ROUTES["docs.create"].path,
     SEARCH: API_ROUTES["docs.search"].path,
     SIGN: API_ROUTES["docs.sign"].path,

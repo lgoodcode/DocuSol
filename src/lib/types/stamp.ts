@@ -11,9 +11,17 @@ export type SigningMode = (typeof SigningModes)[keyof typeof SigningModes];
 
 /** Possible signature states */
 export const SignatureState = {
-  PENDING: "pending",
-  SIGNED: "signed",
+  /** Document is upload but no fields or information is filled out */
+  DRAFT: "draft",
+  /** Document is waiting for a signature from participant(s) */
+  AWAITING_SIGNATURES: "awaiting_signatures",
+  /** Document is partially signed by participant(s) */
+  PARTIALLY_SIGNED: "partially_signed",
+  /** Document is signed by all participants */
+  COMPLETED: "completed",
+  /** Document is rejected by the owner or a participant */
   REJECTED: "rejected",
+  /** Document has expired */
   EXPIRED: "expired",
 } as const;
 
@@ -79,7 +87,7 @@ export interface DocumentContentHash extends BaseDocumentType {
   /** Hash of PDF excluding metadata */
   contentHash: string;
   /** Hash of complete PDF including metadata */
-  fullHash: string;
+  fileHash: string;
   /** Hash of just the metadata */
   metadataHash?: string;
 }
