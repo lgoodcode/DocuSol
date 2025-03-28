@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 import "./globals.css";
 
 const satoshiFont = localFont({
-  src: "./font/Satoshi-Variable.ttf",
+  src: "./fonts/Satoshi-Variable.ttf",
   variable: "--font-satoshi",
   display: "swap",
 });

@@ -15,12 +15,16 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { getUser } from "@/lib/supabase/utils";
 import { isValidEmail } from "@/lib/utils";
-import { SignerRole } from "@/lib/types/stamp";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-import { useDocumentStore, DocumentSigner } from "./useDocumentStore";
+import { useDocumentStore } from "@/lib/pdf-editor/stores/useDocumentStore";
+import type {
+  DocumentSigner,
+  SignerRole,
+  SigningMode,
+} from "@/lib/types/stamp";
 
 const validateEmail = (email: string): string | null => {
   if (!email.trim()) {
@@ -45,12 +49,12 @@ const validateEmail = (email: string): string | null => {
 const checkDuplicateEmail = (
   signers: DocumentSigner[],
   email: string,
-  excludeIndex?: number,
+  excludeId?: string,
 ): string | null => {
   const isDuplicate = signers.some(
-    (signer, index) =>
+    (signer) =>
       signer.email.toLowerCase() === email.toLowerCase() &&
-      index !== excludeIndex,
+      signer.id !== excludeId,
   );
 
   return isDuplicate
@@ -70,7 +74,7 @@ export function SelectSignersStep({
   const [addedMyself, setAddedMyself] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [inputError, setInputError] = useState<string | null>(null);
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingSignerId, setEditingSignerId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editEmailError, setEditEmailError] = useState<string | null>(null);
@@ -92,10 +96,12 @@ export function SelectSignersStep({
 
       // Add signer to the store
       addSigner({
+        id: crypto.randomUUID(),
         name: "",
         email,
-        isMyself: false,
-        role: SignerRole.PARTICIPANT,
+        isOwner: false,
+        role: "participant",
+        mode: "transparent",
       });
 
       setInputValue("");
@@ -107,15 +113,15 @@ export function SelectSignersStep({
     }
   };
 
-  const handleRemoveSigner = (index: number) => {
+  const handleRemoveSigner = (id: string) => {
     try {
-      const signerToRemove = signers[index];
-      if (signerToRemove.isMyself) {
+      const signerToRemove = signers.find((signer) => signer.id === id);
+      if (signerToRemove?.isOwner) {
         setAddedMyself(false);
       }
 
       // Remove signer from the store
-      removeSigner(index);
+      removeSigner(id);
     } catch (err) {
       setError("Failed to remove signer");
       captureException(err);
@@ -144,8 +150,9 @@ export function SelectSignersStep({
         addSigner({
           name: `${user.firstName} ${user.lastName}`,
           email,
-          isMyself: true,
-          role: SignerRole.OWNER,
+          isOwner: true,
+          role: "owner",
+          mode: "transparent",
         });
 
         setAddedMyself(true);
@@ -159,20 +166,21 @@ export function SelectSignersStep({
     }
   };
 
-  const handleEditSigner = (index: number) => {
-    const signer = signers[index];
+  const handleEditSigner = (id: string) => {
+    const signer = signers.find((signer) => signer.id === id);
+    if (!signer) return;
     setEditName(signer.name);
     setEditEmail(signer.email);
     setEditEmailError(null);
-    setEditingIndex(index);
+    setEditingSignerId(signer.id);
   };
 
   const handleSaveEdit = () => {
     try {
-      if (editingIndex === null) return;
+      if (editingSignerId === null) return;
 
       // Skip validation for myself
-      if (!signers[editingIndex].isMyself) {
+      if (!signers.find((signer) => signer.id === editingSignerId)?.isOwner) {
         // Validate email
         const emailError = validateEmail(editEmail);
         if (emailError) {
@@ -184,7 +192,7 @@ export function SelectSignersStep({
         const duplicateError = checkDuplicateEmail(
           signers,
           editEmail,
-          editingIndex,
+          editingSignerId,
         );
         if (duplicateError) {
           setEditEmailError(duplicateError);
@@ -193,12 +201,12 @@ export function SelectSignersStep({
       }
 
       // Update signer in the store
-      updateSigner(editingIndex, {
+      updateSigner(editingSignerId, {
         name: editName,
         email: editEmail,
       });
 
-      setEditingIndex(null);
+      setEditingSignerId(null);
       setEditEmailError(null);
       setError(null);
     } catch (err) {
@@ -208,7 +216,7 @@ export function SelectSignersStep({
   };
 
   const handleCancelEdit = () => {
-    setEditingIndex(null);
+    setEditingSignerId(null);
     setEditName("");
     setEditEmail("");
     setEditEmailError(null);
@@ -227,12 +235,12 @@ export function SelectSignersStep({
 
   // Check if we already have ourselves in the signers list
   useEffect(() => {
-    const myselfExists = signers.some((signer) => signer.isMyself);
+    const myselfExists = signers.some((signer) => signer.isOwner);
     setAddedMyself(myselfExists);
   }, [signers]);
 
   return (
-    <div className="space-y-8">
+    <div className="container mx-auto max-w-4xl space-y-8">
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -345,21 +353,20 @@ export function SelectSignersStep({
                             {signer.name || "Unnamed Signer"}
                           </p>
                           <div className="flex items-center gap-2">
-                            {!signer.isMyself && (
+                            {!signer.isOwner && (
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleEditSigner(index)}
+                                onClick={() => handleEditSigner(signer.id)}
                                 className="text-primary hover:bg-primary/10 hover:text-primary"
                               >
                                 <Pencil className="h-4 w-4" />
                               </Button>
                             )}
                             <Button
-                              variant="ghost"
+                              variant="destructive"
                               size="sm"
-                              onClick={() => handleRemoveSigner(index)}
-                              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                              onClick={() => handleRemoveSigner(signer.id)}
                             >
                               <XCircle className="h-4 w-4" />
                             </Button>
@@ -386,7 +393,7 @@ export function SelectSignersStep({
 
       {/* Edit Signer Dialog */}
       <Dialog
-        open={editingIndex !== null}
+        open={editingSignerId !== null}
         onOpenChange={(open) => !open && handleCancelEdit()}
       >
         <DialogContent className="sm:max-w-md">
@@ -432,7 +439,9 @@ export function SelectSignersStep({
                 placeholder="Enter signer's email"
                 className={editEmailError ? "border-destructive" : ""}
                 disabled={
-                  editingIndex !== null && signers[editingIndex]?.isMyself
+                  editingSignerId !== null &&
+                  signers.find((signer) => signer.id === editingSignerId)
+                    ?.isOwner
                 }
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
@@ -445,11 +454,13 @@ export function SelectSignersStep({
                 {editEmailError && (
                   <p className="text-sm text-destructive">{editEmailError}</p>
                 )}
-                {editingIndex !== null && signers[editingIndex]?.isMyself && (
-                  <p className="text-xs text-muted-foreground">
-                    You cannot change your own email address
-                  </p>
-                )}
+                {editingSignerId !== null &&
+                  signers.find((signer) => signer.id === editingSignerId)
+                    ?.isOwner && (
+                    <p className="text-xs text-muted-foreground">
+                      You cannot change your own email address
+                    </p>
+                  )}
               </div>
             </div>
           </form>

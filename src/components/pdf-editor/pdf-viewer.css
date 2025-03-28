@@ -1,0 +1,51 @@
+/* PDF Viewer Styles */
+.document-canvas {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+.document-canvas::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.document-canvas::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.document-canvas::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.document-canvas::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.document-page {
+  transition: box-shadow 0.2s ease;
+}
+
+.document-page:hover {
+  box-shadow:
+    0 6px 30px rgba(0, 0, 0, 0.2),
+    0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+/* Improve PDF rendering */
+.pdf-page {
+  display: block;
+  user-select: none;
+}
+
+/* Add a subtle border to make the page edges more visible */
+.document-page::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  pointer-events: none;
+}

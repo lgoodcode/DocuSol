@@ -2,16 +2,20 @@
 
 import { useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Stepper } from "@/components/ui/stepper";
 
-import { useDocumentStore } from "./useDocumentStore";
+import { Stepper } from "@/components/ui/stepper";
+import { useDocumentStore } from "@/lib/pdf-editor/stores/useDocumentStore";
+import { cn, dataUrlToFile } from "@/lib/utils";
+
 import { UploadFileStep } from "./upload-file-step";
 import { SelectSignersStep } from "./select-signers-step";
-import { SigningStep } from "./signing-step";
+import { EditingStep } from "./editing-step";
 import { ReviewStep } from "./review-step";
+import { Button } from "@/components/ui/button";
 
 export function NewDocContent() {
-  const { currentStep, setCurrentStep } = useDocumentStore();
+  const { currentStep, setCurrentStep, reset, viewType, setViewType } =
+    useDocumentStore();
 
   // Convert the string step to a number index for the stepper component
   const stepToIndex = {
@@ -23,13 +27,12 @@ export function NewDocContent() {
 
   const currentStepIndex = stepToIndex[currentStep];
 
-  // Initialize the document store if needed
   useEffect(() => {
-    // If the current step is not set, set it to upload
+    // Initialization - if there is no step, reset the store
     if (!currentStep) {
-      setCurrentStep("upload");
+      reset();
     }
-  }, [currentStep, setCurrentStep]);
+  }, [currentStep, reset]);
 
   const onStepComplete = () => {
     const nextStepIndex = currentStepIndex + 1;
@@ -53,17 +56,28 @@ export function NewDocContent() {
   };
 
   return (
-    <div className="space-y-12">
+    <div
+      className={cn(
+        "space-y-12 py-8",
+        currentStep === "fields" && "h-dvh overflow-hidden",
+      )}
+    >
+      <div className="flex items-center gap-2">
+        <span>{viewType}</span>
+        <Button onClick={() => setViewType("signer")}>Signer</Button>
+        <Button onClick={() => setViewType("editor")}>Editor</Button>
+      </div>
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
+        className="container mx-auto max-w-4xl"
       >
         <Stepper
           steps={[
             "Upload Document",
             "Select Signers",
-            "Sign Document",
+            "Edit Document",
             "Review and Send",
           ]}
           currentStep={currentStepIndex}
@@ -86,7 +100,7 @@ export function NewDocContent() {
             <SelectSignersStep onStepComplete={onStepComplete} />
           )}
           {currentStepIndex === 2 && (
-            <SigningStep onStepComplete={onStepComplete} />
+            <EditingStep onStepComplete={onStepComplete} />
           )}
           {currentStepIndex === 3 && (
             <ReviewStep onStepComplete={onStepComplete} />

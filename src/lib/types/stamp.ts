@@ -2,12 +2,7 @@
 export const STAMP_VERSION = "0.1";
 
 /** Supported signing modes */
-export const SigningModes = {
-  TRANSPARENT: "transparent",
-  ANONYMOUS: "anonymous",
-} as const;
-
-export type SigningMode = (typeof SigningModes)[keyof typeof SigningModes];
+export type SigningMode = "transparent" | "anonymous";
 
 /** Possible signature states */
 export const SignatureState = {
@@ -25,39 +20,49 @@ export const SignatureState = {
   EXPIRED: "expired",
 } as const;
 
-export const SignerRole = {
-  OWNER: "owner",
-  REVIEWER: "reviewer",
-  WITNESS: "witness",
-  NOTARY: "notary",
-  PARTICIPANT: "participant",
-} as const;
-
-export type SignerRole = (typeof SignerRole)[keyof typeof SignerRole];
+export type SignerRole =
+  | "owner"
+  | "reviewer"
+  | "witness"
+  | "notary"
+  | "participant";
 
 export type SignatureStatus =
   (typeof SignatureState)[keyof typeof SignatureState];
 
 /** Base type to inherit basic dict structure */
-type BaseDocumentType = Record<string, string | number | undefined>;
+type BaseDocumentType = Record<string, boolean | string | number | undefined>;
 
 /**
  * Signer of the document
  *
- * @property id - Wallet address or ZK verification key (if anonymous)
+ * @property id - ID of the signer field
+ * @property userId - User ID of the signer - this will be set if the user is identified
+ *   in our database
+ * @property name - Name of the signer
+ * @property email - Email of the signer
  * @property role - Role of the signer
  * @property mode - Signing mode for this participant
- * @property order `[optional]` - Sequence number for ordered signing
+ * @property isOwner - Whether the signer is the owner of the document
+ * @property color - Color of the signer
  */
 export interface DocumentSigner extends BaseDocumentType {
-  /** Wallet address or ZK verification key */
+  /** ID of the signer in the document properties */
   id: string;
+  /** User ID of the signer */
+  userId?: string;
+  /** Name of the signer */
+  name: string;
+  /** Email of the signer */
+  email: string;
   /** Role of the signer */
   role: SignerRole;
   /** Signing mode for this participant */
   mode: SigningMode;
-  /** Optional sequence number for ordered signing */
-  order?: number;
+  /** Whether the signer is the owner of the document */
+  isOwner: boolean;
+  /** Color of the signer - used for the document fields */
+  color: string;
 }
 
 /**

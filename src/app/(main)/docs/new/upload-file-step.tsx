@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { captureException } from "@sentry/nextjs";
 import { Loader2, XCircle } from "lucide-react";
 
 import { ACCEPTED_FILE_TYPES, MAX_FILE_SIZE } from "@/constants";
+import { useDocumentStore } from "@/lib/pdf-editor/stores/useDocumentStore";
+import { debounce, fileToDataUrl } from "@/lib/utils";
 import { PDFHash } from "@/lib/stamp/hash-service";
 import { formatFileSize } from "@/lib/utils/format-file-size";
 import { FileUpload } from "@/components/ui/file-upload";
@@ -15,25 +17,40 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
 import { uploadInitialDocument } from "./utils";
-import { useDocumentStore } from "./useDocumentStore";
 
 export function UploadFileStep({
   onStepComplete,
 }: {
   onStepComplete: () => void;
 }) {
+  const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const {
-    documentFile,
-    documentName,
-    setDocumentFile,
+    documentDataUrl,
+    documentName: storeDocumentName,
+    setDocumentDataUrl,
     setDocumentName,
     setCurrentStep,
     setDocumentId,
   } = useDocumentStore();
+  // Local state for document name to prevent lag when typing
+  const [localDocumentName, setLocalDocumentName] = useState(storeDocumentName);
 
-  const handleFileChange = (file: File) => {
+  // Initialize local state from the store when component mounts
+  useEffect(() => {
+    setLocalDocumentName(storeDocumentName);
+  }, [storeDocumentName]);
+
+  const handleDocumentNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const name = e.target.value;
+    setLocalDocumentName(name);
+    debounce((name: string) => {
+      setDocumentName(name);
+    }, 300);
+  };
+
+  const handleFileChange = async (file: File) => {
     if (file.size > MAX_FILE_SIZE) {
       setError(
         `The file is too large. Please try a smaller file. (Max file size: ${formatFileSize(MAX_FILE_SIZE)})`,
@@ -46,31 +63,41 @@ export function UploadFileStep({
       return;
     }
 
-    setDocumentFile(file);
+    setFile(file);
+    setDocumentDataUrl(await fileToDataUrl(file));
   };
 
   const handleFileRemove = () => {
-    setDocumentFile(null);
+    setFile(null);
+    setDocumentDataUrl(null);
   };
 
   const handleUpload = async () => {
-    if (!documentFile) {
+    if (!file || !documentDataUrl) {
       return;
     }
+
+    console.log({
+      file,
+      documentDataUrl,
+    });
 
     try {
       setError(null);
       setIsUploading(true);
 
+      // Make sure document store is updated with the latest document name
+      setDocumentName(localDocumentName);
+
       // Generate the content hash of the original document prior to modifications
       const hash = await PDFHash.getFileHash(
-        Buffer.from(await documentFile.arrayBuffer()),
+        Buffer.from(await file.arrayBuffer()),
       );
 
       // Use the atomic upload function that handles both operations
       const documentId = await uploadInitialDocument(
-        documentName,
-        documentFile,
+        localDocumentName,
+        file,
         hash,
       );
 
@@ -92,7 +119,7 @@ export function UploadFileStep({
   };
 
   return (
-    <div className="space-y-8">
+    <div className="container mx-auto max-w-4xl space-y-8">
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -159,13 +186,13 @@ export function UploadFileStep({
                     <Input
                       type="text"
                       placeholder="Document name"
-                      value={documentName}
-                      onChange={(e) => setDocumentName(e.target.value)}
+                      value={localDocumentName}
+                      onChange={handleDocumentNameChange}
                     />
                   </div>
 
                   <FileUpload
-                    file={documentFile || null}
+                    file={file || null}
                     accept={Object.keys(ACCEPTED_FILE_TYPES)}
                     onChange={handleFileChange}
                     onRemove={handleFileRemove}
@@ -178,10 +205,7 @@ export function UploadFileStep({
       </motion.div>
 
       <div className="mt-4 flex justify-end">
-        <Button
-          disabled={!documentFile || !documentName}
-          onClick={handleUpload}
-        >
+        <Button disabled={!file || !localDocumentName} onClick={handleUpload}>
           Upload
         </Button>
       </div>

@@ -1,0 +1,202 @@
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { DocumentState, FieldType } from "@/lib/pdf-editor/document-types";
+import { DocumentSigner } from "@/lib/types/stamp";
+
+// Predefined set of distinct colors that work well for UI elements
+export const colorPalette = [
+  "#4f46e5", // Indigo
+  "#10b981", // Emerald
+  "#f97316", // Orange
+  "#0ea5e9", // Sky blue
+  "#f59e0b", // Amber
+  "#ef4444", // Red
+  "#8b5cf6", // Violet
+  "#ec4899", // Pink
+  "#06b6d4", // Cyan
+  "#84cc16", // Lime
+  "#6366f1", // Indigo
+  "#14b8a6", // Teal
+  "#a855f7", // Purple
+  "#f43f5e", // Rose
+  "#0284c7", // Light blue
+  "#059669", // Green
+  "#d946ef", // Fuchsia
+  "#6d28d9", // Purple
+];
+
+const keysToNotPersist: (keyof DocumentState)[] = [
+  "documentPreviewUrl",
+  "scale",
+  "isDragging",
+  "isResizing",
+  "selectedFieldId",
+];
+
+// Create the store with persistence
+export const useDocumentStore = create<DocumentState>()(
+  persist(
+    (set) => ({
+      documentId: null,
+      documentName: "",
+      documentDataUrl: null,
+      documentPreviewUrl: null,
+
+      currentStep: "upload",
+      viewType: "editor",
+      scale: 1,
+      isDragging: false,
+      isResizing: false,
+
+      signers: [],
+      currentSignerId: null,
+
+      fields: [],
+      selectedFieldId: undefined,
+
+      // Initial security and expiration state
+      isEncrypted: false,
+      encryptionPassword: "",
+      isExpirationEnabled: false,
+      expirationDate: undefined,
+      senderMessage: "",
+
+      // Document actions
+      setDocumentId: (id) => set({ documentId: id }),
+      setDocumentName: (name) => set({ documentName: name }),
+      setDocumentDataUrl: (url) => set({ documentDataUrl: url }),
+      setDocumentPreviewUrl: (url) => set({ documentPreviewUrl: url }),
+
+      // Document editor actions
+      setCurrentStep: (step) => set({ currentStep: step }),
+      setViewType: (viewType) => set({ viewType }),
+      setScale: (scale) => set({ scale }),
+      setDragging: (isDragging) => set({ isDragging }),
+      setResizing: (isResizing) => set({ isResizing }),
+
+      // Signer actions
+      addSigner: (signer) =>
+        set((state) => {
+          // If the first signer, set it as the current signer by default
+          const newSigner = {
+            ...signer,
+            id: crypto.randomUUID(),
+            color: colorPalette[state.signers.length],
+          } as DocumentSigner;
+
+          if (state.signers.length === 0) {
+            return {
+              signers: [newSigner],
+              currentSignerId: newSigner.id,
+            };
+          }
+
+          return { signers: [...state.signers, newSigner] };
+        }),
+      updateSigner: (id, updatedSigner) =>
+        set((state) => {
+          const newSigners = state.signers.map((signer) =>
+            signer.id === id ? { ...signer, ...updatedSigner } : signer,
+          );
+          return { signers: newSigners };
+        }),
+      removeSigner: (id) =>
+        set((state) => {
+          // If the last signer, set the current signer to null
+          const newSigners = state.signers.filter((signer) => signer.id !== id);
+
+          if (newSigners.length === 0) {
+            return {
+              signers: [],
+              currentSignerId: null,
+            };
+          }
+
+          return { signers: newSigners };
+        }),
+      clearSigners: () => set({ signers: [] }),
+      setCurrentSignerId: (id) => set({ currentSignerId: id }),
+
+      // Field actions
+      addField: (field) =>
+        set((state) => ({
+          fields: [
+            ...state.fields,
+            {
+              ...field,
+              id: crypto.randomUUID(),
+              assignedTo: state.currentSignerId || "",
+              textStyles: {},
+            },
+          ],
+        })),
+      updateField: (updatedField) =>
+        set((state) => ({
+          fields: state.fields.map((field) =>
+            field.id === updatedField.id
+              ? {
+                  ...field,
+                  ...updatedField,
+                  textStyles: {
+                    ...field.textStyles,
+                    ...updatedField.textStyles,
+                  },
+                }
+              : field,
+          ),
+        })),
+      removeField: (id) =>
+        set((state) => ({
+          fields: state.fields.filter((field) => field.id !== id),
+          selectedFieldId:
+            state.selectedFieldId === id ? undefined : state.selectedFieldId,
+        })),
+      clearFields: () => set({ fields: [] }),
+      setSelectedFieldId: (id) =>
+        set((state) => {
+          // Only update if the selection actually changes
+          if (state.selectedFieldId === id) return {};
+          return { selectedFieldId: id };
+        }),
+      clearSelectedFieldId: () => set({ selectedFieldId: undefined }),
+
+      // Security and expiration actions
+      setIsEncrypted: (isEncrypted) => set({ isEncrypted }),
+      setEncryptionPassword: (encryptionPassword) =>
+        set({ encryptionPassword }),
+      setIsExpirationEnabled: (isExpirationEnabled) =>
+        set({ isExpirationEnabled }),
+      setExpirationDate: (expirationDate) => set({ expirationDate }),
+      setSenderMessage: (senderMessage) => set({ senderMessage }),
+
+      // Reset the entire store
+      reset: () =>
+        set({
+          documentId: null,
+          documentName: "",
+          documentDataUrl: null,
+          documentPreviewUrl: null,
+          signers: [],
+          currentSignerId: null,
+          fields: [],
+          selectedFieldId: undefined,
+          currentStep: "upload",
+          isEncrypted: false,
+          encryptionPassword: "",
+          isExpirationEnabled: false,
+          expirationDate: undefined,
+          senderMessage: "",
+        }),
+    }),
+    {
+      name: "document-store",
+      // Only persist certain parts of the state
+      partialize: (state) =>
+        Object.fromEntries(
+          Object.entries(state).filter(
+            ([key]) => !keysToNotPersist.includes(key as keyof DocumentState),
+          ),
+        ),
+    },
+  ),
+);

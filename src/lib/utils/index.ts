@@ -89,6 +89,94 @@ export async function withRetry<T>(
   }
 }
 
+/**
+ * Creates a debounced function that delays invoking the provided function
+ * until after `wait` milliseconds have elapsed since the last time it was invoked.
+ *
+ * @param func The function to debounce
+ * @param wait The number of milliseconds to delay
+ * @returns A debounced version of the original function
+ */
+export function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number,
+): (...args: Parameters<T>) => void {
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+
+  return function (...args: Parameters<T>): void {
+    const later = () => {
+      timeout = null;
+      func(...args);
+    };
+
+    if (timeout !== null) {
+      clearTimeout(timeout);
+    }
+
+    timeout = setTimeout(later, wait);
+  };
+}
+
+/**
+ * Converts a File object to a data URL string
+ * @param file The File object to convert
+ * @returns A Promise that resolves to the data URL string
+ */
+export function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        resolve(reader.result);
+      } else {
+        reject(new Error("FileReader did not return a string"));
+      }
+    };
+
+    reader.onerror = () => {
+      reject(new Error("Error reading file"));
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * Converts a data URL string back to a File object
+ * @param dataUrl The data URL string
+ * @param fileName The name to use for the File
+ * @param options Optional File properties like type and lastModified
+ * @returns A new File object
+ */
+export function dataUrlToFile(
+  dataUrl: string,
+  fileName: string,
+  options: FilePropertyBag = {},
+): File {
+  // Extract the MIME type from the data URL
+  const arr = dataUrl.split(",");
+  const mime = arr[0].match(/:(.*?);/)?.[1] || "";
+  const bstr = atob(arr[1]);
+
+  // Create a Uint8Array from the binary string
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+
+  // Set default options with the extracted MIME type
+  const fileOptions: FilePropertyBag = {
+    type: mime,
+    ...options,
+  };
+
+  // Create and return a new File object
+  return new File([u8arr], fileName, fileOptions);
+}
+
 const openDB = (): Promise<IDBDatabase> => {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open("AppStorage", 3);

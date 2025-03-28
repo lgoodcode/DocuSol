@@ -11,7 +11,7 @@ import { withRetry } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { sign } from "@/lib/utils/sign";
 import { hasSufficientBalance } from "@/lib/utils/solana";
-import { useDocumentStore } from "./useDocumentStore";
+import { useDocumentStore } from "@/lib/pdf-editor/stores/useDocumentStore";
 
 export interface DocumentSigner {
   email: string;

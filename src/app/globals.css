@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url("./fonts/fonts.css");
+
 body {
   font-family: Arial, Helvetica, sans-serif;
 }
@@ -48,11 +50,11 @@ body {
     --popover-foreground: 0 0% 98%;
     --primary: 0 0% 98%;
     --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 5% 12%;
+    --secondary: 240 5% 15%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 240 5% 12%;
+    --muted: 240 5% 15%;
     --muted-foreground: 240 5% 64.9%;
-    --accent: 240 5% 12%;
+    --accent: 240 5% 15%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 82.8% 60.6%;
     --destructive-foreground: 0 0% 98%;
@@ -60,8 +62,8 @@ body {
     --warning-foreground: 38 92% 95%;
     --success: 142.1 76.2% 36.3%;
     --success-foreground: 142.1 76.2% 95%;
-    --border: 240 5% 12%;
-    --input: 240 5% 12%;
+    --border: 240 5% 15%;
+    --input: 240 5% 15%;
     --ring: 240 4.9% 83.9%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
@@ -200,7 +202,8 @@ body {
   }
 
   .bg-grid-primary {
-    background-image: linear-gradient(var(--primary) 1px, transparent 1px),
+    background-image:
+      linear-gradient(var(--primary) 1px, transparent 1px),
       linear-gradient(90deg, var(--primary) 1px, transparent 1px);
   }
 

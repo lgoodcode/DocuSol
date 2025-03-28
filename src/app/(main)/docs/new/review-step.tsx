@@ -7,9 +7,10 @@ import { Trash2, Info, CalendarIcon, RefreshCcw } from "lucide-react";
 import { format } from "date-fns";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import * as z from "zod";
 
-import { toast } from "sonner";
+import { useDocumentStore } from "@/lib/pdf-editor/stores/useDocumentStore";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -47,8 +48,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-import { useDocumentStore } from "./useDocumentStore";
 import { useResetDocument } from "./utils";
+
 const isPastDate = (date: Date) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -185,7 +186,6 @@ export function ReviewStep({ onStepComplete }: { onStepComplete: () => void }) {
     setSenderMessage,
   } = useDocumentStore();
   const resetDocument = useResetDocument();
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
@@ -298,7 +298,7 @@ export function ReviewStep({ onStepComplete }: { onStepComplete: () => void }) {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="container mx-auto max-w-4xl space-y-8">
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -338,7 +338,7 @@ export function ReviewStep({ onStepComplete }: { onStepComplete: () => void }) {
                       <td className="py-4">
                         <div className="flex items-center gap-2">
                           {signer.name || "Unnamed"}
-                          {signer.isMyself && <Badge>You</Badge>}
+                          {signer.isOwner && <Badge>You</Badge>}
                         </div>
                       </td>
                       <td className="py-4">{signer.email}</td>
@@ -355,7 +355,7 @@ export function ReviewStep({ onStepComplete }: { onStepComplete: () => void }) {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  onClick={() => removeSigner(index)}
+                                  onClick={() => removeSigner(signer.id)}
                                   disabled={isOnlySigner}
                                   className={
                                     isOnlySigner
@@ -645,7 +645,7 @@ export function ReviewStep({ onStepComplete }: { onStepComplete: () => void }) {
                   onClick={handleBack}
                   disabled={isSubmitting || isResetting}
                 >
-                  ← Back
+                  Back
                 </Button>
                 <Button
                   type="button"
