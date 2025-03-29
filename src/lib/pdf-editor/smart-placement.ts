@@ -175,11 +175,11 @@ export function calculateSnapPoints(
 
   // Add alignment lines to result
   if (result.x !== null) {
-    result.alignmentLines.push(...vLines);
+    result.alignmentLines.push(...(vLines as AlignmentLine[]));
   }
 
   if (result.y !== null) {
-    result.alignmentLines.push(...hLines);
+    result.alignmentLines.push(...(hLines as AlignmentLine[]));
   }
 
   return result;

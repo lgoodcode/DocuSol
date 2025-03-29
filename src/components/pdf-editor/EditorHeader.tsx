@@ -10,14 +10,15 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useDocumentStore } from "@/lib/pdf-editor/stores/useDocumentStore";
-import { loadPdfDocument } from "@/lib/pdf-editor/pdf-loader";
+import { fileToDataUrl } from "@/lib/utils";
 
 export const EditorHeader: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   const [fileName, setFileName] = useState<string>("");
-
-  const pdfFile = useDocumentStore((state) => state.documentFile);
+  const { documentDataUrl, setDocumentDataUrl } = useDocumentStore((state) => ({
+    documentDataUrl: state.documentDataUrl,
+    setDocumentDataUrl: state.setDocumentDataUrl,
+  }));
 
   const handleSend = () => {
     toast("Document ready to send", {
@@ -43,12 +44,7 @@ export const EditorHeader: React.FC = () => {
     setFileName(file.name);
 
     try {
-      // Use await with toast.promise to properly handle the promise
-      await toast.promise(loadPdfDocument(file), {
-        loading: "Loading PDF document...",
-        success: "PDF document loaded successfully",
-        error: "Failed to load PDF document",
-      });
+      setDocumentDataUrl(await fileToDataUrl(file));
     } catch (error) {
       console.error("Error loading PDF:", error);
       toast.error("Failed to load PDF document");
@@ -63,7 +59,7 @@ export const EditorHeader: React.FC = () => {
   return (
     <div className="flex h-16 items-center justify-between border-b bg-white px-4 shadow-sm">
       <div className="flex items-center space-x-4">
-        {!!pdfFile ? (
+        {!!documentDataUrl ? (
           <>
             <h1 className="text-lg font-medium text-gray-900">
               {fileName || "PDF Document"}
@@ -93,13 +89,13 @@ export const EditorHeader: React.FC = () => {
 
         {/* Upload PDF button - more prominent when no PDF is loaded */}
         <Button
-          variant={!pdfFile ? "default" : "outline"}
+          variant={!documentDataUrl ? "default" : "outline"}
           size="sm"
           className="h-9"
           onClick={handleUploadClick}
         >
           <Upload className="mr-2 h-4 w-4" />
-          <span>{!pdfFile ? "Upload PDF" : "Replace PDF"}</span>
+          <span>{!documentDataUrl ? "Upload PDF" : "Replace PDF"}</span>
         </Button>
 
         <DropdownMenu>

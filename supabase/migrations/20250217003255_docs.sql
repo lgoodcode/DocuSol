@@ -657,3 +657,42 @@ $$ LANGUAGE plpgsql;
 
 ALTER FUNCTION reject_document(UUID, TEXT) OWNER TO postgres;
 
+/**
+ * Retrieves document details along with the hash from a specific version
+ *
+ * @param p_document_id - The ID of the document
+ * @param p_version - The version number to retrieve
+ * @return TABLE - Returns document details and version hash
+ */
+CREATE OR REPLACE FUNCTION get_document_with_version(
+    p_document_id UUID,
+    p_version INTEGER
+)
+RETURNS TABLE(
+    name TEXT,
+    password TEXT,
+    status document_status,
+    created_at TIMESTAMPTZ,
+    completed_at TIMESTAMPTZ,
+    hash TEXT,
+    tx_signature TEXT
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        d.name,
+        d.password,
+        d.status,
+        d.created_at,
+        d.completed_at,
+        dv.hash,
+        dv.tx_signature
+    FROM documents d
+    JOIN document_versions dv ON dv.document_id = d.id
+    WHERE d.id = p_document_id
+    AND dv.version_number = p_version;
+END;
+$$ LANGUAGE plpgsql;
+
+ALTER FUNCTION get_document_with_version(UUID, INTEGER) OWNER TO postgres;
+

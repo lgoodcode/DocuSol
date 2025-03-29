@@ -28,11 +28,12 @@ export const ExportPdfButton: React.FC = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [filename, setFilename] = useState("document.pdf");
 
-  const fields = useDocumentStore((state) => state.fields);
-  const pdfFile = useDocumentStore((state) => state.documentFile);
+  const { fields, documentDataUrl } = useDocumentStore((state) => ({
+    fields: state.fields,
+    documentDataUrl: state.documentDataUrl,
+  }));
 
   const handleExport = async () => {
-    // Validate filename
     if (!filename.trim()) {
       toast.error("Please enter a valid filename");
       return;
@@ -47,12 +48,12 @@ export const ExportPdfButton: React.FC = () => {
       setIsExporting(true);
 
       // Check if PDF is loaded
-      if (!pdfFile) {
+      if (!documentDataUrl) {
         throw new Error("No PDF document loaded");
       }
 
       // Export the PDF with fields
-      await exportPdfWithFields(pdfFile, finalFilename, fields);
+      await exportPdfWithFields(documentDataUrl, finalFilename, fields);
 
       toast.success("PDF exported successfully");
       setIsDialogOpen(false);
@@ -67,7 +68,7 @@ export const ExportPdfButton: React.FC = () => {
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2" disabled={!pdfFile}>
+        <Button variant="outline" className="gap-2" disabled={!documentDataUrl}>
           <Download className="h-4 w-4" />
           Export PDF
         </Button>

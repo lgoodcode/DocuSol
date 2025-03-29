@@ -6,9 +6,24 @@ import { DEFAULT_PDF_WIDTH } from "@/lib/pdf-editor/constants";
 import fontkit from "@pdf-lib/fontkit";
 
 const PX_TO_PT = 0.75;
+const DEFAULT_FONT_SIZE = 16;
 
 // Font cache to avoid reloading fonts
 const fontCache: Record<string, ArrayBuffer> = {};
+
+const getFontSize = (field: DocumentField) => {
+  return field.textStyles?.fontSize || DEFAULT_FONT_SIZE;
+};
+
+const getPdfFontSize = (field: DocumentField) => {
+  return getFontSize(field) * PX_TO_PT;
+};
+
+const getPdfFontColor = (field: DocumentField) => {
+  return field.textStyles?.fontColor
+    ? rgbFromHex(field.textStyles.fontColor)
+    : rgb(0, 0, 0);
+};
 
 /**
  * Converts a hex color string to RGB values for PDF-lib
@@ -107,12 +122,12 @@ const mapFieldType = (fieldType: FieldType): string | null => {
  * @returns A promise that resolves when the PDF is exported
  */
 export async function exportPdfWithFields(
-  pdfBlob: Blob,
+  pdfDataUrl: string,
   filename: string,
   fields: DocumentField[],
 ): Promise<void> {
   try {
-    const pdfDoc = await PDFDocument.load(await pdfBlob.arrayBuffer());
+    const pdfDoc = await PDFDocument.load(pdfDataUrl);
 
     pdfDoc.registerFontkit(fontkit);
 
@@ -180,7 +195,7 @@ export async function exportPdfWithFields(
         height -
         field.position.y * scaleFactor -
         field.size.height / 2 +
-        helveticaFont.heightAtSize(12, { descender: true }) / 2;
+        helveticaFont.heightAtSize(getFontSize(field), { descender: true }) / 2;
 
       try {
         switch (pdfType) {
@@ -188,13 +203,19 @@ export async function exportPdfWithFields(
             const font = await selectFontForField(pdfDoc, field);
             let currentY =
               y -
-              helveticaFont.heightAtSize(12, { descender: true }) / 2 +
-              font.heightAtSize(field.fontSize || 12, { descender: true }) / 2;
+              helveticaFont.heightAtSize(getFontSize(field), {
+                descender: true,
+              }) /
+                2 +
+              font.heightAtSize(getFontSize(field), {
+                descender: true,
+              }) /
+                2;
 
             // Handle multi-line text
             if (field.value.includes("\n")) {
               const lines = field.value.split("\n");
-              const fontSize = (field.fontSize || 12) * PX_TO_PT;
+              const fontSize = getPdfFontSize(field);
               const lineHeight = helveticaFont.heightAtSize(fontSize) * 1.2;
 
               // Draw each line of text
@@ -210,9 +231,7 @@ export async function exportPdfWithFields(
                   y: currentY,
                   font: font,
                   size: fontSize,
-                  color: field.fontColor
-                    ? rgbFromHex(field.fontColor)
-                    : rgb(0, 0, 0),
+                  color: getPdfFontColor(field),
                 });
 
                 // Move down for the next line
@@ -224,10 +243,8 @@ export async function exportPdfWithFields(
                 x,
                 y: currentY,
                 font: font,
-                size: (field.fontSize || 12) * PX_TO_PT,
-                color: field.fontColor
-                  ? rgbFromHex(field.fontColor)
-                  : rgb(0, 0, 0),
+                size: getPdfFontSize(field),
+                color: getPdfFontColor(field),
               });
             }
             break;
@@ -235,19 +252,11 @@ export async function exportPdfWithFields(
 
           case "date": {
             // Add date field
-            const dateValue = new Date(field.value).toLocaleDateString(
-              "en-US",
-              {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              },
-            );
-
+            const dateValue = new Date(field.value).toLocaleDateString();
             page.drawText(dateValue, {
               x,
               y,
-              size: 12 * PX_TO_PT,
+              size: getPdfFontSize(field),
               font: helveticaFont,
               color: rgb(0, 0, 0),
             });
@@ -437,9 +446,9 @@ export async function exportPdfWithFields(
  */
 async function selectFontForField(pdfDoc: PDFDocument, field: DocumentField) {
   // Default to Helvetica if no font family is specified
-  const fontFamily = field.fontFamily || "inherit";
-  const isBold = field.fontWeight === "bold";
-  const isItalic = field.fontStyle === "italic";
+  const fontFamily = field.textStyles?.fontFamily || "inherit";
+  const isBold = field.textStyles?.fontWeight === "bold";
+  const isItalic = field.textStyles?.fontStyle === "italic";
 
   // Check for specific font families
   if (

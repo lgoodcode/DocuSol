@@ -194,6 +194,21 @@ export type Database = {
           version_number: number
         }[]
       }
+      get_document_with_version: {
+        Args: {
+          p_document_id: string
+          p_version: number
+        }
+        Returns: {
+          name: string
+          password: string
+          status: Database["public"]["Enums"]["document_status"]
+          created_at: string
+          completed_at: string
+          hash: string
+          tx_signature: string
+        }[]
+      }
       get_next_document_version_number: {
         Args: {
           doc_id: string

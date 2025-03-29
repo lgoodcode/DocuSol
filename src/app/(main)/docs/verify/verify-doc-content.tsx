@@ -62,9 +62,8 @@ const searchSchema = z.object({
 export function VerifyDocContent() {
   const { toast } = useToast();
   const [file, setFile] = useState<File | null>(null);
-  const [documentDetails, setDocumentDetails] = useState<VerifyDocument | null>(
-    null,
-  );
+  const [documentDetails, setDocumentDetails] =
+    useState<VerifyDocumentData | null>(null);
   const [success, setSuccess] = useState(false);
   const [errorResponseMessage, setErrorResponseMessage] = useState<
     string | null
@@ -124,7 +123,7 @@ export function VerifyDocContent() {
       }
 
       setSuccess(true);
-      setDocumentDetails(data.verifyDocument as VerifyDocument);
+      setDocumentDetails(data.verifyDocument as VerifyDocumentData);
     } catch (error) {
       captureException(error);
       toast({

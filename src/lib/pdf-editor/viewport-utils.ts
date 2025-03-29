@@ -1,28 +1,3 @@
-import { useEditorStore } from "@/lib/pdf-editor/stores/useEditorStore";
-
-/**
- * Loads a PDF document from a file
- *
- * @param file - The PDF file to load
- */
-export async function loadPdfDocument(file: File): Promise<void> {
-  try {
-    // Convert the file to an ArrayBuffer
-    const arrayBuffer = await file.arrayBuffer();
-
-    const pdfFile = new Blob([arrayBuffer], { type: "application/pdf" });
-
-    // Get the editor store
-    const { setPdfFile } = useEditorStore.getState();
-
-    // Update the store with the pdf document and the pdf file
-    setPdfFile(pdfFile);
-  } catch (error) {
-    console.error("Error loading PDF document:", error);
-    throw error;
-  }
-}
-
 /**
  * Gets PDF coordinates from viewport coordinates
  *

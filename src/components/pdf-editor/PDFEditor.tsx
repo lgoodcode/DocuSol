@@ -4,8 +4,7 @@ import { EditorToolbar } from "./EditorToolbar";
 import { DocumentCanvas } from "./DocumentCanvas";
 import { FieldsPalette } from "./FieldsPalette";
 import { FieldsList } from "./FieldsList";
-import { FieldProperties } from "./FieldProperties";
-import { useEditorStore } from "@/lib/pdf-editor/stores/useEditorStore";
+// import { FieldProperties } from "./FieldProperties";
 import { useUserStore } from "@/lib/pdf-editor/stores/useUserStore";
 
 export const PDFEditor: React.FC = () => {
@@ -29,7 +28,7 @@ export const PDFEditor: React.FC = () => {
       </div>
 
       {/* Field properties/editor panel (shows when a field is selected) */}
-      {selectedFieldId && userType === "creator" && <FieldProperties />}
+      {/* {selectedFieldId && userType === "creator" && <FieldProperties />} */}
     </div>
   );
 };

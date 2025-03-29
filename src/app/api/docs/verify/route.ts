@@ -6,19 +6,20 @@ import { createServerClient } from "@/lib/supabase/server";
 import { verifyFileHash } from "@/lib/utils/hashing";
 import { getConfirmedTransactionSlot } from "@/lib/utils/solana";
 
-type VerifyDocumentWithPassword = {
-  document: VerifyDocument;
+type VerifyDocumentDataWithPassword = {
+  verifyDocumentData: VerifyDocumentData;
   password: string | null;
 };
 
 type VerificationResponse = {
   matches: boolean;
-  verifyDocument: VerifyDocument | null;
+  verifyDocumentData: VerifyDocumentData | null;
 };
 
 const ERRORS = {
   INVALID_CONTENT_TYPE: "Invalid content type. Expected multipart/form-data",
-  NO_TX_SIGNATURE: "No transaction signature provided",
+  NO_DOCUMENT_ID: "No document ID provided",
+  NO_VERSION: "No version provided",
   NO_FILE: "No file provided",
   FETCH_ERROR: (message: string) => `Failed to fetch document: ${message}`,
   DOCUMENT_NOT_FOUND: "Document not found",
@@ -29,15 +30,19 @@ const ERRORS = {
 
 const ERROR_STATUS_CODES: Record<string, number> = {
   [ERRORS.INVALID_CONTENT_TYPE]: 400,
-  [ERRORS.NO_TX_SIGNATURE]: 400,
+  [ERRORS.NO_DOCUMENT_ID]: 400,
+  [ERRORS.NO_VERSION]: 400,
   [ERRORS.NO_FILE]: 400,
   [ERRORS.DOCUMENT_NOT_FOUND]: 404,
   [ERRORS.NOT_SIGNED]: 401,
 };
 
 const FormDataSchema = z.object({
-  txSignature: z.string({
-    required_error: ERRORS.NO_TX_SIGNATURE,
+  documentId: z.string({
+    required_error: ERRORS.NO_DOCUMENT_ID,
+  }),
+  version: z.number({
+    required_error: ERRORS.NO_VERSION,
   }),
   file: z.instanceof(File, {
     message: ERRORS.NO_FILE,
@@ -47,7 +52,7 @@ const FormDataSchema = z.object({
 function getErrorStatusCode(message: string): number {
   // Check if message starts with any of the error keys
   const matchingError = Object.keys(ERROR_STATUS_CODES).find((key) =>
-    message.startsWith(key)
+    message.startsWith(key),
   );
   return matchingError ? ERROR_STATUS_CODES[matchingError] : 500;
 }
@@ -59,7 +64,7 @@ const createErrorResponse = (error: unknown) => {
   if (error instanceof z.ZodError) {
     return NextResponse.json(
       { error: error.errors[0].message },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -73,18 +78,15 @@ const createErrorResponse = (error: unknown) => {
 /**
  * Fetch document by transaction signature
  */
-async function fetchDocumentByTxSignature(
-  txSignature: string
-): Promise<VerifyDocumentWithPassword> {
+async function fetchDocumentByIdAndVersion(
+  documentId: string,
+  version: number,
+): Promise<VerifyDocumentDataWithPassword> {
   const supabase = await createServerClient();
-  const { error, data } = await supabase
-    .from("documents")
-    .select(
-      "id,name,password,mime_type,is_signed,signed_hash,created_at,signed_at"
-    )
-    .or(
-      `unsigned_transaction_signature.eq.${txSignature},signed_transaction_signature.eq.${txSignature}`
-    );
+  const { error, data } = await supabase.rpc("get_document_with_version", {
+    p_document_id: documentId,
+    p_version: version,
+  });
 
   if (error) {
     throw new Error(ERRORS.FETCH_ERROR(error.message));
@@ -94,19 +96,19 @@ async function fetchDocumentByTxSignature(
   }
 
   const document = data[0];
-  if (!document.is_signed || !document.signed_hash || !document.signed_at) {
+  if (document.status !== "completed" || !document.completed_at) {
     throw new Error(ERRORS.NOT_SIGNED);
   }
 
   return {
-    document: {
-      id: document.id,
+    verifyDocumentData: {
+      id: documentId,
       name: document.name,
-      password: !!document.password,
-      mime_type: document.mime_type,
-      signed_hash: document.signed_hash,
-      created_at: document.created_at,
-      signed_at: document.signed_at,
+      hasPassword: !!document.password,
+      createdAt: document.created_at,
+      completedAt: document.completed_at,
+      txSignature: document.tx_signature,
+      hash: document.hash,
     },
     password: document.password,
   };
@@ -117,7 +119,7 @@ async function fetchDocumentByTxSignature(
  */
 async function getConfirmationSlot(
   txSignature: string,
-  documentId: string
+  documentId: string,
 ): Promise<number> {
   try {
     return await getConfirmedTransactionSlot(txSignature);
@@ -128,8 +130,8 @@ async function getConfirmationSlot(
     });
     throw new Error(
       ERRORS.SLOT_ERROR(
-        error instanceof Error ? error.message : "Unknown error"
-      )
+        error instanceof Error ? error.message : "Unknown error",
+      ),
     );
   }
 }
@@ -143,13 +145,15 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const validatedData = FormDataSchema.parse({
-      txSignature: formData.get("txSignature"),
+      documentId: formData.get("documentId"),
+      version: formData.get("version"),
       file: formData.get("file"),
     });
 
     // Fetch document
-    const { document, password } = await fetchDocumentByTxSignature(
-      validatedData.txSignature
+    const { verifyDocumentData, password } = await fetchDocumentByIdAndVersion(
+      validatedData.documentId,
+      validatedData.version,
     );
 
     // Get file buffer
@@ -157,22 +161,22 @@ export async function POST(request: Request) {
 
     // Get confirmation slot
     const confirmationSlot = await getConfirmationSlot(
-      validatedData.txSignature,
-      document.id
+      verifyDocumentData.txSignature,
+      verifyDocumentData.id,
     );
 
     // Verify file hash
     const matches = verifyFileHash(
       fileBuffer,
-      document.signed_hash,
+      verifyDocumentData.hash,
       password,
-      confirmationSlot
+      confirmationSlot,
     );
 
     // Return verification result
     return NextResponse.json<VerificationResponse>({
       matches,
-      verifyDocument: matches ? document : null,
+      verifyDocumentData,
     });
   } catch (error) {
     return createErrorResponse(error);

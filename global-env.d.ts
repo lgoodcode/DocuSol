@@ -1,4 +1,10 @@
-import type { Document } from "@/lib/supabase/types";
+import type {
+  Document,
+  DocumentVersion,
+  DocumentSigner,
+  DocumentStatus,
+  DocumentSignerStatus,
+} from "@/lib/supabase/types";
 import type { JWTPayload } from "jose";
 
 export declare global {
@@ -99,14 +105,14 @@ export declare global {
     updatedAt: string;
   }
 
-  interface VerifyDocument {
+  interface VerifyDocumentData {
     id: string;
     name: string;
-    password: boolean;
-    mime_type: string;
-    signed_hash: string;
-    created_at: string;
-    signed_at: string;
+    hasPassword: boolean;
+    createdAt: string;
+    completedAt: string;
+    txSignature: string;
+    hash: string;
   }
 
   /**

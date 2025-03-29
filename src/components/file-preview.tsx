@@ -15,7 +15,7 @@ export function FilePreview({ file }: PreviewProps) {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(
-    typeof window !== undefined ? window.innerWidth < 768 || IS_MOBILE : false
+    typeof window !== undefined ? window.innerWidth < 768 || IS_MOBILE : false,
   );
 
   useEffect(() => {
@@ -74,8 +74,8 @@ export function FilePreview({ file }: PreviewProps) {
 
   if (isMobile && file.type === "application/pdf") {
     return (
-      <div className="w-full max-w-sm mx-auto p-4 rounded-md border bg-background dark:bg-muted">
-        <div className="text-center space-y-3">
+      <div className="mx-auto w-full max-w-sm rounded-md border bg-background p-4 dark:bg-muted">
+        <div className="space-y-3 text-center">
           <p className="font-medium">
             PDF Preview is currently not yet available on mobile devices
           </p>
@@ -86,7 +86,7 @@ export function FilePreview({ file }: PreviewProps) {
             href={previewUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-sm text-primary hover:text-primary/80 underline underline-offset-4"
+            className="inline-flex items-center gap-1 text-sm text-primary underline underline-offset-4 hover:text-primary/80"
           >
             View in new tab
             <ExternalLink className="mr-1 h-4 w-4" />
@@ -100,17 +100,17 @@ export function FilePreview({ file }: PreviewProps) {
     dimensions.height > 0 ? Math.max(dimensions.height + 16, 100) : 300;
 
   return (
-    <div className="flex items-center flex-col gap-4 justify-center w-full">
+    <div className="flex w-full flex-col items-center justify-center gap-4">
       <div className="w-full max-w-sm overflow-hidden rounded-md border">
         {file.type === "application/pdf" ? (
           <embed
             src={`${previewUrl}#toolbar=0`}
             type="application/pdf"
-            className="w-full h-[400px]"
+            className="h-[400px] w-full"
           />
         ) : (
           <div
-            className="flex items-center justify-center p-2 mx-auto"
+            className="mx-auto flex items-center justify-center p-2"
             style={{ height: `${containerHeight}px` }}
           >
             {dimensions.width > 0 && (
@@ -132,7 +132,7 @@ export function FilePreview({ file }: PreviewProps) {
         href={previewUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-1 text-sm text-primary hover:text-primary/80 underline underline-offset-4"
+        className="inline-flex items-center gap-1 text-sm text-primary underline underline-offset-4 hover:text-primary/80"
       >
         View in new tab
         <ExternalLink className="mr-1 h-4 w-4" />
@@ -141,14 +141,8 @@ export function FilePreview({ file }: PreviewProps) {
   );
 }
 
-export const BlobPreview = ({
-  hexValue,
-  mimeType,
-}: {
-  hexValue: string;
-  mimeType: string;
-}) => {
+export const BlobPreview = ({ hexValue }: { hexValue: string }) => {
   const rawData = hexToBuffer(hexValue);
-  const file = new Blob([rawData], { type: mimeType });
+  const file = new Blob([rawData], { type: "application/pdf" });
   return <FilePreview file={file} />;
 };

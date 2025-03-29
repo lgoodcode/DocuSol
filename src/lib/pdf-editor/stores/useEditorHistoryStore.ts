@@ -4,17 +4,17 @@ import { useDocumentStore } from "@/lib/pdf-editor/stores/useDocumentStore";
 import { DocumentField } from "@/lib/pdf-editor/document-types";
 import { DocumentSigner } from "@/lib/types/stamp";
 
+const HISTORY_LIMIT = 20;
+
+type ItemState = {
+  fields: DocumentField[];
+  signers: DocumentSigner[];
+  currentSignerId: string | null;
+};
+
 interface HistoryState {
-  past: Array<{
-    fields: DocumentField[];
-    signers: DocumentSigner[];
-    currentSigner: string | null;
-  }>;
-  future: Array<{
-    fields: DocumentField[];
-    signers: DocumentSigner[];
-    currentSigner: string | null;
-  }>;
+  past: ItemState[];
+  future: ItemState[];
   canUndo: boolean;
   canRedo: boolean;
   saveState: () => void;
@@ -30,8 +30,11 @@ export const useEditorHistoryStore = create<HistoryState>((set, get) => ({
   canRedo: false,
 
   saveState: () => {
-    const currentState = useDocumentStore.getState();
-    const { fields, signers } = currentState;
+    const { fields, signers, currentSignerId } = useDocumentStore((state) => ({
+      fields: state.fields,
+      signers: state.signers,
+      currentSignerId: state.currentSignerId,
+    }));
 
     set((state) => {
       const newPast = [
@@ -39,8 +42,9 @@ export const useEditorHistoryStore = create<HistoryState>((set, get) => ({
         {
           fields: JSON.parse(JSON.stringify(fields)),
           signers: signers.map((s) => structuredClone(s)),
+          currentSignerId,
         },
-      ].slice(-20); // Limit history to 20 states
+      ].slice(-HISTORY_LIMIT);
 
       return {
         past: newPast,
@@ -54,9 +58,6 @@ export const useEditorHistoryStore = create<HistoryState>((set, get) => ({
   undo: () => {
     const { past } = get();
     if (past.length === 0) return;
-
-    const currentState = useDocumentStore.getState();
-    const { fields, signers } = currentState;
 
     const newPast = [...past];
     const previousState = newPast.pop();
@@ -73,6 +74,7 @@ export const useEditorHistoryStore = create<HistoryState>((set, get) => ({
           {
             fields: structuredClone(previousState.fields),
             signers: previousState.signers.map((s) => structuredClone(s)),
+            currentSignerId: previousState.currentSignerId,
           },
           ...state.future,
         ],
@@ -85,9 +87,6 @@ export const useEditorHistoryStore = create<HistoryState>((set, get) => ({
   redo: () => {
     const { future } = get();
     if (future.length === 0) return;
-
-    const currentState = useDocumentStore.getState();
-    const { fields, signers } = currentState;
 
     const newFuture = [...future];
     const nextState = newFuture.shift();
@@ -104,6 +103,7 @@ export const useEditorHistoryStore = create<HistoryState>((set, get) => ({
           {
             fields: structuredClone(nextState.fields),
             signers: nextState.signers.map((s) => structuredClone(s)),
+            currentSignerId: nextState.currentSignerId,
           },
         ],
         future: newFuture,
