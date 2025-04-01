@@ -1,5 +1,3 @@
-import { captureException } from "@sentry/nextjs";
-
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 const BUCKET_NAME = "documents";
@@ -57,30 +55,20 @@ export class StorageService {
   }
 
   async verifyFileExists(filePath: string): Promise<boolean> {
-    try {
-      const { error, data: exists } = await this.supabase.storage
-        .from(this.bucket)
-        .exists(filePath);
+    const { error, data: exists } = await this.supabase.storage
+      .from(this.bucket)
+      .exists(filePath);
 
-      return !error && exists;
-    } catch (err) {
-      const error = err as Error;
-      console.error(error);
-      captureException(error);
-      return false;
-    }
+    if (error) throw error;
+    return exists;
   }
 
-  async deleteFile(filePath: string): Promise<boolean> {
-    try {
-      const { error } = await this.supabase.storage
-        .from(this.bucket)
-        .remove([filePath]);
+  async deleteFile(filePath: string): Promise<void> {
+    const { error } = await this.supabase.storage
+      .from(this.bucket)
+      .remove([filePath]);
 
-      return !error;
-    } catch {
-      return false;
-    }
+    if (error) throw error;
   }
 
   async getDownloadUrl(filePath: string) {

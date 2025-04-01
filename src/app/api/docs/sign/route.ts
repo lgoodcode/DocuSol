@@ -11,11 +11,11 @@ import {
 import { bufferToHex } from "@/lib/utils";
 import { createFileHash } from "@/lib/utils/hashing";
 
-interface Document {
+interface SignDocumentData {
   id: string;
   password: string | null;
-  is_signed: boolean;
-  signed_at: string | null;
+  isSigned: boolean;
+  signedAt: string | null;
 }
 
 type SigningResponse = {
@@ -81,7 +81,7 @@ const createErrorResponse = (error: unknown) => {
 async function validateDocumentAccess(
   id: string,
   password: string | null,
-): Promise<Document> {
+): Promise<SignDocumentData> {
   const supabase = await createServerClient();
   const { error: fetchError, data: document } = await supabase
     .from("documents")

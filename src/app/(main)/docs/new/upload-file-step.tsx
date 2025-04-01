@@ -77,11 +77,6 @@ export function UploadFileStep({
       return;
     }
 
-    console.log({
-      file,
-      documentDataUrl,
-    });
-
     try {
       setError(null);
       setIsUploading(true);

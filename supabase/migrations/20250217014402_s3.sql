@@ -1,4 +1,4 @@
--- Documents are stored in /users/{user_id}/filename
+-- Documents are stored in users/{userId}/{fileName}_V{version}
 
 CREATE POLICY "Users can upload their own objects"
 ON storage.objects

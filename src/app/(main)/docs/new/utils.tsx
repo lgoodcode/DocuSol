@@ -222,29 +222,25 @@ export async function uploadInitialDocument(
 
     // Step 2: Create the document and version in the database
     const { error, data } = await withRetry(async () => {
-      return await supabase
-        .rpc("create_document_with_version", {
-          p_name: documentName,
-          p_hash: hash,
-        })
-        .single();
+      return await supabase.rpc("create_document_with_version", {
+        p_name: documentName,
+        p_hash: hash,
+      });
     });
 
     if (error) {
       throw error;
+    } else if (data.length === 0) {
+      throw new Error("Document not created");
     }
 
-    return data.document_id;
+    return data[0].document_id;
   } catch (err) {
     const error = err as Error;
-    console.error("Error in useUploadInitialDocument:", error);
-    captureException(error);
-
     // File uploaded to storage but DB operation failed
     if (documentUploaded) {
       try {
         await storageService.deleteFile(filePath);
-        console.log(`Cleaned up file at path: ${filePath}`);
       } catch (cleanupErr) {
         console.error("Failed to clean up file from storage:", cleanupErr);
         captureException(cleanupErr);
