@@ -8,7 +8,7 @@ import { useDocumentStore } from "@/lib/pdf-editor/stores/useDocumentStore";
 import { cn, dataUrlToFile } from "@/lib/utils";
 
 import { UploadFileStep } from "./upload-file-step";
-import { SelectSignersStep } from "./select-signers-step";
+import { AssignSignersStep } from "./assign-signers-step";
 import { EditingStep } from "./editing-step";
 import { ReviewStep } from "./review-step";
 import { Button } from "@/components/ui/button";
@@ -76,7 +76,7 @@ export function NewDocContent() {
         <Stepper
           steps={[
             "Upload Document",
-            "Select Signers",
+            "Assign Signers",
             "Edit Document",
             "Review and Send",
           ]}
@@ -97,7 +97,7 @@ export function NewDocContent() {
             <UploadFileStep onStepComplete={onStepComplete} />
           )}
           {currentStepIndex === 1 && (
-            <SelectSignersStep onStepComplete={onStepComplete} />
+            <AssignSignersStep onStepComplete={onStepComplete} />
           )}
           {currentStepIndex === 2 && (
             <EditingStep onStepComplete={onStepComplete} />

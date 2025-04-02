@@ -4,6 +4,14 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { captureException } from "@sentry/nextjs";
 import { XCircle, Plus, Search, Pencil } from "lucide-react";
+
+import { useDocumentStore } from "@/lib/pdf-editor/stores/useDocumentStore";
+import { createClient } from "@/lib/supabase/client";
+import { getUser } from "@/lib/supabase/utils";
+import { isValidEmail } from "@/lib/utils";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -11,20 +19,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-
-import { createClient } from "@/lib/supabase/client";
-import { getUser } from "@/lib/supabase/utils";
-import { isValidEmail } from "@/lib/utils";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-
-import { useDocumentStore } from "@/lib/pdf-editor/stores/useDocumentStore";
-import type {
-  DocumentSigner,
-  SignerRole,
-  SigningMode,
-} from "@/lib/types/stamp";
+import type { DocumentSigner } from "@/lib/types/stamp";
 
 const validateEmail = (email: string): string | null => {
   if (!email.trim()) {
@@ -62,14 +57,11 @@ const checkDuplicateEmail = (
     : null;
 };
 
-export function SelectSignersStep({
+export function AssignSignersStep({
   onStepComplete,
 }: {
   onStepComplete: () => void;
 }) {
-  // Get signers and actions from the store
-  const { signers, addSigner, updateSigner, removeSigner, setCurrentStep } =
-    useDocumentStore();
   const [error, setError] = useState<string | null>(null);
   const [addedMyself, setAddedMyself] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -78,6 +70,8 @@ export function SelectSignersStep({
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editEmailError, setEditEmailError] = useState<string | null>(null);
+  const { signers, addSigner, updateSigner, removeSigner, setCurrentStep } =
+    useDocumentStore();
 
   const handleAddSigner = () => {
     try {
@@ -96,7 +90,6 @@ export function SelectSignersStep({
 
       // Add signer to the store
       addSigner({
-        id: crypto.randomUUID(),
         name: "",
         email,
         isOwner: false,

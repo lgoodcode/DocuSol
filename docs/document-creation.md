@@ -8,7 +8,7 @@ The flow contains a lot of information that is used across each step from the up
 
 For more information refer to the documentation at `docs/document-store.md`
 
-## Step 1: Upload
+## Step 1: Upload Document
 
 The upload step is the first step in the document creation flow. It handles the initial document upload and setup.
 
@@ -69,17 +69,79 @@ The upload step is the first step in the document creation flow. It handles the 
 - Error message display
 - Animated transitions using Framer Motion
 
-### Security Considerations
+### Summary
 
 - File type validation
 - Size restrictions
 - Secure file storage in Supabase
 - Hash generation for blockchain verification
 
-### Next Steps
+## Step 2: Assign Signers
 
-After successful upload:
+The assign signers step allows users to add and manage signers for the document. This step is crucial for determining who will be involved in the signing process.
 
-1. Document ID is set in the store
-2. User is moved to the signers step
-3. Document preview is available for field placement
+### Features
+
+- Add signers by email address
+- Add yourself as a signer
+- Edit signer information
+- Remove signers
+- Validate email addresses
+- Prevent duplicate signers
+
+### Technical Details
+
+- **Signer Management**:
+
+  - Email validation using `isValidEmail` utility
+  - Duplicate email checking with `checkDuplicateEmail` function
+  - Signer state management through `useDocumentStore`
+  - Automatic addition of document owner as a signer
+  - Signer role assignment (owner/participant)
+  - Signer mode configuration (transparent)
+
+- **State Management**:
+
+  - Uses `useDocumentStore` for signer list management
+  - Local state for input validation and error handling
+  - Error state management for various scenarios
+
+- **Storage**:
+  - Signer information stored in document store
+  - Signer metadata includes:
+    - Unique ID
+    - Name
+    - Email
+    - Role
+    - Mode
+    - Owner status
+
+### Error Handling
+
+- Invalid email format
+- Duplicate email addresses
+- Empty email input
+- Failed signer addition/removal
+- Failed self-addition
+- Failed signer updates
+- Network errors during operations
+
+### UI Components
+
+- Email input field with validation
+- Add/Remove signer buttons
+- Signer list display
+- Edit signer dialog
+- Error message display
+- Empty state handling
+- Animated transitions using Framer Motion
+- Responsive layout for different screen sizes
+
+### Summary
+
+- Email-based signer management
+- Role-based access control
+- Real-time validation
+- User-friendly interface
+- Error handling and feedback
+- State persistence through document store
