@@ -24,13 +24,11 @@ const DOCUMENT_OPTIONS = {
 export const DocumentCanvas = memo(function DocumentCanvas() {
   const [numPages, setNumPages] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-
   const pdfDataUrl = useDocumentStore((state) => state.documentDataUrl);
   const scale = useDocumentStore((state) => state.scale);
 
   const onDocumentLoadSuccess = useCallback(
     ({ numPages: nextNumPages }: PDFDocumentProxy): void => {
-      console.log("onDocumentLoadSuccess", nextNumPages);
       setNumPages(nextNumPages);
       setIsLoading(false);
     },
@@ -55,11 +53,7 @@ export const DocumentCanvas = memo(function DocumentCanvas() {
   }, [numPages, scale]);
 
   if (!pdfDataUrl) {
-    return (
-      <div className="flex h-full w-full items-center justify-center">
-        <p className="text-muted-foreground">No document available</p>
-      </div>
-    );
+    throw new Error("No document available");
   }
 
   // Render the document canvas

@@ -1,5 +1,6 @@
+"use client";
+
 import { useField } from "@/lib/pdf-editor/hooks/useField";
-import type { DocumentSigner } from "@/lib/types/stamp";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { DocumentSigner } from "@/lib/types/stamp";
 
 export function FieldProperties({
   fieldId,

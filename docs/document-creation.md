@@ -145,3 +145,76 @@ The assign signers step allows users to add and manage signers for the document.
 - User-friendly interface
 - Error handling and feedback
 - State persistence through document store
+
+## Step 3: Editing
+
+The editing step allows users to add and manage form fields on the document. This step is crucial for preparing the document for the signing process.
+
+### Features
+
+- Interactive PDF canvas for field placement
+- Field type selection and customization
+- Real-time field preview
+- Field list management
+
+### Technical Details
+
+- **Field Management**:
+
+  - When editing, field blocks available and dragged from the `FieldsPalette` component
+    - The list of available blocks to use in the editor are located in the `fields.ts` file, which is a list of the fields with `FieldTemplate` type.
+    - The block component itself is `FieldBlocks.tsx`
+    - Manages the current recipient the blocks will be assigned to
+  - Fields are extended off the `BaseField.tsx` component
+    - Renders the default placeholder
+    - Renders the signer or editor view of the field (dragging and resizing)
+    - Takes the `id` of the field and `renderContent` of the sub field class to render the actual field.
+    - Uses the `useField` hook in `utils.tsx` to get relative data for a field
+  - Field list management through `FieldsList` component
+  - Document preview and field placement through `DocumentCanvas` component
+  - State management through `useDocumentStore`
+  - Field validation and error handling
+
+- **State Management**:
+
+  - Uses `useDocumentStore` for field and document state
+  - View type toggling between editor and list views (only for dev)
+  - Field metadata storage
+
+- **Storage**:
+  - Field information stored in document store
+  - Field metadata includes (reference `DocumentField` type in `document-types.ts`):
+    - Field type
+    - Position coordinates
+    - Dimensions
+    - Validation rules
+    - Required status
+    - Associated signer
+
+### Error Handling
+
+- Invalid field placement
+- Field overlap detection
+- Required field validation
+- Field type compatibility
+- Document loading errors
+- State persistence errors
+
+### UI Components
+
+- Document canvas with field placement
+- Fields palette for field type selection
+- Fields list for field management
+- Navigation controls
+- View type toggle
+- Error message display
+- Empty state handling
+
+### Summary
+
+- Interactive field placement
+- Multiple field type support
+- Real-time field management
+- User-friendly interface
+- Error handling and validation
+- State persistence through document store

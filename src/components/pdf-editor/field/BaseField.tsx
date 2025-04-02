@@ -118,7 +118,7 @@ export const BaseField = memo(function BaseField({
       className="z-20 min-h-[40px] bg-white/30 text-black"
       disableDragging={false}
       enableResizing={true}
-      bounds="parent"
+      bounds="window"
       data-field-id={id}
       data-field-type={field.type}
       onClick={(e: React.MouseEvent) => {
@@ -139,32 +139,83 @@ export const BaseField = memo(function BaseField({
       }}
       onDragStop={(e, d) => {
         setIsDragging(false);
+
+        // Get the Rnd component's DOM node and its offset parent
+        const rndNode = rndRef.current?.getSelfElement();
+        const offsetParent = rndNode?.offsetParent as HTMLElement | null;
+        if (!rndNode || !offsetParent) {
+          console.error("Could not get Rnd node or offset parent.");
+          return;
+        }
+
         // Get the current page element
         const currentPageElement = document.querySelector(
           `[data-page-index="${field.position.page}"]`,
-        );
-        if (!currentPageElement) return;
+        ) as HTMLElement | null;
+        if (!currentPageElement) {
+          console.error("Could not find current page element.");
+          return;
+        }
 
-        // Get the page bounds
-        const pageRect = currentPageElement.getBoundingClientRect();
+        // Calculate the page's offset relative to the Rnd's offsetParent
+        let pageOffsetLeft = 0;
+        let pageOffsetTop = 0;
+        let currentElement: HTMLElement | null = currentPageElement;
 
-        // Calculate the maximum allowed position
-        // We need to consider the scale factor when calculating boundaries
-        const maxX = pageRect.width / scale - field.size.width;
-        const maxY = pageRect.height / scale - field.size.height;
+        // Traverse up the DOM tree from the page element until we reach the Rnd's offsetParent
+        // or the body/html element if the offsetParent is not a direct ancestor.
+        while (
+          currentElement &&
+          currentElement !== offsetParent &&
+          currentElement.offsetParent // Ensure offsetParent exists to continue traversal
+        ) {
+          pageOffsetLeft += currentElement.offsetLeft;
+          pageOffsetTop += currentElement.offsetTop;
+          currentElement = currentElement.offsetParent as HTMLElement | null;
+        }
 
-        // Constrain position within the current page
-        const validX = Math.min(Math.max(0, d.x), maxX);
-        const validY = Math.min(Math.max(0, d.y), maxY);
+        // If the loop finished because currentElement became null or didn't have an offsetParent before reaching the target offsetParent,
+        // this indicates a potential issue or a complex layout. We might need a fallback or different calculation.
+        // For now, we assume the common case where the page is within the offset parent hierarchy.
 
-        updateField({
-          id: id,
-          position: {
-            x: Math.round(validX),
-            y: Math.round(validY),
-            page: field.position.page, // Keep on same page
-          },
-        });
+        // Get the page's unscaled dimensions
+        const pageWidth = currentPageElement.offsetWidth;
+        const pageHeight = currentPageElement.offsetHeight;
+
+        // Get the field's current unscaled dimensions (react-rnd updates the style directly)
+        const fieldWidth =
+          parseInt(rndNode.style.width, 10) || field.size.width;
+        const fieldHeight =
+          parseInt(rndNode.style.height, 10) || field.size.height;
+
+        // Calculate the boundaries in the unscaled coordinate system relative to the offset parent
+        const minX = pageOffsetLeft;
+        const minY = pageOffsetTop;
+        // The maximum position is the page boundary minus the size of the field itself
+        const maxX = pageOffsetLeft + pageWidth - fieldWidth;
+        const maxY = pageOffsetTop + pageHeight - fieldHeight;
+
+        // d.x and d.y are the final coordinates provided by react-rnd, relative to the offsetParent.
+        // Constrain these coordinates within the calculated page boundaries.
+        const validX = Math.max(minX, Math.min(d.x, maxX));
+        const validY = Math.max(minY, Math.min(d.y, maxY));
+
+        // Only update if the position actually changed to avoid unnecessary renders
+        if (
+          Math.round(validX) !== field.position.x ||
+          Math.round(validY) !== field.position.y
+        ) {
+          updateField({
+            id: id,
+            position: {
+              x: Math.round(validX),
+              y: Math.round(validY),
+              page: field.position.page, // Keep on same page
+            },
+            // Optionally update size if it changed during drag (though unlikely)
+            // size: { width: fieldWidth, height: fieldHeight }
+          });
+        }
       }}
       onResizeStart={() => {
         handleFocus();

@@ -1,3 +1,5 @@
+"use client";
+
 import { cn } from "@/lib/utils";
 import { useDocumentStore } from "@/lib/pdf-editor/stores/useDocumentStore";
 import type { FieldTemplate, FieldType } from "@/lib/pdf-editor/document-types";
