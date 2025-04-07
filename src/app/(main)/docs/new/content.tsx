@@ -58,11 +58,11 @@ export function NewDocContent() {
   return (
     <div
       className={cn(
-        "space-y-12 py-8",
+        "grid gap-12 py-8",
         currentStep === "fields" && "h-dvh overflow-hidden",
       )}
     >
-      <div className="flex items-center gap-2">
+      <div className="fixed right-4 top-4 flex items-center gap-2">
         <span>{viewType}</span>
         <Button onClick={() => setViewType("signer")}>Signer</Button>
         <Button onClick={() => setViewType("editor")}>Editor</Button>

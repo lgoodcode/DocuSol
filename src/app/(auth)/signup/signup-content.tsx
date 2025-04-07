@@ -149,7 +149,7 @@ export function SignupContent() {
                 <Form {...signupForm}>
                   <form
                     onSubmit={signupForm.handleSubmit(onSignupSubmit)}
-                    className="space-y-8"
+                    className="space-y-6"
                   >
                     <FormField
                       control={signupForm.control}

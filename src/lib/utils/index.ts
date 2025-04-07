@@ -37,6 +37,7 @@ type RetryOptions = {
   maxDelay?: number;
   backoffFactor?: number;
   retryOnError?: (error: Error) => boolean;
+  /** Prevent a retry if the condition is satisfied */
   cancelOnError?: (error: Error) => boolean;
   onRetry?: (error: Error, attempt: number, delay: number) => void;
 };

@@ -133,7 +133,7 @@ export function LoginContent() {
                 <Form {...loginForm}>
                   <form
                     onSubmit={loginForm.handleSubmit(onLoginSubmit)}
-                    className="space-y-8"
+                    className="space-y-6"
                   >
                     <FormField
                       control={loginForm.control}

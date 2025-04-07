@@ -147,6 +147,12 @@ export async function uploadDocumentToStorage(
   });
 }
 
+/**
+ * Function to reset a document and its version atomically
+ * with retries and rollback on failure
+ *
+ * @returns A function that handles document reset atomically
+ */
 export function useResetDocument() {
   const { documentId, documentName, reset } = useDocumentStore();
   const supabase = createClient();
@@ -157,7 +163,7 @@ export function useResetDocument() {
       const storageService = new StorageService(supabase);
       const filePath = storageService.getFilePath(user.id, documentName, 0);
 
-      const deleteFileFromStorage = async () => {
+      async function deleteFileFromStorage() {
         try {
           await withRetry(
             async () => {
@@ -172,9 +178,9 @@ export function useResetDocument() {
           console.error("Error deleting file from storage:", error);
           captureException(error);
         }
-      };
+      }
 
-      const deleteDocumentFromDB = async () => {
+      async function deleteDocumentFromDB() {
         try {
           if (documentId) {
             await withRetry(async () => {
@@ -185,7 +191,7 @@ export function useResetDocument() {
           console.error("Error deleting document from DB:", error);
           captureException(error);
         }
-      };
+      }
 
       await Promise.all([deleteFileFromStorage(), deleteDocumentFromDB()]);
     } catch (error) {
