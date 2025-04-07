@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { useEffect } from "react";
 import { useShallow } from "zustand/react/shallow";
-import { toast } from "sonner";
 
 import { fieldTemplates } from "@/lib/pdf-editor/fields";
 import { useDocumentStore } from "@/lib/pdf-editor/stores/useDocumentStore";
@@ -13,28 +12,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { DocumentSigner } from "@/lib/types/stamp";
 
 export function FieldsPalette() {
-  const { signers, selectedFieldId } = useDocumentStore(
-    useShallow((state) => ({
-      signers: state.signers,
-      selectedFieldId: state.selectedFieldId,
-    })),
-  );
-  const [currentSigner, setCurrentSigner] = useState<DocumentSigner>(
-    signers[0],
-  );
+  const { signers, selectedFieldId, currentSignerId, setCurrentSignerId } =
+    useDocumentStore(
+      useShallow((state) => ({
+        signers: state.signers,
+        selectedFieldId: state.selectedFieldId,
+        currentSignerId: state.currentSignerId,
+        setCurrentSignerId: state.setCurrentSignerId,
+      })),
+    );
+  // There should always be at least one signer
+  const currentSigner = signers.find((s) => s.id === currentSignerId)!;
 
   const handleSignerChange = (signerId: string) => {
-    const signer = signers.find((s) => s.id === signerId);
-    if (signer) {
-      setCurrentSigner(signer);
-      toast(`Fields will now be assigned to ${signer.name}`, {
-        description: "Drag fields onto the document to place them",
-      });
-    }
+    setCurrentSignerId(signerId);
   };
+
+  // If there is no signer selected, set the current signer as the first signer in the list
+  // This applies to the initial render and when the current signer is removed
+  useEffect(() => {
+    if (!currentSignerId) {
+      setCurrentSignerId(signers[0].id);
+    }
+  }, [currentSignerId]);
 
   return (
     <div className="animate-fade-in h-full overflow-y-auto shadow-sm">
@@ -86,7 +88,7 @@ export function FieldsPalette() {
               <FieldBlock
                 key={`${field.type}-${index}`}
                 field={field}
-                currentSigner={currentSigner}
+                currentSignerId={currentSigner.id}
               />
             ))}
           </div>

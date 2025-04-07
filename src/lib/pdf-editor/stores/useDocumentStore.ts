@@ -74,7 +74,10 @@ export const useDocumentStore = create<DocumentState>()(
       setDragging: (isDragging) => set({ isDragging }),
       setResizing: (isResizing) => set({ isResizing }),
 
-      // Signer actions
+      /**
+       * Signer actions
+       */
+
       addSigner: (signer) =>
         set((state) => {
           // If the first signer, set it as the current signer by default
@@ -109,27 +112,46 @@ export const useDocumentStore = create<DocumentState>()(
             return {
               signers: [],
               currentSignerId: null,
+              fields: [],
             };
           }
 
-          return { signers: newSigners };
+          // Remove all fields that were assigned to the removed signer
+          const newFields = state.fields.filter(
+            (field) => field.assignedTo !== id,
+          );
+
+          return { signers: newSigners, fields: newFields };
         }),
       clearSigners: () => set({ signers: [] }),
       setCurrentSignerId: (id) => set({ currentSignerId: id }),
 
-      // Field actions
+      /**
+       * Field actions
+       */
+
+      // When adding a field, we need to ensure that the field is assigned to a signer
+      // as it is not possible to add a field without a signer. We also need to update the
+      // selected field id to the id of the new field and give it focus.
       addField: (field) =>
-        set((state) => ({
-          fields: [
-            ...state.fields,
-            {
-              ...field,
-              id: crypto.randomUUID(),
-              assignedTo: state.currentSignerId || "",
-              textStyles: {},
-            },
-          ],
-        })),
+        set((state) => {
+          if (!state.currentSignerId) {
+            throw new Error("No signer selected");
+          }
+
+          const newFieldId = crypto.randomUUID();
+          const newField = {
+            ...field,
+            id: newFieldId,
+            assignedTo: state.currentSignerId || "",
+            textStyles: {},
+          };
+
+          return {
+            fields: [...state.fields, newField],
+            selectedFieldId: newFieldId,
+          };
+        }),
       updateField: (updatedField) =>
         set((state) => ({
           fields: state.fields.map((field) =>

@@ -11,10 +11,10 @@ import type { DocumentSigner } from "@/lib/types/stamp";
  */
 export function FieldBlock({
   field,
-  currentSigner,
+  currentSignerId,
 }: {
   field: FieldTemplate;
-  currentSigner: DocumentSigner;
+  currentSignerId: string;
 }) {
   const setDragging = useDocumentStore((state) => state.setDragging);
   const scale = useDocumentStore((state) => state.scale);
@@ -77,7 +77,8 @@ export function FieldBlock({
 
   // Handle drag start
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
-    if (!currentSigner) {
+    // Prevent dragging a field block if no signer is selected
+    if (!currentSignerId) {
       e.preventDefault();
       return;
     }
@@ -88,7 +89,7 @@ export function FieldBlock({
     const offsetY = e.clientY - rect.top;
 
     e.dataTransfer.setData("field-type", field.type);
-    e.dataTransfer.setData("assignedTo", currentSigner.id);
+    e.dataTransfer.setData("assignedTo", currentSignerId);
     e.dataTransfer.setData("scale", scale.toString());
     e.dataTransfer.setData("offsetX", offsetX.toString());
     e.dataTransfer.setData("offsetY", offsetY.toString());
@@ -121,13 +122,13 @@ export function FieldBlock({
         "border border-transparent",
         "hover:bg-accent hover:text-accent-foreground",
         "active:bg-accent/80",
-        !currentSigner && "cursor-not-allowed opacity-50",
-        currentSigner && "cursor-grab",
+        !currentSignerId && "cursor-not-allowed opacity-50",
+        currentSignerId && "cursor-grab",
       )}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
-      draggable={!!currentSigner}
-      title={!currentSigner ? "Select a recipient first" : field.label}
+      draggable={!!currentSignerId}
+      title={!currentSignerId ? "Select a recipient first" : field.label}
     >
       <field.icon className="mb-1.5 h-5 w-5 text-muted-foreground" />
       <span className="text-sm font-medium">{field.label}</span>
