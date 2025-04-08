@@ -18,11 +18,7 @@ import { Button } from "@/components/ui/button";
 
 import { uploadInitialDocument } from "./utils";
 
-export function UploadFileStep({
-  onStepComplete,
-}: {
-  onStepComplete: () => void;
-}) {
+export function UploadStep({ onStepComplete }: { onStepComplete: () => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);

@@ -10,7 +10,7 @@ For more information refer to the documentation at `docs/document-store.md`
 
 ## Step 1: Upload Document
 
-The upload step (`src/app/(main)/docs/new/upload-file-step.tsx`) is the first step in the document creation flow. It handles the initial document upload and setup.
+The upload step (`src/app/(main)/docs/new/upload-step.tsx`) is the first step in the document creation flow. It handles the initial document upload and setup.
 
 ### Features
 
@@ -95,7 +95,7 @@ The upload step (`src/app/(main)/docs/new/upload-file-step.tsx`) is the first st
 
 ## Step 2: Assign Signers
 
-The assign signers step (`src/app/(main)/docs/new/assign-signers-step.tsx`) allows users to add and manage signers for the document.
+The assign signers step (`src/app/(main)/docs/new/assign-step.tsx`) allows users to add and manage signers for the document.
 
 ### Features
 

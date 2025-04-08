@@ -26,7 +26,7 @@ import {
   checkDuplicateEmail,
 } from "./utils";
 
-export function AssignSignersStep({
+export function SignersStep({
   onStepComplete,
 }: {
   onStepComplete: () => void;
