@@ -1,4 +1,4 @@
-import React, { memo, useRef, useMemo, useCallback } from "react";
+import React, { memo, useRef, useMemo } from "react";
 import { Page } from "react-pdf";
 import { useShallow } from "zustand/react/shallow";
 
@@ -9,7 +9,6 @@ import { useDocumentStore } from "@/lib/pdf-editor/stores/useDocumentStore";
 import {
   FieldPosition,
   FieldType,
-  DocumentState,
   DocumentField,
 } from "@/lib/pdf-editor/document-types";
 
@@ -34,7 +33,6 @@ export const DocumentPage = memo(function DocumentPage({
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    debugger;
     const fieldType = e.dataTransfer.getData("field-type") as FieldType;
     const dragScale = parseFloat(e.dataTransfer.getData("scale") || "1");
     const offsetX = parseFloat(e.dataTransfer.getData("offsetX") || "0");

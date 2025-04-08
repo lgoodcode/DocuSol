@@ -3,12 +3,11 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { captureException } from "@sentry/nextjs";
-import { XCircle, Plus, Search, Pencil } from "lucide-react";
+import { XCircle, Trash2, Plus, Search, Pencil } from "lucide-react";
 
 import { useDocumentStore } from "@/lib/pdf-editor/stores/useDocumentStore";
 import { createClient } from "@/lib/supabase/client";
 import { getUser } from "@/lib/supabase/utils";
-import { isValidEmail } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -19,43 +18,13 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import type { DocumentSigner } from "@/lib/types/stamp";
 
-const validateEmail = (email: string): string | null => {
-  if (!email.trim()) {
-    return "Please provide an email address";
-  }
-
-  if (!isValidEmail(email)) {
-    return "Invalid email address";
-  }
-
-  return null;
-};
-
-/**
- * Checks if an email already exists in the signers list
- *
- * @param signers The list of signers to check against
- * @param email The email to check
- * @param excludeIndex Optional index to exclude from the check (for editing)
- * @returns Error message if duplicate, null otherwise
- */
-const checkDuplicateEmail = (
-  signers: DocumentSigner[],
-  email: string,
-  excludeId?: string,
-): string | null => {
-  const isDuplicate = signers.some(
-    (signer) =>
-      signer.email.toLowerCase() === email.toLowerCase() &&
-      signer.id !== excludeId,
-  );
-
-  return isDuplicate
-    ? `A signer with email ${email} has already been added`
-    : null;
-};
+import {
+  validateEmail,
+  validateName,
+  toTitleCase,
+  checkDuplicateEmail,
+} from "./utils";
 
 export function AssignSignersStep({
   onStepComplete,
@@ -66,6 +35,8 @@ export function AssignSignersStep({
   const [addedMyself, setAddedMyself] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [inputError, setInputError] = useState<string | null>(null);
+  const [nameValue, setNameValue] = useState("");
+  const [nameError, setNameError] = useState<string | null>(null);
   const [editingSignerId, setEditingSignerId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
@@ -76,9 +47,23 @@ export function AssignSignersStep({
   const handleAddSigner = () => {
     try {
       const email = inputValue.trim();
-      const emailError = validateEmail(email);
-      if (emailError) {
-        setInputError(emailError);
+      const name = toTitleCase(nameValue.trim());
+
+      const nameValidationError = validateName(name);
+      if (nameValidationError) {
+        setNameError(nameValidationError);
+      } else {
+        setNameError(null);
+      }
+
+      const emailValidationError = validateEmail(email);
+      if (emailValidationError) {
+        setInputError(emailValidationError);
+      } else {
+        setInputError(null);
+      }
+
+      if (nameValidationError || emailValidationError) {
         return;
       }
 
@@ -88,9 +73,8 @@ export function AssignSignersStep({
         return;
       }
 
-      // Add signer to the store
       addSigner({
-        name: "",
+        name,
         email,
         isOwner: false,
         role: "participant",
@@ -98,7 +82,9 @@ export function AssignSignersStep({
       });
 
       setInputValue("");
+      setNameValue("");
       setInputError(null);
+      setNameError(null);
       setError(null);
     } catch (err) {
       setError("Failed to add signer");
@@ -172,6 +158,10 @@ export function AssignSignersStep({
     try {
       if (editingSignerId === null) return;
 
+      // Title case the name before validation/saving
+      const formattedName = toTitleCase(editName.trim());
+      setEditName(formattedName);
+
       // Skip validation for myself
       if (!signers.find((signer) => signer.id === editingSignerId)?.isOwner) {
         // Validate email
@@ -195,7 +185,7 @@ export function AssignSignersStep({
 
       // Update signer in the store
       updateSigner(editingSignerId, {
-        name: editName,
+        name: formattedName,
         email: editEmail,
       });
 
@@ -255,42 +245,72 @@ export function AssignSignersStep({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleAddSigner();
+          }}
+          className="flex flex-col gap-4"
+        >
+          {/* Input Fields container */}
+          <div className="flex flex-1 flex-col gap-4">
+            {/* Name Input Group */}
+            <div className="space-y-2">
+              <label htmlFor="signer-name" className="text-sm font-medium">
+                Signer Name
+              </label>
               <Input
+                id="signer-name"
+                value={nameValue}
+                onChange={(e) => {
+                  setNameValue(e.target.value);
+                  if (nameError) setNameError(null);
+                }}
+                placeholder="Enter signer's name"
+                className={`${nameError ? "border-destructive" : ""}`}
+              />
+              {nameError && (
+                <p className="mt-1 text-xs text-destructive">{nameError}</p>
+              )}
+            </div>
+            {/* Email Input Group */}
+            <div className="space-y-2">
+              <label htmlFor="signer-email" className="text-sm font-medium">
+                Signer Email
+              </label>
+              <Input
+                id="signer-email"
                 value={inputValue}
                 onChange={(e) => {
                   setInputValue(e.target.value);
-                  // Clear error when typing
                   if (inputError) setInputError(null);
                 }}
-                placeholder="Enter a contact's email address"
-                className={`pr-10 ${inputError ? "border-destructive" : ""}`}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleAddSigner();
-                  }
-                }}
+                placeholder="Enter signer's email address"
+                className={`${inputError ? "border-destructive" : ""}`}
               />
+              {inputError && (
+                <p className="mt-1 text-xs text-destructive">{inputError}</p>
+              )}
             </div>
-            <Button onClick={handleAddSigner}>
-              <Plus className="h-4 w-4" />
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex shrink-0 gap-2">
+            <Button type="submit" className="flex-1 md:flex-auto">
+              <Plus className="mr-1 h-4 w-4" />
               Add
             </Button>
-            <Button disabled={addedMyself} onClick={handleAddMyself}>
-              <Plus className="h-4 w-4" />
+            <Button
+              type="button" // Prevent form submission
+              disabled={addedMyself}
+              onClick={handleAddMyself}
+              className="flex-1 md:flex-auto"
+            >
+              <Plus className="mr-1 h-4 w-4" />
               Add Myself
             </Button>
           </div>
-
-          {/* Error message for input - outside the flex layout */}
-          {inputError && (
-            <div>
-              <p className="text-sm text-destructive">{inputError}</p>
-            </div>
-          )}
-        </div>
+        </form>
 
         <Card className="mt-6">
           <CardContent className="space-y-6 pt-6">
@@ -361,7 +381,7 @@ export function AssignSignersStep({
                               size="sm"
                               onClick={() => handleRemoveSigner(signer.id)}
                             >
-                              <XCircle className="h-4 w-4" />
+                              <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
                         </div>
@@ -380,7 +400,7 @@ export function AssignSignersStep({
 
       <div className="mt-4 flex justify-end">
         <Button disabled={signers.length === 0} onClick={handleContinue}>
-          Continue
+          Next
         </Button>
       </div>
 

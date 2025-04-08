@@ -10,7 +10,7 @@ For more information refer to the documentation at `docs/document-store.md`
 
 ## Step 1: Upload Document
 
-The upload step is the first step in the document creation flow. It handles the initial document upload and setup.
+The upload step (`src/app/(main)/docs/new/upload-file-step.tsx`) is the first step in the document creation flow. It handles the initial document upload and setup.
 
 ### Features
 
@@ -22,199 +22,345 @@ The upload step is the first step in the document creation flow. It handles the 
 
 - **File Validation**:
 
-  - Maximum file size: Defined in `MAX_FILE_SIZE` constant
-  - Accepted file types: PDF only
-  - File type validation using MIME type checking
+  - Maximum file size: Defined in `MAX_FILE_SIZE` constant (`@/constants`)
+  - Accepted file types: PDF only (`file.type === "application/pdf"`)
+  - Uses `formatFileSize` from `@/lib/utils/format-file-size` for error messages.
 
 - **Document Processing**:
 
-  - File is converted to data URL for preview and to store in the document store for persistence
-  - Prior to uploading, the hash of the raw document buffer is generated using `PDFHash.getFileHash`
-  - `uploadInitialDocument` in `src/app/(main)/docs/new/utils.tsx` is used to process the upload
-    - Manually atomic by tracking the two changes and undoing the first if the second fails
-    - `version` is static `0` for all new creations
-    - File is uploaded via the `StorageService` class to S3
-      - `documentUploaded` is used within the catch block to know if we failed on the document upload in S3 or the database. If it had succeeded and failed on the database, we want to undo the change and remove the file
-    - `create_document_with_version` postgres function is used to add the document to the database
-      - More information on this can be found in the `docs/database/docs.md` documentation
-  - Document store is updated
-  - Step is completed
+  - File is converted to data URL using `fileToDataUrl` utility (`@/lib/utils`) for preview and stored in the document store (`setDocumentDataUrl`).
+  - Document name is handled via `localDocumentName` state, debounced to update the store (`setDocumentName`).
+  - Prior to uploading, the hash of the raw document buffer is generated using `PDFHash.getFileHash(Buffer.from(await file.arrayBuffer()))`.
+  - `uploadInitialDocument` in `src/app/(main)/docs/new/utils.tsx` is used to process the upload:
+    - Manually atomic by tracking the two changes (storage upload, DB insert) and undoing the first if the second fails.
+    - `version` is static `0` for all new creations.
+    - File is uploaded via the `StorageService` class (`@/lib/supabase/storage`) to Supabase Storage.
+      - `documentUploaded` flag within the function tracks success/failure points for potential rollback.
+    - `create_document_with_version` postgres function is used to add the document metadata to the database.
+      - More information on this can be found in the `docs/database/docs.md` documentation.
+  - The returned `documentId` from `uploadInitialDocument` is saved to the store (`setDocumentId`).
+  - On successful upload, navigates to the next step (`setCurrentStep("signers")`) and calls `onStepComplete`.
 
   TODO: implement a cron job or something to cleanup S3 files of documents that were uploaded but never completed
 
 - **State Management**:
 
-  - Uses `useDocumentStore` for document metadata
-  - Local state debounced for document name to prevent UI lag
-  - Handles upload progress and error states
+  - Uses `useDocumentStore` (`@/lib/pdf-editor/stores/useDocumentStore`) for document metadata (`storeDocumentName`, `setDocumentName`, `setDocumentDataUrl`, `setCurrentStep`, `setDocumentId`).
+  - Local state managed by `useState`: `file`, `error`, `isUploading`, `localDocumentName`.
+  - `useEffect` synchronizes `localDocumentName` from `storeDocumentName` on mount.
 
 - **Storage**:
-  - Document is uploaded to Supabase storage
-  - Document metadata is stored in Supabase database
-  - Document hash is prepared for blockchain storage
+
+  - Document file is uploaded to Supabase Storage.
+  - Document metadata (name, ID, hash, etc.) is stored in Supabase database (`documents` table).
+  - Document hash is prepared for potential future blockchain storage/verification.
+
+- **Navigation**:
+  - "Upload" button triggers `handleUpload`.
+  - On success, `handleUpload` calls `setCurrentStep("signers")`.
 
 ### Error Handling
 
-- File size exceeded
-- Invalid file type
-- Duplicate document names
-- Upload failures
-- Network errors
+- File size exceeded (`file.size > MAX_FILE_SIZE`).
+- Invalid file type (`file.type !== "application/pdf"`).
+- Upload failures caught in `handleUpload`:
+  - Checks for specific error message "The resource already exists" for duplicate document names.
+  - Other errors are logged and reported to Sentry via `captureException`.
+  - Sets `error` state for display in the UI.
+- Uses `sonner` implicitly via `captureException` potentially, but no direct `toast` calls in this component.
 
 ### UI Components
 
-- File upload component with drag-and-drop support
-- Document name input with validation
-- Upload progress indicator
-- Error message display
-- Animated transitions using Framer Motion
+- Main layout `div` with `motion` animations from `framer-motion`.
+- `Card` component containing the main content.
+- Error message display block (conditionally rendered based on `error` state) using `XCircle` icon from `lucide-react`.
+- Conditional rendering based on `isUploading`:
+  - Shows loading indicator (`Loader2` icon from `lucide-react`).
+  - Shows form fields when not uploading.
+- Form fields:
+  - `Label` and `Input` for "Document Name".
+  - `FileUpload` component (`@/components/ui/file-upload`) for drag-and-drop/file selection.
+- `Button` for triggering the upload.
 
 ### Summary
 
-- File type validation
-- Size restrictions
-- Secure file storage in Supabase
-- Hash generation for blockchain verification
+- Validates PDF file type and size.
+- Debounced input for document name.
+- Calculates file hash.
+- Uses atomic utility function (`uploadInitialDocument`) for storage and database operations.
+- Secure file storage in Supabase.
+- Hash generation for future verification.
+- Error handling and reporting.
+- Clear UI feedback for loading and error states.
 
 ## Step 2: Assign Signers
 
-The assign signers step allows users to add and manage signers for the document. This step is crucial for determining who will be involved in the signing process.
+The assign signers step (`src/app/(main)/docs/new/assign-signers-step.tsx`) allows users to add and manage signers for the document.
 
 ### Features
 
-- Add signers by email address
-- Add yourself as a signer
-- Edit signer information
-- Remove signers
-- Validate email addresses
-- Prevent duplicate signers
+- Add signers with a name and email address.
+- Add yourself as a signer (fetches user details).
+- Edit signer name/email inline.
+- Remove signers.
+- Validate email addresses and names.
+- Prevent duplicate signers (by email).
 
 ### Technical Details
 
 - **Signer Management**:
 
-  - Email validation using `isValidEmail` utility
-  - Duplicate email checking with `checkDuplicateEmail` function
-  - Signer state management through `useDocumentStore`
-  - Automatic addition of document owner as a signer
-  - Signer role assignment (owner/participant)
-  - Signer mode configuration (transparent)
+  - Uses validation functions from `./utils.tsx`: `validateName`, `validateEmail`, `checkDuplicateEmail`.
+  - Uses `toTitleCase` utility from `./utils.tsx` for names.
+  - **Adding Signers:**
+    - Uses `handleAddSigner` function triggered by form submission or button click.
+    - Validates name and email, checks for duplicates.
+    - Calls `addSigner` from `useDocumentStore` with role "participant" and owner status false.
+  - **Adding Myself:**
+    - Uses `handleAddMyself` function.
+    - Fetches user details using `getUser` from `@/lib/supabase/utils`.
+    - Checks for duplicates before calling `addSigner` with role "owner" and owner status true.
+  - **Removing Signers:**
+    - Uses `handleRemoveSigner` function.
+    - Calls `removeSigner` from `useDocumentStore`.
+    - Updates `addedMyself` state if the owner is removed.
+  - **Editing Signers (Inline):**
+    - Clicking the edit icon triggers `handleEditSigner`, setting `editingSignerId`, `editName`, and `editEmail` state.
+    - Saving triggers `handleSaveEdit`:
+      - Validates email (if not owner) using `validateEmail` and `checkDuplicateEmail` (excluding self).
+      - Calls `updateSigner` from `useDocumentStore` with partial updates (name, email).
+      - Cancelling edit via `handleCancelEdit` resets editing state.
+  - Signer state management primarily through `useDocumentStore`.
 
 - **State Management**:
 
-  - Uses `useDocumentStore` for signer list management
-  - Local state for input validation and error handling
-  - Error state management for various scenarios
+  - Uses `useDocumentStore` actions: `addSigner`, `updateSigner`, `removeSigner`, `setCurrentStep`. Reads `signers`.
+  - Local state managed by `useState`: `error` (general errors), `addedMyself` (boolean), `inputValue` (email input), `inputError` (email validation), `nameValue` (name input), `nameError` (name validation), `editingSignerId`, `editName`, `editEmail`, `editEmailError`.
+  - `useEffect` checks if owner exists in `signers` list to set initial `addedMyself` state.
 
 - **Storage**:
-  - Signer information stored in document store
-  - Signer metadata includes:
-    - Unique ID
-    - Name
-    - Email
-    - Role
-    - Mode
-    - Owner status
+
+  - Signer information stored temporarily in Zustand (`useDocumentStore`). Persisted later in the process.
+  - Signer metadata includes: `id` (generated by store), `name`, `email`, `isOwner`, `role`, `mode`.
+
+- **Navigation**:
+  - "Back" button calls `setCurrentStep("upload")`.
+  - "Continue" button triggers `handleContinue`, which checks if at least one signer exists before calling `setCurrentStep("fields")` and `onStepComplete`.
 
 ### Error Handling
 
-- Invalid email format
-- Duplicate email addresses
-- Empty email input
-- Failed signer addition/removal
-- Failed self-addition
-- Failed signer updates
-- Network errors during operations
+- Displays validation errors for name (`nameError`) and email (`inputError`, `editEmailError`) inputs.
+- Checks for duplicate emails via `checkDuplicateEmail`.
+- Displays general errors via `error` state (e.g., "Failed to add signer", "Failed to remove signer", "Failed to add yourself", "Failed to update signer", "Please add at least one signer").
+- Reports errors to Sentry via `captureException` in `handleAddSigner`, `handleRemoveSigner`, `handleAddMyself`, `handleSaveEdit`.
+- Uses `sonner` implicitly via `captureException` potentially, but no direct `toast` calls in this component.
 
 ### UI Components
 
-- Email input field with validation
-- Add/Remove signer buttons
-- Signer list display
-- Edit signer dialog
-- Error message display
-- Empty state handling
-- Animated transitions using Framer Motion
-- Responsive layout for different screen sizes
+- Main layout `div` with `motion` animations.
+- `Card` containing the main content.
+- Error message display block (`XCircle` icon).
+- Form for adding new signers (`Input` for name, `Input` for email, `Button` with `Plus` icon).
+- Button to "Add Myself" (conditionally enabled based on `addedMyself` state).
+- List of added signers:
+  - Displays name and email.
+  - Edit functionality (conditionally shows input fields or text, `Pencil` icon triggers edit mode).
+  - Remove button (`Trash2` icon).
+- Navigation buttons ("Back", "Continue").
+- Note: `Dialog` components are imported but not directly used for editing within this step's current implementation.
 
 ### Summary
 
-- Email-based signer management
-- Role-based access control
-- Real-time validation
-- User-friendly interface
-- Error handling and feedback
-- State persistence through document store
+- Email and name-based signer management with validation.
+- Inline editing capabilities for signers.
+- Automatic "Add Myself" feature.
+- Role assignment (owner/participant).
+- Real-time validation and duplicate checking.
+- Error handling and reporting.
+- State persistence through document store.
 
 ## Step 3: Editing
 
-The editing step allows users to add and manage form fields on the document. This step is crucial for preparing the document for the signing process.
+The editing step (`src/app/(main)/docs/new/editing-step.tsx`) allows users to add and manage form fields on the document. This step is crucial for preparing the document for the signing process.
 
 ### Features
 
-- Interactive PDF canvas for field placement
-- Field type selection and customization
-- Real-time field preview
-- Field list management
+- Interactive PDF canvas for field placement.
+- Field type selection and customization.
+- Real-time field preview.
+- Field list management.
 
 ### Technical Details
 
 - **Field Management**:
 
-  - When editing, field blocks available and dragged from the `FieldsPalette` component
-    - The list of available blocks to use in the editor are located in the `fields.ts` file, which is a list of the fields with `FieldTemplate` type.
-    - The block component itself is `FieldBlocks.tsx`
-    - Manages the current recipient the blocks will be assigned to
-  - Fields are extended off the `BaseField.tsx` component
-    - Renders the default placeholder
-    - Renders the signer or editor view of the field (dragging and resizing)
-    - Takes the `id` of the field and `renderContent` of the sub field class to render the actual field.
-    - Uses the `useField` hook in `utils.tsx` to get relative data for a field
-  - Field list management through `FieldsList` component
-  - Document preview and field placement through `DocumentCanvas` component
-  - State management through `useDocumentStore`
-  - Field validation and error handling
+  - Primarily handled by child components: `DocumentCanvas`, `FieldsPalette`, `FieldsList`.
+  - `FieldsPalette` component:
+    - Displays available field blocks based on `fields.ts` (`FieldTemplate` type).
+    - Allows dragging fields (`FieldBlock` component, uses `handleDragStart`).
+    - Manages the currently selected recipient for field assignment.
+  - `DocumentCanvas` component:
+    - Renders the PDF using potentially `react-pdf` or similar.
+    - Handles dropping fields onto pages (`DocumentPage` component, `handleDrop` function).
+    - Displays placed fields.
+  - Field components (e.g., `SignatureField`, `TextField`) likely extend a `BaseField.tsx`:
+    - Renders placeholder and different views (editor vs. signer).
+    - Uses `useField` hook (`@/lib/pdf-editor/hooks/useField`) for field-specific data/logic.
+  - `FieldsList` component manages viewing/editing properties of placed fields.
+  - Overall state management through `useDocumentStore`.
 
 - **State Management**:
 
-  - Uses `useDocumentStore` for field and document state
-  - View type toggling between editor and list views (only for dev)
-  - Field metadata storage
+  - Uses `useDocumentStore` for field state (`fields`, `addOrUpdateField`, `removeField`), document state (`documentDataUrl`), and view state (`viewType`).
+  - `viewType` toggling between "editor" and "list" views (potentially dev-only).
 
 - **Storage**:
-  - Field information stored in document store
+
+  - Field information stored in document store (`useDocumentStore`).
   - Field metadata includes (reference `DocumentField` type in `document-types.ts`):
-    - Field type
-    - Position coordinates
-    - Dimensions
-    - Validation rules
-    - Required status
-    - Associated signer
+    - `id`
+    - `type`
+    - `pageIndex`
+    - `rect` (position and dimensions)
+    - `signerId` (associated signer)
+    - Potentially other type-specific properties (validation rules, required status).
+
+- **Navigation**:
+
+  - `handleBack` function navigates to the "signers" step (`setCurrentStep("signers")`).
+  - `handleNext` function navigates to the "review" step (`setCurrentStep("review")`) and calls the `onStepComplete` callback.
 
 ### Error Handling
 
-- Invalid field placement
-- Field overlap detection
-- Required field validation
-- Field type compatibility
-- Document loading errors
-- State persistence errors
+- Throws an error if `documentDataUrl` is missing from the store when the component mounts.
+- Invalid field placement, overlap detection, required field validation, etc., are likely handled within the child components (`DocumentCanvas`, `FieldsPalette`, `FieldsList`, individual field components) and potentially update the store or show local errors.
 
 ### UI Components
 
-- Document canvas with field placement
-- Fields palette for field type selection
-- Fields list for field management
-- Navigation controls
-- View type toggle
-- Error message display
-- Empty state handling
+- Main layout container (`div` with flexbox).
+- `DocumentCanvas`: Displays the interactive PDF document.
+- `FieldsPalette`: (Conditionally rendered based on `viewType`) Displays available field types to drag onto the canvas.
+- `FieldsList`: (Conditionally rendered based on `viewType`) Displays a list of fields already placed on the document.
+- `Button` components for "Back" and "Next" navigation.
+- Note: Specific field representations, error messages, empty states, and view toggling logic are handled within the child components (`DocumentCanvas`, `FieldsPalette`, `FieldsList`).
 
 ### Summary
 
-- Interactive field placement
-- Multiple field type support
-- Real-time field management
-- User-friendly interface
-- Error handling and validation
-- State persistence through document store
+- Interactive field placement via drag-and-drop.
+- Multiple field type support.
+- Real-time field management and state updates via Zustand.
+- Relies heavily on specialized child components for core functionality.
+- User-friendly interface for document preparation.
+- Error handling and validation within child components.
+- State persistence through document store.
+
+## Step 4: Review
+
+The review step (`src/app/(main)/docs/new/review-step.tsx`) is the final stage before submitting the document for signing. It allows the user to review all previously entered information and configure final settings.
+
+### Features
+
+- Review document recipients (signers).
+  - Can edit and update signer name/email via a dialog.
+  - Can remove signers via a confirmation dialog.
+- Configure document settings:
+  - Document name review (read-only currently).
+  - Optional document encryption with password.
+  - Optional document expiration date.
+- Add a custom sender message for recipients.
+- Reset the entire document creation process (with confirmation).
+- Submit the document for processing (currently simulated).
+
+### Technical Details
+
+- **Recipient Review**:
+
+  - Displays the list of signers from `useDocumentStore`.
+  - Edit button triggers `handleOpenEditSignerDialog`, showing `EditSignerDialog`.
+    - On save, `handleSaveEditedSigner` calls `updateSigner` from the store.
+  - Remove button triggers `handleOpenDeleteSignerDialog`, showing `DeleteSignerDialog`.
+    - On confirm, `handleConfirmDeleteSigner` calls `removeSigner` from the store.
+    - Remove button is disabled if only one signer remains (`isOnlySigner` state).
+
+- **Document Settings**:
+
+  - Uses `react-hook-form` with `zod` schema (`documentMetadataSchemaWithValidation`) for validation.
+  - **Document Name**: Displays `documentName` from the store (read-only `Input`).
+  - **Encryption**:
+    - Controlled by `isEncrypted` state/store value and `Switch` component.
+    - Updates store via `setIsEncrypted`.
+    - Conditionally displays password `Input`.
+    - Password stored via `encryptionPassword` state/store value (`setEncryptionPassword`).
+    - Zod schema validates password length (min 6 chars) if enabled.
+  - **Expiration**:
+    - Controlled by `isExpirationEnabled` state/store value and `Switch` component.
+    - Updates store via `setIsExpirationEnabled`.
+    - Uses `Popover` + `Calendar` component for date selection.
+    - Date stored via `expirationDate` state/store value (`setExpirationDate`).
+    - Uses `isPastDate` helper function to disable past dates in `Calendar`.
+    - Zod schema validates that a date is selected if enabled.
+  - **Sender Message**:
+    - Uses `Textarea` component.
+    - Stored via `senderMessage` state/store value (`setSenderMessage`).
+    - Zod schema validates character limit (1000 chars).
+    - Message is noted as not stored permanently or encrypted.
+
+- **Form Handling**:
+
+  - Form state managed by `react-hook-form` (`documentMetadataForm`).
+  - Input changes (`onChange`, `onCheckedChange`, `onSelect`) update the Zustand store directly _and_ the `react-hook-form` state.
+  - `onSubmit` function:
+    - Validates form data against the Zod schema.
+    - Currently simulates submission success/failure with `setTimeout`. (TODO: Implement actual submission logic).
+
+- **Document Reset**:
+
+  - "Reset" button triggers showing `ResetDocumentDialog` by setting `isResetDialogOpen` state.
+  - On confirmation, `handleReset` function is called:
+    - Calls `useResetDocument` hook (from `./utils.tsx`).
+      - This hook handles deleting the document from DB (`documents` table) and Storage (`StorageService.deleteFile`) with retries (`withRetry`).
+    - Clears the Zustand store via `reset()`.
+    - Navigates back to the "upload" step (`setCurrentStep("upload")`).
+    - Shows success/error toast notification via `sonner`.
+
+- **State Management**:
+
+  - Reads/writes configuration values to `useDocumentStore`.
+  - `react-hook-form` manages form state and validation.
+  - Local state (`useState`): `isSubmitting`, `isResetDialogOpen`, `isResetting`, `isEditSignerDialogOpen`, `currentSignerToEdit`, `isDeleteSignerDialogOpen`, `currentSignerToDelete`.
+  - Derived state: `isOnlySigner` (from `signers.length`).
+
+- **Navigation**:
+  - "Back" button (`handleBack`) navigates to the "fields" step (`setCurrentStep("fields")`).
+  - "Submit" button triggers the `onSubmit` handler.
+
+### Error Handling
+
+- Form validation errors displayed via `react-hook-form` (`FormMessage`).
+- Handles potential errors during document reset (`handleReset` try/catch), submission (`onSubmit` try/catch), signer updates (`handleSaveEditedSigner` try/catch), and signer deletion (`handleConfirmDeleteSigner` try/catch).
+- Reports errors to Sentry using `captureException` in all `catch` blocks.
+- Displays toast notifications for success/error states using `sonner` (`toast.success`, `toast.error`).
+
+### UI Components
+
+- Main layout `div` with `motion` animations.
+- `Card` components for sectioning (Recipients, Settings, Message).
+- `Table` for displaying recipients (`Badge` for role).
+- Action buttons within the table row (`Button` with `Edit2` icon, `Button` with `Trash2` icon).
+  - Tooltip (`TooltipProvider`, `Tooltip`, `TooltipContent`) for disabled remove button.
+- `Form` component (`@/components/ui/form`) encapsulating settings and message.
+- Form field components (`FormField`, `FormItem`, `FormLabel`, `FormControl`, `FormDescription`, `FormMessage`).
+- Input components: `Input`, `Switch`, `Popover` + `Calendar` (`CalendarIcon`), `Textarea`.
+- `Info` icon with `Tooltip` for encryption details.
+- Action buttons: "Back", "Reset" (`RefreshCcw` icon), "Submit".
+- `Dialog` components: `ResetDocumentDialog`, `EditSignerDialog`, `DeleteSignerDialog`.
+
+### Summary
+
+- Final review of recipients and document settings.
+- Configuration of optional encryption and expiration.
+- Optional non-persistent sender message.
+- Robust form validation using `react-hook-form` and `zod`.
+- Comprehensive error handling with Sentry reporting and user feedback via toasts.
+- Document reset functionality with confirmation and cleanup.
+- Prepares document metadata for final submission (simulation currently).

@@ -7,32 +7,92 @@ import { PLATFORM_FEE } from "@/constants";
 import { createClient } from "@/lib/supabase/client";
 import { getUser } from "@/lib/supabase/utils";
 import { StorageService } from "@/lib/supabase/storage";
-import { withRetry } from "@/lib/utils";
+import { isValidEmail, withRetry } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { sign } from "@/lib/utils/sign";
 import { hasSufficientBalance } from "@/lib/utils/solana";
 import { useDocumentStore } from "@/lib/pdf-editor/stores/useDocumentStore";
+import type { DocumentSigner } from "@/lib/types/stamp";
 
-export interface DocumentSigner {
-  email: string;
-  name: string;
-  userId?: string;
-  orderIndex: number;
-}
+// export interface DocumentSigner {
+//   email: string;
+//   name: string;
+//   userId?: string;
+//   orderIndex: number;
+// }
 
-export interface NewDocument {
-  name: string;
-  file: File;
-  password?: string;
-  signers?: DocumentSigner[];
-}
+// export interface NewDocument {
+//   name: string;
+//   file: File;
+//   password?: string;
+//   signers?: DocumentSigner[];
+// }
 
-export interface NewDocumentResponse {
-  id: string;
-  status: string;
-  name: string;
-  originalDocumentUrl: string;
-}
+// export interface NewDocumentResponse {
+//   id: string;
+//   status: string;
+//   name: string;
+//   originalDocumentUrl: string;
+// }
+
+export const validateEmail = (email: string): string | null => {
+  if (!email.trim()) {
+    return "Please provide an email address";
+  }
+
+  if (!isValidEmail(email)) {
+    return "Invalid email address";
+  }
+
+  return null;
+};
+
+export const validateName = (name: string): string | null => {
+  if (!name.trim()) {
+    return "Please provide a name";
+  }
+  if (name.length > 100) {
+    return "Name must be less than 100 characters";
+  }
+  if (name.length < 2) {
+    return "Name must be at least 2 characters";
+  }
+  return null;
+};
+
+/**
+ * Converts a string to title case (e.g., "john doe" -> "John Doe")
+ */
+export const toTitleCase = (str: string): string =>
+  str
+    .toLowerCase()
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+
+/**
+ * Checks if an email already exists in the signers list
+ *
+ * @param signers The list of signers to check against
+ * @param email The email to check
+ * @param excludeIndex Optional index to exclude from the check (for editing)
+ * @returns Error message if duplicate, null otherwise
+ */
+export const checkDuplicateEmail = (
+  signers: DocumentSigner[],
+  email: string,
+  excludeId?: string,
+): string | null => {
+  const isDuplicate = signers.some(
+    (signer) =>
+      signer.email.toLowerCase() === email.toLowerCase() &&
+      signer.id !== excludeId,
+  );
+
+  return isDuplicate
+    ? `A signer with email ${email} has already been added`
+    : null;
+};
 
 export function useSignDoc() {
   const { toast } = useToast();

@@ -129,10 +129,7 @@ export const FieldsList: React.FC = () => {
   const handleFieldSelect = (field: DocumentField) => {
     setSelectedFieldId(field.id);
 
-    // Ensure the field is visible by scrolling to its page
-    const pageElement = document.querySelector(
-      `[data-page-index="${field.position.page}"]`,
-    );
+    const pageElement = document.querySelector(`[data-field-id="${field.id}"]`);
     if (pageElement) {
       pageElement.scrollIntoView({
         behavior: "smooth",
