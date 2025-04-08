@@ -3,15 +3,15 @@
 import { useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
-import { Stepper } from "@/components/ui/stepper";
+import { cn } from "@/lib/utils";
 import { useDocumentStore } from "@/lib/pdf-editor/stores/useDocumentStore";
-import { cn, dataUrlToFile } from "@/lib/utils";
+import { Stepper } from "@/components/ui/stepper";
+import { Button } from "@/components/ui/button";
 
 import { UploadStep } from "./upload-step";
 import { SignersStep } from "./signers-step";
 import { EditingStep } from "./editing-step";
 import { ReviewStep } from "./review-step";
-import { Button } from "@/components/ui/button";
 
 export function NewDocContent() {
   const { currentStep, setCurrentStep, reset, viewType, setViewType } =

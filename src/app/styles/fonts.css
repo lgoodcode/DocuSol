@@ -1,6 +1,6 @@
 @font-face {
   font-family: "Bastliga";
-  src: url("./bastliga.otf") format("opentype");
+  src: url("/fonts/bastliga.otf") format("opentype");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -8,7 +8,7 @@
 
 @font-face {
   font-family: "Brother";
-  src: url("./brother.otf") format("opentype");
+  src: url("/fonts/brother.otf") format("opentype");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -16,7 +16,7 @@
 
 @font-face {
   font-family: "CentralWell";
-  src: url("./centralwell.ttf") format("truetype");
+  src: url("/fonts/centralwell.ttf") format("truetype");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -24,7 +24,7 @@
 
 @font-face {
   font-family: "DancingFont";
-  src: url("./dancing.ttf") format("truetype");
+  src: url("/fonts/dancing.ttf") format("truetype");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -32,7 +32,7 @@
 
 @font-face {
   font-family: "ModernSignature";
-  src: url("./modern-signature.ttf") format("truetype");
+  src: url("/fonts/modern-signature.ttf") format("truetype");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -40,7 +40,7 @@
 
 @font-face {
   font-family: "PerfectoCalligraphy";
-  src: url("./perfectocalligraphy.ttf") format("truetype");
+  src: url("/fonts/perfectocalligraphy.ttf") format("truetype");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -48,7 +48,7 @@
 
 @font-face {
   font-family: "Phitagate";
-  src: url("./phitagate.otf") format("opentype");
+  src: url("/fonts/phitagate.otf") format("opentype");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -56,7 +56,7 @@
 
 @font-face {
   font-family: "Priestacy";
-  src: url("./priestacy.otf") format("opentype");
+  src: url("/fonts/priestacy.otf") format("opentype");
   font-weight: normal;
   font-style: normal;
   font-display: swap;

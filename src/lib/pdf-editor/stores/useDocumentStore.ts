@@ -33,10 +33,9 @@ const keysToNotPersist: (keyof DocumentState)[] = [
   "selectedFieldId",
 ];
 
-// Create the store with persistence
 export const useDocumentStore = create<DocumentState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       documentId: null,
       documentName: "",
       documentDataUrl: null,
@@ -54,7 +53,6 @@ export const useDocumentStore = create<DocumentState>()(
       fields: [],
       selectedFieldId: undefined,
 
-      // Initial security and expiration state
       isEncrypted: false,
       encryptionPassword: "",
       isExpirationEnabled: false,
@@ -191,7 +189,6 @@ export const useDocumentStore = create<DocumentState>()(
       setExpirationDate: (expirationDate) => set({ expirationDate }),
       setSenderMessage: (senderMessage) => set({ senderMessage }),
 
-      // Reset the entire store
       reset: () =>
         set({
           documentId: null,
@@ -209,6 +206,23 @@ export const useDocumentStore = create<DocumentState>()(
           expirationDate: undefined,
           senderMessage: "",
         }),
+
+      export: () => {
+        const state = get();
+        return {
+          documentId: state.documentId,
+          documentName: state.documentName,
+          documentDataUrl: state.documentDataUrl,
+          documentPreviewUrl: state.documentPreviewUrl,
+          signers: state.signers,
+          fields: state.fields,
+          isEncrypted: state.isEncrypted,
+          encryptionPassword: state.encryptionPassword,
+          isExpirationEnabled: state.isExpirationEnabled,
+          expirationDate: state.expirationDate,
+          senderMessage: state.senderMessage,
+        };
+      },
     }),
     {
       name: "document-store",

@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import * as z from "zod";
 
 import { useDocumentStore } from "@/lib/pdf-editor/stores/useDocumentStore";
-import { DocumentSigner, SignerRole, SigningMode } from "@/lib/types/stamp";
+import { DocumentSigner } from "@/lib/types/stamp";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -58,45 +58,27 @@ const documentMetadataSchema = z.object({
     .min(1, "Document name is required")
     .max(200, "Document name should not exceed 200 characters"),
   isEncrypted: z.boolean().default(false),
-  encryptionPassword: z.string().optional(),
+  encryptionPassword: z
+    .string()
+    .optional()
+    .refine((password) => !password || password.length >= 6, {
+      message: "Password must be at least 6 characters",
+    })
+    .refine((password) => !password || password.length <= 100, {
+      message: "Password must be less than 100 characters",
+    }),
   isExpirationEnabled: z.boolean().default(false),
-  expirationDate: z.date({ coerce: true }).optional(),
+  expirationDate: z
+    .date({ coerce: true })
+    .optional()
+    .refine((date) => !date || !isPastDate(date), {
+      message: "Expiration date cannot be in the past",
+    }),
   senderMessage: z
     .string()
     .max(1000, "Message should not exceed 1000 characters")
     .optional(),
 });
-
-// Add validation for password when encryption is enabled
-const documentMetadataSchemaWithValidation = documentMetadataSchema
-  .refine(
-    (data) => {
-      if (
-        data.isEncrypted &&
-        (!data.encryptionPassword || data.encryptionPassword.length < 6)
-      ) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message:
-        "Password must be at least 6 characters when encryption is enabled",
-      path: ["encryptionPassword"],
-    },
-  )
-  .refine(
-    (data) => {
-      if (data.isExpirationEnabled && !data.expirationDate) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message: "Expiration date is required when expiration is enabled",
-      path: ["expirationDate"],
-    },
-  );
 
 /**
  * Review step component for the document creation flow
@@ -120,6 +102,7 @@ export function ReviewStep({ onStepComplete }: { onStepComplete: () => void }) {
     setExpirationDate,
     senderMessage,
     setSenderMessage,
+    export: exportDocumentState,
   } = useDocumentStore();
   const resetDocument = useResetDocument();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -135,10 +118,8 @@ export function ReviewStep({ onStepComplete }: { onStepComplete: () => void }) {
   const isOnlySigner = signers.length <= 1;
 
   // Initialize form with values from the document store
-  const documentMetadataForm = useForm<
-    z.infer<typeof documentMetadataSchemaWithValidation>
-  >({
-    resolver: zodResolver(documentMetadataSchemaWithValidation),
+  const documentMetadataForm = useForm<z.infer<typeof documentMetadataSchema>>({
+    resolver: zodResolver(documentMetadataSchema),
     defaultValues: {
       documentName,
       isEncrypted,
@@ -150,32 +131,8 @@ export function ReviewStep({ onStepComplete }: { onStepComplete: () => void }) {
   });
 
   const handleBack = () => {
-    // No need to save form values to store before going back
-    // as they are already being saved on change
     setCurrentStep("fields");
   };
-
-  // TODO: implement in the future to change the document name
-  // // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  // const validateDocumentName = async (name: string) => {
-  //   // TODO: make editable - requires update storage path
-  //   const { data, error } = await supabase
-  //     .from("documents")
-  //     .select("name")
-  //     .eq("name", name);
-
-  //   if (error) {
-  //     console.error(error);
-  //     captureException(error);
-  //     throw new Error("Failed to validate document name");
-  //   }
-
-  //   if (data && data.length > 0) {
-  //     return false;
-  //   }
-
-  //   return true;
-  // };
 
   const handleReset = async () => {
     try {
@@ -197,45 +154,20 @@ export function ReviewStep({ onStepComplete }: { onStepComplete: () => void }) {
     }
   };
 
-  const onSubmit = async (
-    values: z.infer<typeof documentMetadataSchemaWithValidation>,
-  ) => {
+  const onSubmit = async (values: z.infer<typeof documentMetadataSchema>) => {
     try {
-      setIsSubmitting(true);
-
-      // Only validate document name if there's no existing error
-      if (!documentMetadataForm.formState.errors.documentName) {
-        // TODO: implement in the future to change the document name
-        // // Validate document name
-        // const isNameValid = await validateDocumentName(values.documentName);
-        // if (!isNameValid) {
-        //   documentMetadataForm.setError("documentName", {
-        //     type: "manual",
-        //     message: "Document name already exists",
-        //   });
-        //   setIsSubmitting(false);
-        //   return;
-        // }
-      } else {
-        // If there's already an error, don't proceed
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Values are already saved to store as they change
-      // No need to save them again here
-
-      // Here you would implement the actual submission logic
-      // For example, sending the document to the API
+      // setIsSubmitting(true);
+      console.log("document values", values);
+      console.log("store", exportDocumentState());
 
       // Simulate success
-      setTimeout(() => {
-        onStepComplete();
-        setIsSubmitting(false);
-        toast.success("Document submitted", {
-          description: "Document submitted successfully",
-        });
-      }, 1500);
+      // setTimeout(() => {
+      //   onStepComplete();
+      //   setIsSubmitting(false);
+      //   toast.success("Document submitted", {
+      //     description: "Document submitted successfully",
+      //   });
+      // }, 1500);
     } catch (error) {
       setIsSubmitting(false);
       captureException(error);

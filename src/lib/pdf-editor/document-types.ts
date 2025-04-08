@@ -101,8 +101,23 @@ export interface DocumentState {
   setExpirationDate: (date?: Date) => void;
   setSenderMessage: (message: string) => void;
 
-  // Reset store
   reset: () => void;
+  export: () => DocumentStateExport;
+}
+
+/** All the values from the DocumentState that can be exported */
+export interface DocumentStateExport {
+  documentId: string | null;
+  documentName: string;
+  documentDataUrl: string | null;
+  documentPreviewUrl: string | null;
+  signers: DocumentSigner[];
+  fields: DocumentField[];
+  isEncrypted: boolean;
+  encryptionPassword?: string;
+  isExpirationEnabled: boolean;
+  expirationDate?: Date;
+  senderMessage: string;
 }
 
 export interface EditorState {

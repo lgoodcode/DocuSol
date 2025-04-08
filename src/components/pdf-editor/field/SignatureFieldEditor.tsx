@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import SignatureCanvas from "react-signature-canvas";
 import { Eraser, Trash2, Undo } from "lucide-react";
 
-import { signatureFonts } from "@/app/fonts";
+import { signatureFonts } from "@/app/styles/fonts";
 import { useField } from "@/lib/pdf-editor/hooks/useField";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

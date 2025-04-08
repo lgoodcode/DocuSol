@@ -14,27 +14,6 @@ import { hasSufficientBalance } from "@/lib/utils/solana";
 import { useDocumentStore } from "@/lib/pdf-editor/stores/useDocumentStore";
 import type { DocumentSigner } from "@/lib/types/stamp";
 
-// export interface DocumentSigner {
-//   email: string;
-//   name: string;
-//   userId?: string;
-//   orderIndex: number;
-// }
-
-// export interface NewDocument {
-//   name: string;
-//   file: File;
-//   password?: string;
-//   signers?: DocumentSigner[];
-// }
-
-// export interface NewDocumentResponse {
-//   id: string;
-//   status: string;
-//   name: string;
-//   originalDocumentUrl: string;
-// }
-
 export const validateEmail = (email: string): string | null => {
   if (!email.trim()) {
     return "Please provide an email address";

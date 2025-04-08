@@ -1,5 +1,6 @@
 import { useState, memo, useCallback, useMemo } from "react";
 import { Document, pdfjs } from "react-pdf";
+import { toast } from "sonner";
 import { captureException } from "@sentry/nextjs";
 import { PDFDocumentProxy } from "pdfjs-dist/types/src/display/api";
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
@@ -39,6 +40,10 @@ export const DocumentCanvas = memo(function DocumentCanvas() {
     console.error("Error loading PDF:", error);
     captureException(error);
     setIsLoading(false);
+    toast.error("Error loading PDF", {
+      description:
+        "Please try again. If the problem persists, please contact support.",
+    });
   }, []);
 
   const pdfFile = useMemo(() => {

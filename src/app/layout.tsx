@@ -13,10 +13,10 @@ import { WalletProvider } from "@/components/providers/wallet-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 
-import "./globals.css";
+import "./styles/globals.css";
 
 const satoshiFont = localFont({
-  src: "./fonts/Satoshi-Variable.ttf",
+  src: "./styles/Satoshi-Variable.ttf",
   variable: "--font-satoshi",
   display: "swap",
 });
