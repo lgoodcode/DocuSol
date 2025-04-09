@@ -13,7 +13,7 @@ export const fieldTemplates: FieldTemplate[] = [
     type: "signature",
     icon: Edit3,
     label: "Signature",
-    defaultSize: { width: 200, height: 80 },
+    defaultSize: { width: 180, height: 42 },
   },
   {
     type: "date",
@@ -25,10 +25,16 @@ export const fieldTemplates: FieldTemplate[] = [
     type: "initials",
     icon: Type,
     label: "Initials",
-    defaultSize: { width: 100, height: 60 },
+    defaultSize: { width: 150, height: 42 },
   },
 ];
 
-export const getFieldTemplate = (type: string): FieldTemplate | undefined => {
-  return fieldTemplates.find((template) => template.type === type);
+export const getFieldTemplate = (
+  type: FieldTemplate["type"],
+): FieldTemplate => {
+  const template = fieldTemplates.find((template) => template.type === type);
+  if (!template) {
+    throw new Error(`Field template not found for type: ${type}`);
+  }
+  return template;
 };

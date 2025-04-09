@@ -3,14 +3,14 @@ import { Page } from "react-pdf";
 import { useShallow } from "zustand/react/shallow";
 
 import { DEFAULT_PDF_WIDTH } from "@/lib/pdf-editor/constants";
-import { Fields } from "@/components/pdf-editor/field";
-
 import { useDocumentStore } from "@/lib/pdf-editor/stores/useDocumentStore";
-import {
+import { Fields } from "@/components/pdf-editor/field";
+import type {
   FieldPosition,
   FieldType,
   DocumentField,
 } from "@/lib/pdf-editor/document-types";
+import { getFieldTemplate } from "@/lib/pdf-editor/fields";
 
 interface DocumentPageProps {
   pageIndex: number;
@@ -34,17 +34,11 @@ export const DocumentPage = memo(function DocumentPage({
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     const fieldType = e.dataTransfer.getData("field-type") as FieldType;
-    const dragScale = parseFloat(e.dataTransfer.getData("scale") || "1");
+    const fieldTemplate = getFieldTemplate(fieldType);
     const offsetX = parseFloat(e.dataTransfer.getData("offsetX") || "0");
     const offsetY = parseFloat(e.dataTransfer.getData("offsetY") || "0");
 
     if (!fieldType || !pageRef.current) return;
-
-    // TODO: update to switch statement in case of covering all field types
-    const newFieldSize =
-      fieldType === "signature" || fieldType === "initials"
-        ? { width: 200, height: 70 }
-        : { width: 150, height: 40 };
 
     const pageRect = pageRef.current.getBoundingClientRect();
 
@@ -53,10 +47,13 @@ export const DocumentPage = memo(function DocumentPage({
     const y = (e.clientY - pageRect.top) / scale - offsetY / scale;
 
     const newFieldPosition: FieldPosition = {
-      x: Math.min(Math.max(x, 0), pageRect.width / scale - newFieldSize.width),
+      x: Math.min(
+        Math.max(x, 0),
+        pageRect.width / scale - fieldTemplate.defaultSize.width,
+      ),
       y: Math.min(
         Math.max(y, 0),
-        pageRect.height / scale - newFieldSize.height,
+        pageRect.height / scale - fieldTemplate.defaultSize.height,
       ),
       page: pageIndex,
     };
@@ -64,13 +61,12 @@ export const DocumentPage = memo(function DocumentPage({
     addField({
       type: fieldType,
       position: newFieldPosition,
-      size: newFieldSize,
+      size: fieldTemplate.defaultSize,
     });
   };
 
   // Memoize the fields rendering to prevent re-renders when selection changes
   const renderedFields = useMemo(() => {
-    // Only render fields that belong to this page
     return fields
       .filter((field: DocumentField) => field.position.page === pageIndex)
       .map((field: DocumentField) => {
