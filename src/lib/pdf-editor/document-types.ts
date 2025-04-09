@@ -15,6 +15,13 @@ export type FieldPosition = {
   page: number;
 };
 
+export type FieldTemplate = {
+  type: FieldType;
+  icon: LucideIcon;
+  label: string;
+  defaultSize: FieldSize;
+};
+
 export interface DocumentField {
   id: string;
   type: FieldType;
@@ -118,70 +125,4 @@ export interface DocumentStateExport {
   isExpirationEnabled: boolean;
   expirationDate?: Date;
   senderMessage: string;
-}
-
-export interface EditorState {
-  fields: DocumentField[];
-  pdfFile: Blob | null;
-  selectedFieldId: string | null;
-  recipients: Signer[];
-  currentRecipient: string | null;
-  scale: number;
-  isDragging: boolean;
-  isResizing: boolean;
-}
-
-export type FieldTemplate = {
-  type: FieldType;
-  icon: LucideIcon;
-  label: string;
-  defaultSize: FieldSize;
-};
-
-export class Signer {
-  index: number;
-  name: string;
-  email: string;
-  color: string;
-
-  // Predefined set of distinct colors that work well for UI elements
-  private static colorPalette = [
-    "#4f46e5", // Indigo
-    "#0ea5e9", // Sky blue
-    "#10b981", // Emerald
-    "#f59e0b", // Amber
-    "#ef4444", // Red
-    "#8b5cf6", // Violet
-    "#ec4899", // Pink
-    "#06b6d4", // Cyan
-    "#84cc16", // Lime
-    "#f97316", // Orange
-    "#6366f1", // Indigo
-    "#14b8a6", // Teal
-    "#a855f7", // Purple
-    "#f43f5e", // Rose
-    "#0284c7", // Light blue
-    "#059669", // Green
-    "#d946ef", // Fuchsia
-    "#6d28d9", // Purple
-  ];
-
-  /**
-   * Creates a new Recipient instance
-   *
-   * @param params - The recipient parameters
-   */
-  constructor(params: {
-    index: number;
-    name: string;
-    email?: string;
-    color?: string;
-  }) {
-    this.index = params.index;
-    this.name = params.name.trim();
-    this.email = (params.email || "").trim();
-    this.color =
-      params.color ||
-      Signer.colorPalette[params.index % Signer.colorPalette.length];
-  }
 }
