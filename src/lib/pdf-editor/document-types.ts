@@ -33,7 +33,7 @@ export interface DocumentField {
   label?: string;
   value?: string;
   options?: string[];
-  scale?: number;
+  signatureScale?: number;
   textStyles?: {
     fontFamily?: string;
     fontSize?: number;
@@ -87,14 +87,14 @@ export interface DocumentState {
   setResizing: (isResizing: boolean) => void;
 
   // Signer actions
-  addSigner: (signer: Omit<DocumentSigner, "id" | "color">) => void; // Color is set in the store
+  addSigner: (signer: Omit<DocumentSigner, "id" | "color">) => void;
   updateSigner: (id: string, signer: Partial<DocumentSigner>) => void;
   removeSigner: (id: string) => void;
   clearSigners: () => void;
   setCurrentSignerId: (id: string) => void;
 
   // Field actions
-  addField: (field: Omit<DocumentField, "id" | "assignedTo">) => void;
+  addField: (field: Omit<DocumentField, "id" | "assignedTo" | "scale">) => void;
   updateField: (field: Partial<DocumentField>) => void;
   removeField: (id: string) => void;
   clearFields: () => void;

@@ -11,14 +11,17 @@ export function EditingStep({
 }: {
   onStepComplete: () => void;
 }) {
-  const { viewType, documentDataUrl, setCurrentStep } = useDocumentStore();
+  const { viewType, documentDataUrl, setCurrentStep, setSelectedFieldId } =
+    useDocumentStore();
 
   const handleBack = () => {
     setCurrentStep("signers");
+    setSelectedFieldId("");
   };
 
   const handleNext = () => {
     setCurrentStep("review");
+    setSelectedFieldId("");
     onStepComplete();
   };
 

@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
-import { cn } from "@/lib/utils";
 import { useDocumentStore } from "@/lib/pdf-editor/stores/useDocumentStore";
 import { Stepper } from "@/components/ui/stepper";
 import { Button } from "@/components/ui/button";
@@ -56,12 +55,7 @@ export function NewDocContent() {
   };
 
   return (
-    <div
-      className={cn(
-        "grid gap-12 py-8",
-        currentStep === "fields" && "h-dvh overflow-hidden",
-      )}
-    >
+    <div className="grid gap-6 py-8">
       <div className="fixed right-4 top-4 flex items-center gap-2">
         <span>{viewType}</span>
         <Button onClick={() => setViewType("signer")}>Signer</Button>

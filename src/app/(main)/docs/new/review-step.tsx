@@ -46,6 +46,8 @@ import { ResetDocumentDialog } from "./reset-document-dialog";
 import { EditSignerDialog } from "./edit-signer-dialog";
 import { DeleteSignerDialog } from "./delete-signer-dialog";
 
+import { exportPdfWithFields } from "@/lib/pdf-editor/pdf-export";
+
 const isPastDate = (date: Date) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -157,8 +159,22 @@ export function ReviewStep({ onStepComplete }: { onStepComplete: () => void }) {
   const onSubmit = async (values: z.infer<typeof documentMetadataSchema>) => {
     try {
       // setIsSubmitting(true);
+
+      const documentState = exportDocumentState();
+      const filename = `${documentName}.pdf`;
+      const fields = documentState.fields;
+
+      if (!documentState.documentDataUrl) {
+        throw new Error("Document data URL is not available");
+      }
+
       console.log("document values", values);
-      console.log("store", exportDocumentState());
+      console.log("store", documentState);
+      await exportPdfWithFields(
+        documentState.documentDataUrl,
+        filename,
+        fields,
+      );
 
       // Simulate success
       // setTimeout(() => {

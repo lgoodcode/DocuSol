@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import type { DocumentField } from "@/lib/pdf-editor/document-types";
 
 interface SignatureFieldEditorProps {
@@ -35,6 +36,12 @@ interface SignatureFieldEditorProps {
 const MIN_FONT_SIZE = 16;
 const MAX_FONT_SIZE = 72;
 const DEFAULT_FONT_SIZE = 32; // Default for preview/input
+
+// Constants for image scale limits
+const MIN_IMAGE_SCALE = 0.5;
+const MAX_IMAGE_SCALE = 4.0;
+const DEFAULT_IMAGE_SCALE = 1.0;
+const IMAGE_SCALE_STEP = 0.05;
 
 /**
  * Loads an existing signature image (data URL) onto the canvas.
@@ -132,6 +139,7 @@ export const SignatureFieldEditor = memo(function SignatureFieldEditor({
   const initialFont =
     field.textStyles?.fontFamily || signatureFonts[0]?.fontFamily || "cursive";
   const initialFontSize = field.textStyles?.fontSize || DEFAULT_FONT_SIZE;
+  const initialSignatureScale = field.signatureScale ?? DEFAULT_IMAGE_SCALE;
 
   const [activeTab, setActiveTab] = useState<"type" | "draw">(
     initialIsDraw ? "draw" : "type",
@@ -140,27 +148,22 @@ export const SignatureFieldEditor = memo(function SignatureFieldEditor({
   const [inputValue, setInputValue] = useState(initialInputValue);
   const [selectedFont, setSelectedFont] = useState(initialFont);
   const [fontSize, setFontSize] = useState(initialFontSize);
+  const [signatureScale, setSignatureScale] = useState(initialSignatureScale);
 
-  // --- Effects ---
-
-  // Load existing signature image when dialog opens and is in draw mode initially or switches to draw
+  // Load existing signature image and scale
   useEffect(() => {
     if (open && activeTab === "draw" && field.value?.startsWith("data:image")) {
-      // Use a small timeout to ensure the canvas element is mounted and sized correctly
-      // before attempting to draw the image onto it.
+      setSignatureScale(field.signatureScale ?? DEFAULT_IMAGE_SCALE);
       const timer = setTimeout(() => {
         loadExistingSignature(field, sigCanvasRef, setHasSignature);
-      }, 100); // Adjust delay if needed
-
-      return () => clearTimeout(timer); // Cleanup timeout
-    } else if (!open) {
-      // Optional: Reset state when dialog closes if needed
-      // setHasSignature(initialIsDraw);
+      }, 100);
+      return () => clearTimeout(timer);
+    } else if (open && activeTab === "type") {
+      setSignatureScale(DEFAULT_IMAGE_SCALE);
     }
-    // Re-run if dialog opens, tab changes to 'draw', or the image value changes
-  }, [open, activeTab, field.value]);
+  }, [open, activeTab, field.value, field.signatureScale]);
 
-  // Synchronize state from field changes (e.g., external updates)
+  // Synchronize state from field changes
   useEffect(() => {
     const isDraw = field.value?.startsWith("data:image") ?? false;
     setInputValue(isDraw ? "" : (field.value ?? ""));
@@ -169,9 +172,19 @@ export const SignatureFieldEditor = memo(function SignatureFieldEditor({
         signatureFonts[0]?.fontFamily ||
         "cursive",
     );
-    setFontSize(field.textStyles?.fontSize || DEFAULT_FONT_SIZE); // Sync font size
+    setFontSize(field.textStyles?.fontSize || DEFAULT_FONT_SIZE);
+    setSignatureScale(
+      isDraw
+        ? (field.signatureScale ?? DEFAULT_IMAGE_SCALE)
+        : DEFAULT_IMAGE_SCALE,
+    );
     setActiveTab(isDraw ? "draw" : "type");
-  }, [field.value, field.textStyles?.fontFamily, field.textStyles?.fontSize]); // Added fontSize dependency
+  }, [
+    field.value,
+    field.textStyles?.fontFamily,
+    field.textStyles?.fontSize,
+    field.signatureScale,
+  ]);
 
   // --- Font Size Actions ---
   const decreaseFontSize = useCallback(() => {
@@ -204,265 +217,237 @@ export const SignatureFieldEditor = memo(function SignatureFieldEditor({
     }
   }, []);
 
-  // --- Persistence Actions ---
+  // Close the dialog and reset the state
+  const handleCancel = useCallback(() => {
+    onOpenChange(false);
+    setInputValue("");
+    clearSignature();
+    setSelectedFont(signatureFonts[0]?.fontFamily || "cursive");
+    setFontSize(DEFAULT_FONT_SIZE);
+    setSignatureScale(DEFAULT_IMAGE_SCALE);
+    setActiveTab("type");
+  }, [onOpenChange, clearSignature]);
 
-  // Define handleDelete first as handleSave depends on it
   const handleDelete = useCallback(() => {
     updateField({
       id: field.id,
       value: undefined,
       textStyles: undefined,
+      signatureScale: undefined,
     });
-    toast.success(
-      `${field.type === "signature" ? "Signature" : "Initials"} cleared`,
-    );
-    // Reset local state after clearing
+
     setInputValue("");
     clearSignature();
     setSelectedFont(signatureFonts[0]?.fontFamily || "cursive");
     setFontSize(DEFAULT_FONT_SIZE);
+    setSignatureScale(DEFAULT_IMAGE_SCALE);
     setActiveTab("type");
     onOpenChange(false);
-  }, [updateField, field.id, field.type, onOpenChange, clearSignature]);
+  }, [updateField, field.id, onOpenChange, clearSignature]);
 
   const handleSave = useCallback(() => {
     let valueToSave: string | undefined = undefined;
-    let textStylesToSave: { fontFamily?: string; fontSize?: number } = {};
+    let textStylesToSave: DocumentField["textStyles"] | undefined = undefined;
+    let signatureScaleToSave: number | undefined = undefined;
 
     if (activeTab === "type") {
-      if (inputValue.trim()) {
-        valueToSave = inputValue.trim();
+      const trimmedValue = inputValue.trim();
+      if (trimmedValue) {
+        valueToSave = trimmedValue;
         textStylesToSave = {
           fontFamily: selectedFont,
           fontSize: fontSize,
         };
+        // Ensure scale is undefined for typed signatures
+        signatureScaleToSave = undefined;
       }
     } else {
+      signatureScaleToSave = signatureScale; // Use the state value from the slider
+
       if (sigCanvasRef.current && !sigCanvasRef.current.isEmpty()) {
         valueToSave = sigCanvasRef.current.toDataURL("image/png");
-        textStylesToSave = {};
+        // Ensure text styles are undefined for drawn signatures
+        textStylesToSave = undefined;
+      } else {
+        // Fall back to current field value if canvas is empty
+        valueToSave = field.value;
+        textStylesToSave = field.textStyles;
       }
     }
 
-    if (valueToSave !== undefined) {
-      updateField({
-        id: field.id,
-        value: valueToSave,
-        textStyles: textStylesToSave,
-      });
-      onOpenChange(false);
-    } else {
-      handleDelete(); // Call handleDelete if saving empty state
+    // If neither type nor draw resulted in a value, delete the field
+    if (valueToSave === undefined) {
+      handleDelete();
+      return;
     }
+
+    // Update the field with the new values
+    updateField({
+      id: field.id,
+      value: valueToSave,
+      textStyles: textStylesToSave,
+      signatureScale: signatureScaleToSave,
+    });
+
+    onOpenChange(false);
   }, [
     activeTab,
     inputValue,
     selectedFont,
     fontSize,
+    signatureScale, // Include signatureScale from state
     updateField,
     field.id,
     onOpenChange,
-    handleDelete, // Now handleDelete is defined above
+    handleDelete, // Include handleDelete dependency
   ]);
 
-  // --- Render ---
+  const handleOpenChange = useCallback(
+    (newOpenState: boolean) => {
+      if (!newOpenState) {
+        handleCancel();
+      }
+      onOpenChange(newOpenState);
+    },
+    [handleCancel, onOpenChange],
+  );
 
   const fieldTypeName =
     field.type.charAt(0).toUpperCase() + field.type.slice(1);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-[550px]">
         <DialogHeader>
-          <DialogTitle>{fieldTypeName} Field</DialogTitle>
+          <DialogTitle>
+            {field.type === "initials" ? "Create Initials" : "Create Signature"}
+          </DialogTitle>
         </DialogHeader>
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="type">Type</TabsTrigger>
+            <TabsTrigger value="draw">Draw</TabsTrigger>
+          </TabsList>
 
-        <div className="space-y-4">
-          <Tabs
-            value={activeTab}
-            onValueChange={(value) => setActiveTab(value as "type" | "draw")}
-            className="w-full"
-          >
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="type">Type</TabsTrigger>
-              <TabsTrigger value="draw">Draw</TabsTrigger>
-            </TabsList>
-
-            {/* --- Type Tab --- */}
-            <TabsContent value="type" className="mt-4 space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="signature-font">Select Font Style</Label>
+          {/* Typed Signature Tab */}
+          <TabsContent value="type">
+            <div className="space-y-4 py-4">
+              <div className="relative">
+                <Input
+                  id="signature-text"
+                  placeholder={
+                    field.type === "initials" ? "Initials" : "Your Name"
+                  }
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  style={{
+                    fontFamily: selectedFont,
+                    fontSize: `${fontSize}px`,
+                  }}
+                  className="h-24 text-4xl"
+                />
+              </div>
+              <div className="flex items-center justify-between gap-4">
                 <Select value={selectedFont} onValueChange={setSelectedFont}>
-                  <SelectTrigger id="signature-font">
-                    <SelectValue placeholder="Select a font" />
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Select font" />
                   </SelectTrigger>
                   <SelectContent>
                     {signatureFonts.map((font) => (
-                      <SelectItem
-                        key={font.fontFamily}
-                        value={font.fontFamily}
-                        className="text-lg"
-                        style={{ fontFamily: font.fontFamily }}
-                      >
-                        {font.name}
+                      <SelectItem key={font.name} value={font.fontFamily}>
+                        <span style={{ fontFamily: font.fontFamily }}>
+                          {font.name}
+                        </span>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-
-              {/* Font Size Toolbar */}
-              <div className="space-y-2">
-                <Label>Font Size</Label>
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
                     size="icon"
                     onClick={decreaseFontSize}
                     disabled={fontSize <= MIN_FONT_SIZE}
-                    aria-label="Decrease font size"
                   >
                     <Minus className="h-4 w-4" />
                   </Button>
-                  <span className="w-12 text-center text-sm tabular-nums">
-                    {fontSize}px
-                  </span>
+                  <span className="w-10 text-center text-sm">{fontSize}px</span>
                   <Button
                     variant="outline"
                     size="icon"
                     onClick={increaseFontSize}
                     disabled={fontSize >= MAX_FONT_SIZE}
-                    aria-label="Increase font size"
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
+            </div>
+          </TabsContent>
 
-              {/* Input Field */}
-              <div className="space-y-2">
-                <Label htmlFor="signature-input">Type your {field.type}</Label>
-                <Input
-                  id="signature-input"
-                  className="h-auto resize-none overflow-hidden py-2 text-lg leading-tight" // Use standard text size for input
-                  autoFocus
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  placeholder={`Your ${field.type}`}
-                />
+          {/* Drawn Signature Tab */}
+          <TabsContent value="draw">
+            <div className="space-y-4 py-4">
+              <div className="mb-2 flex justify-end gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={undoSignature}
+                  title="Undo"
+                  disabled={!hasSignature}
+                >
+                  <Undo className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={clearSignature}
+                  title="Clear"
+                  disabled={!hasSignature}
+                >
+                  <Eraser className="h-4 w-4" />
+                </Button>
               </div>
-
-              {/* Preview Area */}
-              <div className="flex min-h-[100px] items-center justify-center rounded-md border p-4">
-                {inputValue ? (
-                  <p
-                    // Apply dynamic font size and family ONLY to preview
-                    style={{
-                      fontFamily: selectedFont,
-                      fontSize: `${fontSize}px`,
-                    }}
-                    className="overflow-hidden text-center"
-                  >
-                    {inputValue}
-                  </p>
-                ) : (
-                  <p className="select-none text-sm text-muted-foreground">
-                    Your {field.type} will appear here
-                  </p>
-                )}
-              </div>
-            </TabsContent>
-
-            {/* --- Draw Tab --- */}
-            <TabsContent value="draw" className="mt-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <Label>Draw your {field.type}</Label>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={undoSignature}
-                    aria-label="Undo last stroke"
-                  >
-                    <Undo className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={clearSignature}
-                    aria-label="Clear canvas"
-                  >
-                    <Eraser className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-
-              {/* Canvas Area */}
-              <div className="rounded-md border bg-white">
-                {/* Use theme background */}
+              <div className="relative w-full rounded-md border bg-white">
                 <SignatureCanvas
                   ref={sigCanvasRef}
+                  penColor="black"
                   canvasProps={{
-                    className: "w-full h-[150px] cursor-crosshair rounded-md", // Added rounded-md
-                    style: {
-                      // CSS handles the visual sizing
-                      width: "100%",
-                      height: "150px",
-                      // No background color here, handled by parent div
-                    },
-                    // Explicitly set drawing buffer size to prevent scaling issues
-                    // Use dimensions matching CSS height and reasonable width for dialog
-                    width: 400, // Adjust if dialog width changes significantly
-                    height: 150,
+                    className: "w-full h-[200px]",
                   }}
-                  backgroundColor="transparent" // Export with transparency
-                  penColor="black" // Pen color
-                  onBegin={() => setHasSignature(true)} // Set flag when drawing starts
-                  onEnd={() => {
-                    // Update hasSignature based on actual content after stroke ends
-                    if (sigCanvasRef.current) {
-                      setHasSignature(!sigCanvasRef.current.isEmpty());
-                    }
-                  }}
+                  onEnd={() => setHasSignature(true)}
                 />
               </div>
-              <p className="text-xs text-muted-foreground">
-                {fieldTypeName} will have a transparent background when saved.
-              </p>
-            </TabsContent>
-          </Tabs>
-        </div>
-
-        {/* --- Footer Actions --- */}
-        <DialogFooter>
-          <div className="flex w-full items-center justify-between gap-2">
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              className="flex items-center gap-1"
-              aria-label="Clear signature"
-            >
-              <Trash2 className="h-4 w-4" />
-              <span>Clear</span>
-            </Button>
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                aria-label="Cancel editing"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSave}
-                disabled={
-                  activeTab === "draw" ? !hasSignature : !inputValue.trim()
-                } // Disable save if no content
-                aria-label="Save signature"
-              >
-                Save
-              </Button>
+              <div className="space-y-2">
+                <Label htmlFor="image-scale">
+                  Adjust Size ({Math.round(signatureScale * 100)}%)
+                </Label>
+                <Slider
+                  id="image-scale"
+                  min={MIN_IMAGE_SCALE}
+                  max={MAX_IMAGE_SCALE}
+                  step={IMAGE_SCALE_STEP}
+                  value={[signatureScale]}
+                  onValueChange={(value) => setSignatureScale(value[0])}
+                  disabled={!hasSignature}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Adjust the size of the signature in the field. (Does not
+                  preview here)
+                </p>
+              </div>
             </div>
+          </TabsContent>
+        </Tabs>
+        <DialogFooter className="mt-4 flex flex-row justify-between sm:justify-between">
+          <Button variant="destructive" onClick={handleDelete}>
+            <Trash2 className="h-4 w-4" />
+          </Button>
+          <div className="flex flex-row gap-2">
+            <Button variant="outline" onClick={handleCancel}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave}>Apply</Button>
           </div>
         </DialogFooter>
       </DialogContent>

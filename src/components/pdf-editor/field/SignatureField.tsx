@@ -1,4 +1,4 @@
-import { useState, memo, useEffect } from "react";
+import { useState, memo } from "react";
 
 import {
   BaseField,
@@ -16,12 +16,7 @@ export const SignatureField = memo(function SignatureField({
   fieldId,
   isInitials = false,
 }: SignatureFieldProps) {
-  const { isSelected } = useField(fieldId);
   const [showEditor, setShowEditor] = useState(false);
-
-  useEffect(() => {
-    setShowEditor(isSelected);
-  }, [isSelected]);
 
   const renderSignatureField = ({
     field,
@@ -65,11 +60,15 @@ export const SignatureField = memo(function SignatureField({
 
           {field.value ? (
             field.value.startsWith("data:image") ? (
-              <img
-                src={field.value}
-                alt={isInitials ? "Initials" : "Signature"}
-                className="h-full max-h-full object-contain"
-              />
+              <div className="flex h-full w-full items-center justify-center">
+                <img
+                  src={field.value}
+                  alt={isInitials ? "Initials" : "Signature"}
+                  style={{
+                    transform: `scale(${field.signatureScale ?? 1.0})`,
+                  }}
+                />
+              </div>
             ) : (
               <span
                 style={{
@@ -98,7 +97,9 @@ export const SignatureField = memo(function SignatureField({
           <img
             src={field.value}
             alt={isInitials ? "Initials" : "Signature"}
-            className="h-full max-h-full object-contain"
+            style={{
+              transform: `scale(${field.signatureScale ?? 1.0})`,
+            }}
           />
         </div>
       );
@@ -109,6 +110,7 @@ export const SignatureField = memo(function SignatureField({
         <span
           style={{
             fontFamily: field.textStyles?.fontFamily || "cursive",
+            fontSize: field.textStyles?.fontSize || "inherit",
           }}
         >
           {field.value}
