@@ -325,18 +325,17 @@ const FieldItem = ({
       )}
       onClick={onSelect}
     >
-      <div className="flex w-full items-center">
-        <div className="mr-3 flex items-center justify-center">
-          {isCompleted ? (
-            <Check size={ICON_SIZE} />
-          ) : (
-            <FieldIcon type={field.type} size={ICON_SIZE} />
-          )}
-        </div>
-
-        <div className="flex flex-row gap-4">
+      <div className="flex w-full items-center justify-between">
+        <div className="flex items-center">
+          <div className="mr-3 flex items-center justify-center">
+            {isCompleted ? (
+              <Check size={ICON_SIZE} />
+            ) : (
+              <FieldIcon type={field.type} size={ICON_SIZE} />
+            )}
+          </div>
           <div className="flex flex-col items-start">
-            <span className="text-sm font-medium">
+            <span className="whitespace-normal break-words text-left text-sm font-medium">
               {field.label ||
                 field.type.charAt(0).toUpperCase() + field.type.slice(1)}
             </span>
@@ -344,11 +343,15 @@ const FieldItem = ({
               {field.type.charAt(0).toUpperCase() + field.type.slice(1)}
             </span>
           </div>
-
-          {field.required && <Badge variant="destructive">Required</Badge>}
         </div>
-
-        <ChevronRight className="ml-auto h-4 w-4 text-muted-foreground" />
+        <div className="ml-2 flex flex-shrink-0 items-center gap-2">
+          {field.required && (
+            <Badge variant="destructive" className="shrink-0">
+              Required
+            </Badge>
+          )}
+          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+        </div>
       </div>
     </Button>
   );

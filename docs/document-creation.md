@@ -200,18 +200,29 @@ The editing step (`src/app/(main)/docs/new/editing-step.tsx`) allows users to ad
     - Allows dragging fields (`FieldBlock` component, uses `handleDragStart`).
     - Manages the currently selected recipient for field assignment.
   - `DocumentCanvas` component:
-    - Renders the PDF using potentially `react-pdf` or similar.
-    - Handles dropping fields onto pages (`DocumentPage` component, `handleDrop` function).
-    - Displays placed fields.
-  - Field components (e.g., `SignatureField`, `TextField`) likely extend a `BaseField.tsx`:
-    - Renders placeholder and different views (editor vs. signer).
-    - Uses `useField` hook (`@/lib/pdf-editor/hooks/useField`) for field-specific data/logic.
-  - `FieldsList` component manages viewing/editing properties of placed fields.
-  - Overall state management through `useDocumentStore`.
+    - Renders the PDF using `react-pdf`.
+    - Contains multiple `DocumentPage` components.
+  - `DocumentPage` component (`@/components/pdf-editor/DocumentPage.tsx`):
+    - Renders a single page of the PDF.
+    - Handles dropping new fields onto the page (`handleDrop`).
+    - **Crucially, it now renders the individual fields (`DocumentField`) belonging to that page.**
+    - For each field in 'editor' mode, it wraps the specific field component (e.g., `TextField`) with `react-rnd` (`Rnd` component).
+    - It manages the dragging (`onDragStop`), resizing (`onResizeStop`), and selection (`onClick`) logic for each field directly within the page's coordinate system, using `bounds="parent"` to constrain fields.
+    - It fetches necessary state (scale, viewType, selectedFieldId, etc.) and actions (`updateField`, `setSelectedFieldId`) from `useDocumentStore`.
+  - Individual field components (e.g., `SignatureField`, `TextField`):
+    - Render the specific input/display for their type (text input, date picker, etc.).
+    - Likely extend a simplified `BaseField.tsx`.
+  - `BaseField.tsx` (`@/components/pdf-editor/field/BaseField.tsx`):
+    - **Simplified:** No longer contains `react-rnd` or manages dragging/resizing/container logic.
+    - Renders only the _inner content_ of a field (e.g., the input element, placeholder).
+    - Relies on `DocumentPage` to provide the outer container (`Rnd` or `div`), positioning, and interaction handling.
+    - Uses `useField` hook (`@/lib/pdf-editor/hooks/useField`) for field-specific data/callbacks (like `handleChange`, `handleBlur`).
+  - `FieldsList` component manages viewing/editing properties of placed fields (likely remains unchanged by this refactor).
+  - Overall field state management (`fields`, `addOrUpdateField`, `removeField`) through `useDocumentStore`.
 
 - **State Management**:
 
-  - Uses `useDocumentStore` for field state (`fields`, `addOrUpdateField`, `removeField`), document state (`documentDataUrl`), and view state (`viewType`).
+  - Uses `useDocumentStore` for field state (`fields`, `addField`, `updateField`, `removeField`, `selectedFieldId`, `setSelectedFieldId`), document state (`documentDataUrl`), signer state (`signers`), and view state (`viewType`, `scale`, `isDragging`, `isResizing`, `setDragging`, `setResizing`).
   - `viewType` toggling between "editor" and "list" views (potentially dev-only).
 
 - **Storage**:
@@ -220,10 +231,10 @@ The editing step (`src/app/(main)/docs/new/editing-step.tsx`) allows users to ad
   - Field metadata includes (reference `DocumentField` type in `document-types.ts`):
     - `id`
     - `type`
-    - `pageIndex`
-    - `rect` (position and dimensions)
-    - `signerId` (associated signer)
-    - Potentially other type-specific properties (validation rules, required status).
+    - `position` (x, y, page)
+    - `size` (width, height)
+    - `assignedTo` (signer ID)
+    - Potentially other type-specific properties (validation rules, required status, value).
 
 - **Navigation**:
 
@@ -233,20 +244,24 @@ The editing step (`src/app/(main)/docs/new/editing-step.tsx`) allows users to ad
 ### Error Handling
 
 - Throws an error if `documentDataUrl` is missing from the store when the component mounts.
-- Invalid field placement, overlap detection, required field validation, etc., are likely handled within the child components (`DocumentCanvas`, `FieldsPalette`, `FieldsList`, individual field components) and potentially update the store or show local errors.
+- Invalid field placement, overlap detection, required field validation, etc., are likely handled within the child components (`DocumentCanvas`, `DocumentPage`, `FieldsPalette`, `FieldsList`, individual field components) and potentially update the store or show local errors.
+- Type errors in event handlers (`onDragStart`, `onDragStop`) in `DocumentPage` were addressed, potentially using `any` as a workaround due to `react-rnd` type complexities.
 
 ### UI Components
 
 - Main layout container (`div` with flexbox).
-- `DocumentCanvas`: Displays the interactive PDF document.
+- `DocumentCanvas`: Displays the interactive PDF document pages.
+- `DocumentPage`: Renders each page and the interactive `Rnd` field components within it.
 - `FieldsPalette`: (Conditionally rendered based on `viewType`) Displays available field types to drag onto the canvas.
 - `FieldsList`: (Conditionally rendered based on `viewType`) Displays a list of fields already placed on the document.
 - `Button` components for "Back" and "Next" navigation.
-- Note: Specific field representations, error messages, empty states, and view toggling logic are handled within the child components (`DocumentCanvas`, `FieldsPalette`, `FieldsList`).
+- Note: Specific field representations, error messages, empty states, and view toggling logic are handled within the child components (`DocumentCanvas`, `DocumentPage`, `FieldsPalette`, `FieldsList`).
 
 ### Summary
 
-- Interactive field placement via drag-and-drop.
+- Interactive field placement via drag-and-drop onto specific pages.
+- `DocumentPage` now handles field rendering, positioning, dragging, and resizing using `react-rnd`.
+- `BaseField` is simplified to render only inner field content.
 - Multiple field type support.
 - Real-time field management and state updates via Zustand.
 - Relies heavily on specialized child components for core functionality.

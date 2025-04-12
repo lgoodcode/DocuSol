@@ -26,7 +26,6 @@ export const DocumentCanvas = memo(function DocumentCanvas() {
   const [numPages, setNumPages] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const pdfDataUrl = useDocumentStore((state) => state.documentDataUrl);
-  const scale = useDocumentStore((state) => state.scale);
 
   const onDocumentLoadSuccess = useCallback(
     ({ numPages: nextNumPages }: PDFDocumentProxy): void => {
@@ -53,9 +52,9 @@ export const DocumentCanvas = memo(function DocumentCanvas() {
   // Memoize the pages array to prevent unnecessary re-renders
   const pages = useMemo(() => {
     return Array.from(new Array(numPages), (_el, index) => (
-      <DocumentPage key={`page_${index}`} pageIndex={index} scale={scale} />
+      <DocumentPage key={`page_${index}`} pageIndex={index} />
     ));
-  }, [numPages, scale]);
+  }, [numPages]);
 
   if (!pdfDataUrl) {
     throw new Error("No document available");
