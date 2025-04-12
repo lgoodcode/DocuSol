@@ -3,6 +3,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 const BUCKET_NAME = "documents";
 const EXPIRATION_TIME = 3600;
 
+/**
+ * Storage service for the documents bucket. This will handle specifying
+ * the bucket name and providing methods to interact with the bucket.
+ *
+ * @param supabase - Supabase client
+ */
 export class StorageService {
   private bucket: string;
   private supabase: SupabaseClient;
@@ -63,10 +69,10 @@ export class StorageService {
     return exists;
   }
 
-  async deleteFile(filePath: string): Promise<void> {
+  async deleteFiles(filePaths: string[]): Promise<void> {
     const { error } = await this.supabase.storage
       .from(this.bucket)
-      .remove([filePath]);
+      .remove(filePaths);
 
     if (error) throw error;
   }

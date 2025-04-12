@@ -45,6 +45,10 @@ export interface DocumentField {
 }
 
 export interface DocumentState {
+  // Used to determine if the document store is stale - the cron job will
+  // have cleaned up the abandoned draft documents after this time
+  createdAt: number;
+
   // Document metadata
   documentId: string | null;
   documentName: string;

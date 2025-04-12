@@ -206,7 +206,7 @@ export function useResetDocument() {
         try {
           await withRetry(
             async () => {
-              await storageService.deleteFile(filePath);
+              await storageService.deleteFiles([filePath]);
             },
             {
               cancelOnError: (error) =>
@@ -285,7 +285,7 @@ export async function uploadInitialDocument(
     // File uploaded to storage but DB operation failed
     if (documentUploaded) {
       try {
-        await storageService.deleteFile(filePath);
+        await storageService.deleteFiles([filePath]);
       } catch (cleanupErr) {
         console.error("Failed to clean up file from storage:", cleanupErr);
         captureException(cleanupErr);

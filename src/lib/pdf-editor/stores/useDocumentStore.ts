@@ -1,6 +1,6 @@
-import { create } from "zustand";
+import { create, StateCreator } from "zustand";
 import { persist } from "zustand/middleware";
-import { DocumentState, FieldType } from "@/lib/pdf-editor/document-types";
+import { DocumentState } from "@/lib/pdf-editor/document-types";
 import { DocumentSigner } from "@/lib/types/stamp";
 
 // Predefined set of distinct colors that work well for UI elements
@@ -36,6 +36,8 @@ const keysToNotPersist: (keyof DocumentState)[] = [
 export const useDocumentStore = create<DocumentState>()(
   persist(
     (set, get) => ({
+      createdAt: Date.now(),
+
       documentId: null,
       documentName: "",
       documentDataUrl: null,

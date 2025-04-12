@@ -53,6 +53,7 @@ ALTER TABLE documents OWNER TO postgres;
 CREATE INDEX idx_documents_user_id ON documents(user_id);
 CREATE INDEX idx_documents_status ON documents(status);
 CREATE INDEX idx_documents_created_at ON documents(created_at);
+CREATE INDEX idx_documents_updated_at ON documents(updated_at);
 
 -- Users can view their own documents
 CREATE POLICY "Users can view their own documents"

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -12,9 +13,22 @@ import { SignersStep } from "./signers-step";
 import { EditingStep } from "./editing-step";
 import { ReviewStep } from "./review-step";
 
+const EXPIRATION_TIME = 1000 * 60 * 60 * 24; // 1 day
+
+const isStoreExpired = (createdAt: number) => {
+  return Date.now() - createdAt > EXPIRATION_TIME;
+};
+
 export function NewDocContent() {
-  const { currentStep, setCurrentStep, reset, viewType, setViewType } =
-    useDocumentStore();
+  const router = useRouter();
+  const {
+    createdAt,
+    currentStep,
+    setCurrentStep,
+    reset,
+    viewType,
+    setViewType,
+  } = useDocumentStore();
 
   // Convert the string step to a number index for the stepper component
   const stepToIndex = {
@@ -27,9 +41,10 @@ export function NewDocContent() {
   const currentStepIndex = stepToIndex[currentStep];
 
   useEffect(() => {
-    // Initialization - if there is no step, reset the store
-    if (!currentStep) {
+    // Initialization - if there is no step or the store is expired, reset the store
+    if (!currentStep || isStoreExpired(createdAt)) {
       reset();
+      router.refresh();
     }
   }, [currentStep, reset]);
 
