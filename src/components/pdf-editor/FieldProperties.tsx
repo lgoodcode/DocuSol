@@ -25,7 +25,7 @@ export function FieldProperties({
   const { field, updateField, removeField } = useField(fieldId);
 
   return (
-    <div className="mt-8 space-y-4">
+    <div className="mt-8 space-y-4" key={fieldId}>
       <Separator />
       <h3 className="text-sm uppercase tracking-wide">
         {field.type} Properties
