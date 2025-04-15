@@ -12,18 +12,18 @@ export function Stepper({
 }: {
   steps: string[];
   currentStep: number;
-  onChange: (step: number) => void;
+  onChange?: (step: number) => void;
   hideButtons?: boolean;
 }) {
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
-      onChange(currentStep + 1);
+      onChange?.(currentStep + 1);
     }
   };
 
   const handlePrev = () => {
     if (currentStep > 0) {
-      onChange(currentStep - 1);
+      onChange?.(currentStep - 1);
     }
   };
 

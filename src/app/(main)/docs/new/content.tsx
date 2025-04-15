@@ -20,15 +20,8 @@ const isStoreExpired = (createdAt: number) => {
 };
 
 export function NewDocContent() {
-  const router = useRouter();
-  const {
-    createdAt,
-    currentStep,
-    setCurrentStep,
-    reset,
-    viewType,
-    setViewType,
-  } = useDocumentStore();
+  const { currentStep, setCurrentStep, reset, viewType, setViewType } =
+    useDocumentStore();
 
   // Convert the string step to a number index for the stepper component
   const stepToIndex = {
@@ -37,16 +30,19 @@ export function NewDocContent() {
     fields: 2,
     review: 3,
   };
-
   const currentStepIndex = stepToIndex[currentStep];
 
+  // Run only once on mount to check initial state and expiration
   useEffect(() => {
-    // Initialization - if there is no step or the store is expired, reset the store
+    const { currentStep, createdAt } = useDocumentStore.getState();
     if (!currentStep || isStoreExpired(createdAt)) {
+      console.log(
+        "Resetting document store due to missing step or expiration.",
+      );
       reset();
-      router.refresh();
     }
-  }, [currentStep, reset]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reset]); // Only depend on reset to ensure it's available
 
   const onStepComplete = () => {
     const nextStepIndex = currentStepIndex + 1;
@@ -54,19 +50,7 @@ export function NewDocContent() {
       (key) => stepToIndex[key as keyof typeof stepToIndex] === nextStepIndex,
     ) as "upload" | "signers" | "fields" | "review";
 
-    if (nextStep) {
-      setCurrentStep(nextStep);
-    }
-  };
-
-  const handleStepChange = (index: number) => {
-    const step = Object.keys(stepToIndex).find(
-      (key) => stepToIndex[key as keyof typeof stepToIndex] === index,
-    ) as "upload" | "signers" | "fields" | "review";
-
-    if (step) {
-      setCurrentStep(step);
-    }
+    setCurrentStep(nextStep);
   };
 
   return (
@@ -83,15 +67,14 @@ export function NewDocContent() {
         className="container mx-auto max-w-4xl"
       >
         <Stepper
+          hideButtons
+          currentStep={currentStepIndex}
           steps={[
             "Upload Document",
             "Assign Signers",
             "Edit Document",
             "Review and Send",
           ]}
-          currentStep={currentStepIndex}
-          onChange={handleStepChange}
-          hideButtons={true}
         />
       </motion.div>
       <AnimatePresence mode="wait">

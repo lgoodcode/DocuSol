@@ -27,7 +27,6 @@ export function UploadStep({ onStepComplete }: { onStepComplete: () => void }) {
     documentName: storeDocumentName,
     setDocumentDataUrl,
     setDocumentName,
-    setCurrentStep,
     setDocumentId,
   } = useDocumentStore();
   // Local state for document name to prevent lag when typing
@@ -93,7 +92,6 @@ export function UploadStep({ onStepComplete }: { onStepComplete: () => void }) {
       );
 
       setDocumentId(documentId);
-      setCurrentStep("signers");
       onStepComplete();
     } catch (err) {
       const error = err as Error;

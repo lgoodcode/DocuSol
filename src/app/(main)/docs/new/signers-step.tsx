@@ -41,8 +41,7 @@ export function SignersStep({
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editEmailError, setEditEmailError] = useState<string | null>(null);
-  const { signers, addSigner, updateSigner, removeSigner, setCurrentStep } =
-    useDocumentStore();
+  const { signers, addSigner, updateSigner, removeSigner } = useDocumentStore();
 
   const handleAddSigner = () => {
     try {
@@ -211,8 +210,6 @@ export function SignersStep({
       return;
     }
 
-    // Update the current step in the store and call onStepComplete
-    setCurrentStep("fields");
     onStepComplete();
   };
 

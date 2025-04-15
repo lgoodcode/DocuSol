@@ -20,7 +20,6 @@ export function EditingStep({
   };
 
   const handleNext = () => {
-    setCurrentStep("review");
     setSelectedFieldId("");
     onStepComplete();
   };

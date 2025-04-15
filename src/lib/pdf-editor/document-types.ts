@@ -84,7 +84,8 @@ export interface DocumentState {
   setDocumentPreviewUrl: (url: string) => void;
 
   // Document editor actions
-  setCurrentStep: (step: DocumentState["currentStep"]) => void;
+  stepBack: () => void;
+  stepForward: () => void;
   setViewType: (viewType: DocumentState["viewType"]) => void;
   setScale: (scale: number) => void;
   setDragging: (isDragging: boolean) => void;
