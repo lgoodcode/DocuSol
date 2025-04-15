@@ -80,7 +80,7 @@ export function UploadStep({ onStepComplete }: { onStepComplete: () => void }) {
       setDocumentName(localDocumentName);
 
       // Generate the content hash of the original document prior to modifications
-      const hash = await PDFHash.getFileHash(
+      const contentHash = await PDFHash.generateContentHash(
         Buffer.from(await file.arrayBuffer()),
       );
 
@@ -88,7 +88,7 @@ export function UploadStep({ onStepComplete }: { onStepComplete: () => void }) {
       const documentId = await uploadInitialDocument(
         localDocumentName,
         file,
-        hash,
+        contentHash,
       );
 
       setDocumentId(documentId);

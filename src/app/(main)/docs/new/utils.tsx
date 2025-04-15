@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { sign } from "@/lib/utils/sign";
 import { hasSufficientBalance } from "@/lib/utils/solana";
 import { useDocumentStore } from "@/lib/pdf-editor/stores/useDocumentStore";
-import type { DocumentSigner } from "@/lib/types/stamp";
+import type { DocumentSigner, DocumentContentHash } from "@/lib/types/stamp";
 
 export const validateEmail = (email: string): string | null => {
   if (!email.trim()) {
@@ -252,7 +252,7 @@ export function useResetDocument() {
 export async function uploadInitialDocument(
   documentName: string,
   file: File,
-  hash: string,
+  contentHash: DocumentContentHash,
 ) {
   const supabase = createClient();
   const version = 0;
@@ -269,7 +269,9 @@ export async function uploadInitialDocument(
     const { error, data } = await withRetry(async () => {
       return await supabase.rpc("create_document_with_version", {
         p_name: documentName,
-        p_hash: hash,
+        p_content_hash: contentHash.contentHash,
+        p_file_hash: contentHash.fileHash,
+        p_metadata_hash: contentHash.metadataHash ?? "",
       });
     });
 

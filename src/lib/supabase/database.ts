@@ -71,31 +71,37 @@ export type Database = {
       }
       document_versions: {
         Row: {
+          contenthash: string
           created_at: string
           created_by: string
           document_id: string | null
-          hash: string
+          filehash: string
           id: string
+          metadatahash: string
           transaction_signature: string | null
-          version_number: number | null
+          version_number: number
         }
         Insert: {
+          contenthash: string
           created_at?: string
           created_by: string
           document_id?: string | null
-          hash: string
+          filehash: string
           id?: string
+          metadatahash: string
           transaction_signature?: string | null
-          version_number?: number | null
+          version_number?: number
         }
         Update: {
+          contenthash?: string
           created_at?: string
           created_by?: string
           document_id?: string | null
-          hash?: string
+          filehash?: string
           id?: string
+          metadatahash?: string
           transaction_signature?: string | null
-          version_number?: number | null
+          version_number?: number
         }
         Relationships: [
           {
@@ -185,7 +191,9 @@ export type Database = {
       create_document_with_version: {
         Args: {
           p_name: string
-          p_hash: string
+          p_content_hash: string
+          p_file_hash: string
+          p_metadata_hash: string
           p_password?: string
         }
         Returns: {
@@ -205,7 +213,9 @@ export type Database = {
           status: Database["public"]["Enums"]["document_status"]
           created_at: string
           completed_at: string
-          hash: string
+          contenthash: string
+          filehash: string
+          metadatahash: string
           tx_signature: string
         }[]
       }
@@ -230,8 +240,9 @@ export type Database = {
           p_document_id: string
           p_signer_id: string
           p_user_id: string
-          p_document_url: string
-          p_hash: string
+          p_content_hash: string
+          p_file_hash: string
+          p_metadata_hash: string
           p_signature_type?: string
           p_signature_data?: string
         }

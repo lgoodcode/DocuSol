@@ -115,8 +115,9 @@ CREATE TRIGGER update_documents_updated_at
  * document_id - The ID of the document
  * version_number - The version number of the document - this is automatically
  *   set by the set_document_version_number function
- * document_url - The URL of the document
- * hash - The hash of the document
+ * contentHash - The hash of the document content
+ * fileHash - The hash of the document file
+ * metadataHash - The hash of the document metadata
  * transaction_signature - The transaction signature of the document
  * created_by - The ID of the user who created the document version
  * created_at - The timestamp when the document version was created
@@ -125,7 +126,9 @@ CREATE TABLE document_versions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     document_id UUID,
     version_number INTEGER NOT NULL DEFAULT 0,
-    hash TEXT NOT NULL,
+    contentHash TEXT NOT NULL,
+    fileHash TEXT NOT NULL,
+    metadataHash TEXT NOT NULL,
     transaction_signature TEXT,
     created_by UUID NOT NULL REFERENCES auth.users(id),
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -214,10 +217,10 @@ DECLARE
     next_version INTEGER;
 BEGIN
     -- Get the highest version number for this document
-    SELECT COALESCE(MAX(version_number), 0) + 1
+    SELECT COALESCE(MAX(dv.version_number), 0) + 1
     INTO next_version
-    FROM document_versions
-    WHERE document_id = doc_id;
+    FROM document_versions dv
+    WHERE dv.document_id = doc_id;
 
     RETURN next_version;
 END;
@@ -435,24 +438,29 @@ CREATE TRIGGER update_document_status_on_signer_change
  * This function handles the entire transaction to ensure data consistency.
  *
  * @param p_name - The name of the document
+ * @param p_content_hash - The hash of the document content
+ * @param p_file_hash - The hash of the document file
+ * @param p_metadata_hash - The hash of the document metadata
  * @param p_password - Optional password for the document
  * @return RECORD - Returns the created document and version records
  */
 CREATE OR REPLACE FUNCTION create_document_with_version(
     p_name TEXT,
-    p_hash TEXT,
+    p_content_hash TEXT,
+    p_file_hash TEXT,
+    p_metadata_hash TEXT,
     p_password TEXT DEFAULT NULL
 )
 RETURNS TABLE(
     document_id UUID,
     version_id UUID,
-    version_number INTEGER
+    out_version_number INTEGER
 ) AS $$
 DECLARE
     v_user_id UUID;
     v_document_id UUID;
     v_version_id UUID;
-    v_version_number INTEGER;
+    returned_version_number INTEGER;
 BEGIN
     -- Get the current user ID
     v_user_id := auth.uid();
@@ -473,13 +481,17 @@ BEGIN
     -- Create the initial version
     INSERT INTO document_versions (
         document_id,
-        hash,
+        contentHash,
+        fileHash,
+        metadataHash,
         created_by
     ) VALUES (
         v_document_id,
-        p_hash,
+        p_content_hash,
+        p_file_hash,
+        p_metadata_hash,
         v_user_id
-    ) RETURNING id, version_number INTO v_version_id, v_version_number;
+    ) RETURNING id, version_number INTO v_version_id, returned_version_number;
 
     -- Update the document with the current version
     UPDATE documents
@@ -488,11 +500,11 @@ BEGIN
 
     -- Return the results
     RETURN QUERY
-    SELECT v_document_id, v_version_id, v_version_number;
+    SELECT v_document_id, v_version_id, returned_version_number;
 END;
 $$ LANGUAGE plpgsql;
 
-ALTER FUNCTION create_document_with_version(TEXT, TEXT, TEXT) OWNER TO postgres;
+ALTER FUNCTION create_document_with_version(TEXT, TEXT, TEXT, TEXT, TEXT) OWNER TO postgres;
 
 /**
  * Adds signers to a document.
@@ -550,8 +562,9 @@ ALTER FUNCTION add_document_signers(UUID, JSONB) OWNER TO postgres;
  * @param p_document_id - The ID of the document
  * @param p_signer_id - The ID of the signer
  * @param p_user_id - The ID of the user signing the document
- * @param p_document_url - The URL of the signed document
- * @param p_hash - The hash of the signed document
+ * @param p_content_hash - The hash of the signed document content
+ * @param p_file_hash - The hash of the signed document file
+ * @param p_metadata_hash - The hash of the signed document metadata
  * @param p_signature_type - The type of signature used
  * @param p_signature_data - The signature data
  * @return TABLE - Returns information about the signing operation
@@ -560,8 +573,9 @@ CREATE OR REPLACE FUNCTION sign_document(
     p_document_id UUID,
     p_signer_id UUID,
     p_user_id UUID,
-    p_document_url TEXT,
-    p_hash TEXT,
+    p_content_hash TEXT,
+    p_file_hash TEXT,
+    p_metadata_hash TEXT,
     p_signature_type TEXT DEFAULT NULL,
     p_signature_data TEXT DEFAULT NULL
 )
@@ -578,13 +592,15 @@ BEGIN
     -- Create a new version
     INSERT INTO document_versions (
         document_id,
-        document_url,
-        hash,
+        contentHash,
+        fileHash,
+        metadataHash,
         created_by
     ) VALUES (
         p_document_id,
-        p_document_url,
-        p_hash,
+        p_content_hash,
+        p_file_hash,
+        p_metadata_hash,
         p_user_id
     ) RETURNING id, version_number INTO v_version_id, v_version_number;
 
@@ -610,7 +626,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-ALTER FUNCTION sign_document(UUID, UUID, UUID, TEXT, TEXT, TEXT, TEXT) OWNER TO postgres;
+ALTER FUNCTION sign_document(UUID, UUID, UUID, TEXT, TEXT, TEXT, TEXT, TEXT) OWNER TO postgres;
 
 /**
  * Rejects a document by updating the signer status.
@@ -675,7 +691,9 @@ RETURNS TABLE(
     status document_status,
     created_at TIMESTAMPTZ,
     completed_at TIMESTAMPTZ,
-    hash TEXT,
+    contentHash TEXT,
+    fileHash TEXT,
+    metadataHash TEXT,
     tx_signature TEXT
 ) AS $$
 BEGIN
@@ -686,7 +704,9 @@ BEGIN
         d.status,
         d.created_at,
         d.completed_at,
-        dv.hash,
+        dv.contentHash,
+        dv.fileHash,
+        dv.metadataHash,
         dv.tx_signature
     FROM documents d
     JOIN document_versions dv ON dv.document_id = d.id
