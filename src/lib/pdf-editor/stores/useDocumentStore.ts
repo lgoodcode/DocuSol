@@ -195,7 +195,6 @@ export const useDocumentStore = create<DocumentState>()(
       setExpirationDate: (expirationDate) => set({ expirationDate }),
       setSenderMessage: (senderMessage) => set({ senderMessage }),
 
-      getFormDocumentMetadata: () => get().formDocumentMetadata,
       setFormDocumentMetadata: (metadata) =>
         set({ formDocumentMetadata: metadata }),
 

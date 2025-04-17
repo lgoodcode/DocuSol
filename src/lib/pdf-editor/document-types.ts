@@ -119,7 +119,6 @@ export interface DocumentState {
   setExpirationDate: (date?: Date) => void;
   setSenderMessage: (message: string) => void;
 
-  getFormDocumentMetadata: () => FormDocumentMetadata | null;
   setFormDocumentMetadata: (metadata: FormDocumentMetadata) => void;
 
   resetDocumentState: () => void;
