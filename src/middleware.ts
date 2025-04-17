@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { captureException, setUser } from "@sentry/nextjs";
 
-import { createMiddlewareResponse } from "./lib/supabase/middleware";
+import { IS_PROD } from "@/constants";
+import { createMiddlewareResponse } from "@/lib/supabase/middleware";
 import { handleRateLimit, rateLimit } from "@/lib/auth/ratelimiter";
 import { PROTECTED_PATHS, PAGE_PATHS } from "@/config/routes";
 
@@ -20,24 +21,26 @@ export async function middleware(request: NextRequest) {
     });
   }
 
-  // Rate limit
-  try {
-    const rateLimitHeaders = await rateLimit(request);
-    if (rateLimitHeaders) {
-      return handleRateLimit(request, rateLimitHeaders);
-    }
-  } catch (error) {
-    console.error("Middleware rate limit error:", error);
-    captureException(error, {
-      tags: { context: "middleware-rate-limit" },
-      extra: { url: request.url },
-    });
+  // Rate limit - only in production
+  if (IS_PROD) {
+    try {
+      const rateLimitHeaders = await rateLimit(request);
+      if (rateLimitHeaders) {
+        return handleRateLimit(request, rateLimitHeaders);
+      }
+    } catch (error) {
+      console.error("Middleware rate limit error:", error);
+      captureException(error, {
+        tags: { context: "middleware-rate-limit" },
+        extra: { url: request.url },
+      });
 
-    const response = NextResponse.rewrite(new URL("/error", request.url), {
-      status: 500,
-    });
-    response.headers.set("x-error-rewrite", "true");
-    return response;
+      const response = NextResponse.rewrite(new URL("/error", request.url), {
+        status: 500,
+      });
+      response.headers.set("x-error-rewrite", "true");
+      return response;
+    }
   }
 
   // Protected routes

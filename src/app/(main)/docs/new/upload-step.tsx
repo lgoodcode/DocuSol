@@ -28,6 +28,8 @@ export function UploadStep({ onStepComplete }: { onStepComplete: () => void }) {
     setDocumentDataUrl,
     setDocumentName,
     setDocumentId,
+    setCreatedAt,
+    setDocumentContentHash,
   } = useDocumentStore();
   // Local state for document name to prevent lag when typing
   const [localDocumentName, setLocalDocumentName] = useState(storeDocumentName);
@@ -76,8 +78,10 @@ export function UploadStep({ onStepComplete }: { onStepComplete: () => void }) {
       setError(null);
       setIsUploading(true);
 
-      // Make sure document store is updated with the latest document name
+      // Make sure document store is updated with the latest document name,
+      // created at, and content hash (to be used for the DocumentStamp)
       setDocumentName(localDocumentName);
+      setCreatedAt(Date.now());
 
       // Generate the content hash of the original document prior to modifications
       const contentHash = await PDFHash.generateContentHash(
@@ -92,6 +96,7 @@ export function UploadStep({ onStepComplete }: { onStepComplete: () => void }) {
       );
 
       setDocumentId(documentId);
+      setDocumentContentHash(contentHash);
       onStepComplete();
     } catch (err) {
       const error = err as Error;

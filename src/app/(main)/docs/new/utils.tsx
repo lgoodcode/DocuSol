@@ -4,15 +4,17 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { captureException } from "@sentry/nextjs";
 
 import { PLATFORM_FEE } from "@/constants";
+import { API_PATHS } from "@/config/routes/api";
 import { createClient } from "@/lib/supabase/client";
 import { getUser } from "@/lib/supabase/utils";
+import { sign } from "@/lib/utils/sign";
 import { StorageService } from "@/lib/supabase/storage";
 import { isValidEmail, withRetry } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
-import { sign } from "@/lib/utils/sign";
 import { hasSufficientBalance } from "@/lib/utils/solana";
 import { useDocumentStore } from "@/lib/pdf-editor/stores/useDocumentStore";
+import { useToast } from "@/hooks/use-toast";
 import type { DocumentSigner, DocumentContentHash } from "@/lib/types/stamp";
+import type { DocumentStateExport } from "@/lib/pdf-editor/document-types";
 
 export const validateEmail = (email: string): string | null => {
   if (!email.trim()) {
@@ -193,7 +195,7 @@ export async function uploadDocumentToStorage(
  * @returns A function that handles document reset atomically
  */
 export function useResetDocument() {
-  const { documentId, documentName, reset } = useDocumentStore();
+  const { documentId, documentName, resetDocumentState } = useDocumentStore();
   const supabase = createClient();
 
   return async function resetDocument() {
@@ -238,7 +240,7 @@ export function useResetDocument() {
       captureException(error);
       throw error;
     } finally {
-      reset();
+      resetDocumentState();
     }
   };
 }
@@ -296,4 +298,25 @@ export async function uploadInitialDocument(
 
     throw error;
   }
+}
+
+/**
+ * Send the draft document metadata to the server to create the DocumentStamp
+ * and store the DocumentStamp the hash of that in the Solana blockchain within
+ * a memo program.
+ *
+ * @param documentState The document state to send
+ */
+export async function sendDraftDocument(documentState: DocumentStateExport) {
+  const response = await fetch(API_PATHS.DOCS.UPLOAD, {
+    method: "POST",
+    body: JSON.stringify(documentState),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to send draft document metadata");
+  }
+
+  const data = await response.json();
+  return data;
 }

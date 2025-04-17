@@ -1,6 +1,7 @@
+import * as z from "zod";
 import type { LucideIcon } from "lucide-react";
 
-import type { DocumentSigner } from "@/lib/types/stamp";
+import type { DocumentSigner, DocumentContentHash } from "@/lib/types/stamp";
 
 export type FieldType = "text" | "date" | "initials" | "signature";
 
@@ -54,9 +55,10 @@ export interface DocumentState {
   documentName: string;
   documentDataUrl: string | null;
   documentPreviewUrl: string | null;
+  documentContentHash: DocumentContentHash | null;
 
   // Document editor state
-  currentStep: "upload" | "signers" | "fields" | "review";
+  currentStep: "upload" | "signers" | "fields" | "review" | "sending";
   viewType: "editor" | "signer";
   scale: number;
   isDragging: boolean;
@@ -77,15 +79,19 @@ export interface DocumentState {
   expirationDate?: Date;
   senderMessage: string;
 
+  // Form metadata from the review step - used in the sending step
+  formDocumentMetadata: FormDocumentMetadata | null;
+
   // Actions
+  setCreatedAt: (createdAt: number) => void;
   setDocumentId: (id: string) => void;
   setDocumentName: (name: string) => void;
   setDocumentDataUrl: (url: string | null) => void;
   setDocumentPreviewUrl: (url: string) => void;
+  setDocumentContentHash: (hash: DocumentContentHash) => void;
 
   // Document editor actions
-  stepBack: () => void;
-  stepForward: () => void;
+  setCurrentStep: (step: DocumentState["currentStep"]) => void;
   setViewType: (viewType: DocumentState["viewType"]) => void;
   setScale: (scale: number) => void;
   setDragging: (isDragging: boolean) => void;
@@ -113,21 +119,57 @@ export interface DocumentState {
   setExpirationDate: (date?: Date) => void;
   setSenderMessage: (message: string) => void;
 
-  reset: () => void;
-  export: () => DocumentStateExport;
+  getFormDocumentMetadata: () => FormDocumentMetadata | null;
+  setFormDocumentMetadata: (metadata: FormDocumentMetadata) => void;
+
+  resetDocumentState: () => void;
+  exportDocumentState: () => DocumentStateExport;
 }
 
 /** All the values from the DocumentState that can be exported */
 export interface DocumentStateExport {
   documentId: string | null;
   documentName: string;
-  documentDataUrl: string | null;
-  documentPreviewUrl: string | null;
+  documentContentHash: DocumentContentHash | null;
   signers: DocumentSigner[];
   fields: DocumentField[];
-  isEncrypted: boolean;
   encryptionPassword?: string;
-  isExpirationEnabled: boolean;
   expirationDate?: Date;
   senderMessage: string;
 }
+
+export const isPastDate = (date: Date) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return date < today;
+};
+
+export const formDocumentMetadataSchema = z.object({
+  documentName: z
+    .string()
+    .min(1, "Document name is required")
+    .max(200, "Document name should not exceed 200 characters"),
+  isEncrypted: z.boolean().default(false),
+  encryptionPassword: z
+    .string()
+    .optional()
+    .refine((password) => !password || password.length >= 6, {
+      message: "Password must be at least 6 characters",
+    })
+    .refine((password) => !password || password.length <= 100, {
+      message: "Password must be less than 100 characters",
+    }),
+  isExpirationEnabled: z.boolean().default(false),
+  expirationDate: z
+    .date({ coerce: true })
+    .optional()
+    .refine((date) => !date || !isPastDate(date), {
+      message: "Expiration date cannot be in the past",
+    }),
+  senderMessage: z
+    .string()
+    .max(1000, "Message should not exceed 1000 characters")
+    .optional(),
+});
+
+export type FormDocumentMetadata = z.infer<typeof formDocumentMetadataSchema>;

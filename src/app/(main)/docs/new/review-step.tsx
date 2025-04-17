@@ -8,9 +8,13 @@ import { format } from "date-fns";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import * as z from "zod";
 
 import { useDocumentStore } from "@/lib/pdf-editor/stores/useDocumentStore";
+import {
+  isPastDate,
+  formDocumentMetadataSchema,
+  type FormDocumentMetadata,
+} from "@/lib/pdf-editor/document-types";
 import { DocumentSigner } from "@/lib/types/stamp";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,42 +50,6 @@ import { ResetDocumentDialog } from "./reset-document-dialog";
 import { EditSignerDialog } from "./edit-signer-dialog";
 import { DeleteSignerDialog } from "./delete-signer-dialog";
 
-import { exportPdfWithFields } from "@/lib/pdf-editor/pdf-export";
-
-const isPastDate = (date: Date) => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return date < today;
-};
-
-const documentMetadataSchema = z.object({
-  documentName: z
-    .string()
-    .min(1, "Document name is required")
-    .max(200, "Document name should not exceed 200 characters"),
-  isEncrypted: z.boolean().default(false),
-  encryptionPassword: z
-    .string()
-    .optional()
-    .refine((password) => !password || password.length >= 6, {
-      message: "Password must be at least 6 characters",
-    })
-    .refine((password) => !password || password.length <= 100, {
-      message: "Password must be less than 100 characters",
-    }),
-  isExpirationEnabled: z.boolean().default(false),
-  expirationDate: z
-    .date({ coerce: true })
-    .optional()
-    .refine((date) => !date || !isPastDate(date), {
-      message: "Expiration date cannot be in the past",
-    }),
-  senderMessage: z
-    .string()
-    .max(1000, "Message should not exceed 1000 characters")
-    .optional(),
-});
-
 /**
  * Review step component for the document creation flow
  *
@@ -104,10 +72,9 @@ export function ReviewStep({ onStepComplete }: { onStepComplete: () => void }) {
     setExpirationDate,
     senderMessage,
     setSenderMessage,
-    export: exportDocumentState,
+    setFormDocumentMetadata,
   } = useDocumentStore();
   const resetDocument = useResetDocument();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [isEditSignerDialogOpen, setIsEditSignerDialogOpen] = useState(false);
@@ -117,11 +84,11 @@ export function ReviewStep({ onStepComplete }: { onStepComplete: () => void }) {
     useState(false);
   const [currentSignerToDelete, setCurrentSignerToDelete] =
     useState<DocumentSigner | null>(null);
-  const isOnlySigner = signers.length <= 1;
+  const isOnlySigner = signers.length === 1;
 
   // Initialize form with values from the document store
-  const documentMetadataForm = useForm<z.infer<typeof documentMetadataSchema>>({
-    resolver: zodResolver(documentMetadataSchema),
+  const documentMetadataForm = useForm<FormDocumentMetadata>({
+    resolver: zodResolver(formDocumentMetadataSchema),
     defaultValues: {
       documentName,
       isEncrypted,
@@ -142,8 +109,9 @@ export function ReviewStep({ onStepComplete }: { onStepComplete: () => void }) {
       await resetDocument();
       setIsResetDialogOpen(false);
       setCurrentStep("upload");
-      toast.success("Document Reset", {
-        description: "Your document has been reset successfully.",
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
       });
     } catch (error) {
       console.error("Error resetting document:", error);
@@ -153,44 +121,6 @@ export function ReviewStep({ onStepComplete }: { onStepComplete: () => void }) {
       });
     } finally {
       setIsResetting(false);
-    }
-  };
-
-  const onSubmit = async (values: z.infer<typeof documentMetadataSchema>) => {
-    try {
-      // setIsSubmitting(true);
-
-      const documentState = exportDocumentState();
-      const filename = `${documentName}.pdf`;
-      const fields = documentState.fields;
-
-      if (!documentState.documentDataUrl) {
-        throw new Error("Document data URL is not available");
-      }
-
-      console.log("document values", values);
-      console.log("store", documentState);
-      await exportPdfWithFields(
-        documentState.documentDataUrl,
-        filename,
-        fields,
-      );
-
-      // Simulate success
-      // setTimeout(() => {
-      //   onStepComplete();
-      //   setIsSubmitting(false);
-      //   toast.success("Document submitted", {
-      //     description: "Document submitted successfully",
-      //   });
-      // }, 1500);
-    } catch (error) {
-      setIsSubmitting(false);
-      captureException(error);
-      console.error("Error submitting document:", error);
-      toast.error("Error submitting document", {
-        description: "Failed to submit document",
-      });
     }
   };
 
@@ -232,6 +162,15 @@ export function ReviewStep({ onStepComplete }: { onStepComplete: () => void }) {
       });
       throw error;
     }
+  };
+
+  const onSubmit = (metadata: FormDocumentMetadata) => {
+    setFormDocumentMetadata(metadata);
+    onStepComplete();
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   };
 
   return (
@@ -619,7 +558,7 @@ export function ReviewStep({ onStepComplete }: { onStepComplete: () => void }) {
                     type="button"
                     variant="outline"
                     onClick={handleBack}
-                    disabled={isSubmitting || isResetting}
+                    disabled={isResetting}
                   >
                     Back
                   </Button>
@@ -627,7 +566,7 @@ export function ReviewStep({ onStepComplete }: { onStepComplete: () => void }) {
                     type="button"
                     variant="destructive"
                     onClick={() => setIsResetDialogOpen(true)}
-                    disabled={isSubmitting || isResetting}
+                    disabled={isResetting}
                   >
                     <RefreshCcw className="h-4 w-4" />
                     Reset
@@ -635,10 +574,10 @@ export function ReviewStep({ onStepComplete }: { onStepComplete: () => void }) {
                 </div>
                 <Button
                   type="submit"
-                  disabled={isSubmitting || isResetting}
+                  disabled={isResetting}
                   className="min-w-[120px]"
                 >
-                  {isSubmitting ? "Submitting..." : "Submit"}
+                  {isResetting ? "Resetting..." : "Submit"}
                 </Button>
               </div>
             </form>

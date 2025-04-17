@@ -42,6 +42,7 @@ export const useDocumentStore = create<DocumentState>()(
       documentName: "",
       documentDataUrl: null,
       documentPreviewUrl: null,
+      documentContentHash: null,
 
       currentStep: "upload",
       viewType: "editor",
@@ -61,12 +62,15 @@ export const useDocumentStore = create<DocumentState>()(
       expirationDate: undefined,
       senderMessage: "",
 
+      formDocumentMetadata: null,
+
       // Document actions
+      setCreatedAt: (createdAt) => set({ createdAt }),
       setDocumentId: (id) => set({ documentId: id }),
       setDocumentName: (name) => set({ documentName: name }),
       setDocumentDataUrl: (url) => set({ documentDataUrl: url }),
       setDocumentPreviewUrl: (url) => set({ documentPreviewUrl: url }),
-
+      setDocumentContentHash: (hash) => set({ documentContentHash: hash }),
       // Document editor actions
       setCurrentStep: (step) => set({ currentStep: step }),
       setViewType: (viewType) => set({ viewType }),
@@ -191,7 +195,11 @@ export const useDocumentStore = create<DocumentState>()(
       setExpirationDate: (expirationDate) => set({ expirationDate }),
       setSenderMessage: (senderMessage) => set({ senderMessage }),
 
-      reset: () =>
+      getFormDocumentMetadata: () => get().formDocumentMetadata,
+      setFormDocumentMetadata: (metadata) =>
+        set({ formDocumentMetadata: metadata }),
+
+      resetDocumentState: () =>
         set({
           documentId: null,
           documentName: "",
@@ -209,18 +217,15 @@ export const useDocumentStore = create<DocumentState>()(
           senderMessage: "",
         }),
 
-      export: () => {
+      exportDocumentState: () => {
         const state = get();
         return {
           documentId: state.documentId,
           documentName: state.documentName,
-          documentDataUrl: state.documentDataUrl,
-          documentPreviewUrl: state.documentPreviewUrl,
+          documentContentHash: state.documentContentHash,
           signers: state.signers,
           fields: state.fields,
-          isEncrypted: state.isEncrypted,
           encryptionPassword: state.encryptionPassword,
-          isExpirationEnabled: state.isExpirationEnabled,
           expirationDate: state.expirationDate,
           senderMessage: state.senderMessage,
         };
