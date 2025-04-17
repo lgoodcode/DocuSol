@@ -85,6 +85,12 @@ export function SignersStep({
       setInputError(null);
       setNameError(null);
       setError(null);
+
+      // Set focus to the name input field for UX
+      const nameInput = document.getElementById("signer-name");
+      if (nameInput) {
+        nameInput.focus();
+      }
     } catch (err) {
       setError("Failed to add signer");
       captureException(err);
