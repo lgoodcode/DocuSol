@@ -10,7 +10,7 @@ import { getUser } from "@/lib/supabase/utils";
 import { sign } from "@/lib/utils/sign";
 import { StorageService } from "@/lib/supabase/storage";
 import { isValidEmail, withRetry } from "@/lib/utils";
-import { hasSufficientBalance } from "@/lib/utils/solana";
+// import { hasSufficientBalance } from "@/lib/utils/solana";
 import { useDocumentStore } from "@/lib/pdf-editor/stores/useDocumentStore";
 import { useToast } from "@/hooks/use-toast";
 import type { DocumentSigner, DocumentContentHash } from "@/lib/types/stamp";
@@ -127,46 +127,47 @@ export function useSignDoc() {
   };
 }
 
-export function useUserHasSufficientBalance() {
-  const { toast } = useToast();
-  const { publicKey } = useWallet();
+// export function useUserHasSufficientBalance() {
+//   debugger;
+//   const { toast } = useToast();
+//   const { publicKey } = useWallet();
 
-  return async function userHasSufficientBalance() {
-    try {
-      if (!publicKey) {
-        throw new Error("Wallet not connected");
-      }
+//   return async function userHasSufficientBalance() {
+//     try {
+//       if (!publicKey) {
+//         throw new Error("Wallet not connected");
+//       }
 
-      const isSufficient = await hasSufficientBalance(publicKey);
-      if (!isSufficient) {
-        toast({
-          title: "Insufficient Balance",
-          description: (
-            <span>
-              You need at least <strong>{PLATFORM_FEE} SOL</strong> in your
-              wallet to upload a document for the platform fee.
-            </span>
-          ),
-          variant: "destructive",
-        });
-        return false;
-      }
+//       const isSufficient = await hasSufficientBalance(publicKey);
+//       if (!isSufficient) {
+//         toast({
+//           title: "Insufficient Balance",
+//           description: (
+//             <span>
+//               You need at least <strong>{PLATFORM_FEE} SOL</strong> in your
+//               wallet to upload a document for the platform fee.
+//             </span>
+//           ),
+//           variant: "destructive",
+//         });
+//         return false;
+//       }
 
-      return true;
-    } catch (err) {
-      const error = err as Error;
-      console.error(error);
-      captureException(error);
+//       return true;
+//     } catch (err) {
+//       const error = err as Error;
+//       console.error(error);
+//       captureException(error);
 
-      toast({
-        title: "Error",
-        description: "An error occurred while verifying your balance",
-        variant: "destructive",
-      });
-      return false;
-    }
-  };
-}
+//       toast({
+//         title: "Error",
+//         description: "An error occurred while verifying your balance",
+//         variant: "destructive",
+//       });
+//       return false;
+//     }
+//   };
+// }
 
 export async function uploadDocumentToStorage(
   documentName: string,
@@ -269,7 +270,7 @@ export async function uploadInitialDocument(
 
     // Step 2: Create the document and version in the database
     const { error, data } = await withRetry(async () => {
-      return await supabase.rpc("create_document_with_version", {
+      return await supabase.rpc("create_draft_document", {
         p_name: documentName,
         p_content_hash: contentHash.contentHash,
         p_file_hash: contentHash.fileHash,
@@ -307,16 +308,21 @@ export async function uploadInitialDocument(
  *
  * @param documentState The document state to send
  */
-export async function sendDraftDocument(documentState: DocumentStateExport) {
+export async function sendDraftDocument(
+  documentState: DocumentStateExport,
+  dryRun: boolean = false,
+) {
   const response = await fetch(API_PATHS.DOCS.UPLOAD, {
     method: "POST",
-    body: JSON.stringify(documentState),
+    body: JSON.stringify({
+      ...documentState,
+      dryRun,
+    }),
   });
 
   if (!response.ok) {
     throw new Error("Failed to send draft document metadata");
   }
 
-  const data = await response.json();
-  return data;
+  return await response.json();
 }

@@ -108,7 +108,7 @@ async function fetchDocumentByIdAndVersion(
       createdAt: document.created_at,
       completedAt: document.completed_at,
       txSignature: document.tx_signature,
-      hash: document.hash,
+      hash: document.filehash,
     },
     password: document.password,
   };

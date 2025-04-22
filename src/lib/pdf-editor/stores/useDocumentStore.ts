@@ -198,7 +198,7 @@ export const useDocumentStore = create<DocumentState>()(
       setFormDocumentMetadata: (metadata) =>
         set({ formDocumentMetadata: metadata }),
 
-      resetDocumentState: () =>
+      resetDocumentState: (completed = false) =>
         set({
           documentId: null,
           documentName: "",
@@ -208,7 +208,10 @@ export const useDocumentStore = create<DocumentState>()(
           currentSignerId: null,
           fields: [],
           selectedFieldId: undefined,
-          currentStep: "upload",
+          // Don't reset the current step if the document is completed, let it stay in the
+          // sending step so that the user can see success message and manually navigate to
+          // the document.
+          currentStep: completed ? "sending" : "upload",
           isEncrypted: false,
           encryptionPassword: "",
           isExpirationEnabled: false,

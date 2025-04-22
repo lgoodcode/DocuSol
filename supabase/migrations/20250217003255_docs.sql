@@ -119,6 +119,7 @@ CREATE TRIGGER update_documents_updated_at
  * fileHash - The hash of the document file
  * metadataHash - The hash of the document metadata
  * transaction_signature - The transaction signature of the document
+ * encryption_key - The symmetric key used to encrypt the DocumentStamp JSON for this version
  * created_by - The ID of the user who created the document version
  * created_at - The timestamp when the document version was created
  */
@@ -262,6 +263,77 @@ CREATE TRIGGER set_document_version_number_trigger
     BEFORE INSERT ON document_versions
     FOR EACH ROW
     EXECUTE FUNCTION set_document_version_number();
+
+--
+--
+-- Function to add a new document version
+--
+
+/**
+ * Adds a new version to a document.
+ * This function handles the creation of a new version record,
+ * automatically calculating the next version number, and updating
+ * the document's current_version_id.
+ *
+ * @param p_document_id - The ID of the document
+ * @param p_content_hash - The hash of the document content for this version
+ * @param p_file_hash - The hash of the document file for this version
+ * @param p_metadata_hash - The hash of the document metadata for this version
+ * @param p_user_id - The ID of the user creating this version
+ * @param p_transaction_signature - The Solana transaction signature for the memo storing the encrypted stamp
+ * @return TABLE - Returns the ID and number of the newly created version
+ */
+CREATE OR REPLACE FUNCTION add_document_version(
+    p_document_id UUID,
+    p_content_hash TEXT,
+    p_file_hash TEXT,
+    p_metadata_hash TEXT,
+    p_user_id UUID,
+    p_transaction_signature TEXT
+)
+RETURNS TABLE(
+    version_id UUID,
+    version_number INTEGER
+) AS $$
+DECLARE
+    v_version_id UUID;
+    v_version_number INTEGER;
+BEGIN
+    -- Get the next version number
+    v_version_number := get_next_document_version_number(p_document_id);
+
+    -- Insert the new version
+    INSERT INTO document_versions (
+        document_id,
+        contentHash,
+        fileHash,
+        metadataHash,
+        created_by,
+        transaction_signature,
+        version_number
+    ) VALUES (
+        p_document_id,
+        p_content_hash,
+        p_file_hash,
+        p_metadata_hash,
+        p_user_id,
+        p_transaction_signature,
+        v_version_number
+    ) RETURNING id INTO v_version_id;
+
+    -- Update the document's current version ID
+    UPDATE documents
+    SET current_version_id = v_version_id,
+        updated_at = CURRENT_TIMESTAMP -- Also update the document's timestamp
+    WHERE id = p_document_id;
+
+    -- Return the new version details
+    RETURN QUERY
+    SELECT v_version_id, v_version_number;
+END;
+$$ LANGUAGE plpgsql;
+
+ALTER FUNCTION add_document_version(UUID, TEXT, TEXT, TEXT, UUID, TEXT) OWNER TO postgres;
 
 --
 --
@@ -434,22 +506,20 @@ CREATE TRIGGER update_document_status_on_signer_change
 --
 
 /**
- * Creates a new document with its initial version.
- * This function handles the entire transaction to ensure data consistency.
+ * Creates a new draft document with its initial version (version 0).
+ * This function handles the initial creation transaction for a document.
  *
  * @param p_name - The name of the document
  * @param p_content_hash - The hash of the document content
  * @param p_file_hash - The hash of the document file
  * @param p_metadata_hash - The hash of the document metadata
- * @param p_password - Optional password for the document
- * @return RECORD - Returns the created document and version records
+ * @return RECORD - Returns the created document and version IDs, and the initial version number (0)
  */
-CREATE OR REPLACE FUNCTION create_document_with_version(
+CREATE OR REPLACE FUNCTION create_draft_document(
     p_name TEXT,
     p_content_hash TEXT,
     p_file_hash TEXT,
-    p_metadata_hash TEXT,
-    p_password TEXT DEFAULT NULL
+    p_metadata_hash TEXT
 )
 RETURNS TABLE(
     document_id UUID,
@@ -460,51 +530,50 @@ DECLARE
     v_user_id UUID;
     v_document_id UUID;
     v_version_id UUID;
-    returned_version_number INTEGER;
 BEGIN
     -- Get the current user ID
     v_user_id := auth.uid();
 
-    -- Create the document
+    -- Create the document with 'draft' status
     INSERT INTO documents (
         user_id,
         name,
-        password,
         status
     ) VALUES (
         v_user_id,
         p_name,
-        p_password,
         'draft'
     ) RETURNING id INTO v_document_id;
 
-    -- Create the initial version
+    -- Create the initial version (version 0)
     INSERT INTO document_versions (
         document_id,
         contentHash,
         fileHash,
         metadataHash,
-        created_by
+        created_by,
+        version_number -- Explicitly set initial version to 0
     ) VALUES (
         v_document_id,
         p_content_hash,
         p_file_hash,
         p_metadata_hash,
-        v_user_id
-    ) RETURNING id, version_number INTO v_version_id, returned_version_number;
+        v_user_id,
+        0 -- Set version number to 0 for the initial draft
+    ) RETURNING id INTO v_version_id;
 
-    -- Update the document with the current version
+    -- Update the document with the current version ID
     UPDATE documents
     SET current_version_id = v_version_id
     WHERE id = v_document_id;
 
     -- Return the results
     RETURN QUERY
-    SELECT v_document_id, v_version_id, returned_version_number;
+    SELECT v_document_id, v_version_id, 0; -- Return 0 as the initial version number
 END;
 $$ LANGUAGE plpgsql;
 
-ALTER FUNCTION create_document_with_version(TEXT, TEXT, TEXT, TEXT, TEXT) OWNER TO postgres;
+ALTER FUNCTION create_draft_document(TEXT, TEXT, TEXT, TEXT) OWNER TO postgres;
 
 /**
  * Adds signers to a document.
@@ -595,13 +664,15 @@ BEGIN
         contentHash,
         fileHash,
         metadataHash,
-        created_by
+        created_by,
+        transaction_signature
     ) VALUES (
         p_document_id,
         p_content_hash,
         p_file_hash,
         p_metadata_hash,
-        p_user_id
+        p_user_id,
+        p_transaction_signature
     ) RETURNING id, version_number INTO v_version_id, v_version_number;
 
     -- Update the signer
@@ -694,7 +765,8 @@ RETURNS TABLE(
     contentHash TEXT,
     fileHash TEXT,
     metadataHash TEXT,
-    tx_signature TEXT
+    tx_signature TEXT,
+    encryption_key TEXT
 ) AS $$
 BEGIN
     RETURN QUERY
@@ -707,7 +779,8 @@ BEGIN
         dv.contentHash,
         dv.fileHash,
         dv.metadataHash,
-        dv.tx_signature
+        dv.tx_signature,
+        dv.encryption_key
     FROM documents d
     JOIN document_versions dv ON dv.document_id = d.id
     WHERE d.id = p_document_id
@@ -716,4 +789,406 @@ END;
 $$ LANGUAGE plpgsql;
 
 ALTER FUNCTION get_document_with_version(UUID, INTEGER) OWNER TO postgres;
+
+--
+--
+-- document_fields
+--
+--
+
+-- Create a type for the document field types
+CREATE TYPE document_field_type AS ENUM (
+  'text',
+  'date',
+  'initials',
+  'signature'
+);
+
+/**
+ * Stores the fields placed on a document.
+ *
+ * id - The ID of the document field
+ * document_id - The ID of the document this field belongs to
+ * participant_id - The ID of the document_participant this field is assigned to
+ * type - The type of the field (text, date, etc.)
+ * position_x - The X coordinate of the field's top-left corner
+ * position_y - The Y coordinate of the field's top-left corner
+ * position_page - The page number the field is on
+ * size_width - The width of the field
+ * size_height - The height of the field
+ * required - Whether the field is required to be filled
+ * label - An optional label for the field
+ * value - The current value of the field (can be updated by signers)
+ * options - JSONB storage for options (e.g., dropdown choices)
+ * signature_scale - Scaling factor applied to signature fields
+ * text_styles - JSONB storage for text styling information
+ * created_at - The timestamp when the field was created
+ * updated_at - The timestamp when the field was last updated
+ */
+CREATE TABLE document_fields (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+    participant_id UUID REFERENCES document_participants(id) ON DELETE SET NULL,
+    type document_field_type NOT NULL,
+    position_x REAL NOT NULL,
+    position_y REAL NOT NULL,
+    position_page INTEGER NOT NULL,
+    size_width REAL NOT NULL,
+    size_height REAL NOT NULL,
+    required BOOLEAN NOT NULL DEFAULT FALSE,
+    label TEXT,
+    value TEXT,
+    options JSONB,
+    signature_scale REAL,
+    text_styles JSONB,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE document_fields OWNER TO postgres;
+
+-- Add indexes to the document fields table
+CREATE INDEX idx_document_fields_document_id ON document_fields(document_id);
+CREATE INDEX idx_document_fields_participant_id ON document_fields(participant_id);
+
+-- RLS Policies: Owners can manage fields for their documents
+CREATE POLICY "Owners can manage fields for their documents"
+ON document_fields
+FOR ALL
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM documents
+    WHERE documents.id = document_fields.document_id
+    AND documents.user_id = auth.uid()
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM documents
+    WHERE documents.id = document_fields.document_id
+    AND documents.user_id = auth.uid()
+  )
+);
+
+-- Trigger for updated_at: Use the existing function
+CREATE TRIGGER update_document_fields_updated_at
+    BEFORE UPDATE ON document_fields
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+--
+--
+-- document_participants
+--
+--
+
+-- Create ENUM types for participant roles and modes
+CREATE TYPE participant_role AS ENUM (
+    'reviewer',
+    'witness',
+    'notary',
+    'participant'
+);
+
+CREATE TYPE participant_mode AS ENUM (
+    'transparent',
+    'anonymous'
+);
+
+/**
+ * Defines the participants involved in a document process.
+ * This table stores the configuration of each participant before
+ * they necessarily interact (sign/reject).
+ *
+ * id - The ID of the participant entry
+ * document_id - The ID of the document this participant belongs to
+ * user_id - The ID of the user who is the participant
+ * role - The role of the participant (e.g., owner, signer, reviewer)
+ * mode - The signing mode for the participant (e.g., transparent, anonymous)
+ * is_owner - Flag indicating if this participant is the document owner
+ * color - A color associated with the participant (e.g., for UI highlighting)
+ * created_at - Timestamp when the participant was added
+ * updated_at - Timestamp when the participant was last updated
+ */
+CREATE TABLE document_participants (
+    id UUID PRIMARY KEY,
+    document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES auth.users(id), -- Can be NULL for non-users
+    name TEXT,
+    email TEXT,
+    role participant_role NOT NULL DEFAULT 'participant',
+    mode participant_mode NOT NULL DEFAULT 'transparent',
+    is_owner BOOLEAN NOT NULL DEFAULT FALSE,
+    color TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE document_participants OWNER TO postgres;
+
+-- Add indexes
+CREATE INDEX idx_document_participants_document_id ON document_participants(document_id);
+CREATE INDEX idx_document_participants_user_id ON document_participants(user_id);
+
+-- RLS: Document owners can manage participants for their documents
+CREATE POLICY "Owners can manage participants for their documents"
+ON document_participants
+FOR ALL
+TO authenticated
+USING (
+    EXISTS (
+        SELECT 1 FROM documents
+        WHERE documents.id = document_participants.document_id
+        AND documents.user_id = auth.uid()
+    )
+)
+WITH CHECK (
+    EXISTS (
+        SELECT 1 FROM documents
+        WHERE documents.id = document_participants.document_id
+        AND documents.user_id = auth.uid()
+    )
+);
+
+-- RLS: Participants can view their own participation entry
+CREATE POLICY "Participants can view their own entry"
+ON document_participants
+FOR SELECT
+TO authenticated
+USING (user_id = auth.uid());
+
+-- Trigger for updated_at
+CREATE TRIGGER update_document_participants_updated_at
+    BEFORE UPDATE ON document_participants
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+--
+--
+-- finalize_document_upload Function
+--
+--
+
+/**
+ * Finalizes the document upload process by creating the first version (after draft),
+ * inserting fields, and adding participants in a single transaction.
+ * This ensures atomicity for the upload finalization steps.
+ *
+ * @param p_document_id - The ID of the document being finalized
+ * @param p_user_id - The ID of the user performing the upload
+ * @param p_content_hash - The content hash for the new version
+ * @param p_file_hash - The file hash for the new version
+ * @param p_metadata_hash - The metadata hash for the new version
+ * @param p_transaction_signature - The Solana transaction signature storing the encrypted stamp
+ * @param p_fields - JSONB array of document fields to insert
+ * @param p_participants - JSONB array of document participants (signers/reviewers etc.) to insert
+ * @return BOOLEAN - Returns true if successful, raises an exception on failure (causing rollback)
+ */
+CREATE OR REPLACE FUNCTION finalize_document_upload(
+    p_document_id UUID,
+    p_user_id UUID,
+    p_content_hash TEXT,
+    p_file_hash TEXT,
+    p_metadata_hash TEXT,
+    p_transaction_signature TEXT,
+    p_fields JSONB,
+    p_participants JSONB
+)
+RETURNS BOOLEAN AS $$
+DECLARE
+    v_version_id UUID;
+    v_version_number INTEGER;
+    field_data JSONB;
+    participant_data JSONB;
+BEGIN
+    -- Step 1: Add the new document version (version 1 or higher) using existing function
+    -- This RPC also updates the document's current_version_id
+    SELECT version_id, version_number
+    INTO v_version_id, v_version_number
+    FROM add_document_version(
+        p_document_id,
+        p_content_hash,
+        p_file_hash,
+        p_metadata_hash,
+        p_user_id,
+        p_transaction_signature
+    );
+
+    -- Step 2: Insert document participants by iterating through the JSONB array FIRST
+    FOR participant_data IN SELECT jsonb_array_elements(p_participants)
+    LOOP
+        INSERT INTO document_participants (
+            id,
+            document_id,
+            user_id,
+            name,
+            email,
+            role,
+            mode,
+            is_owner,
+            color
+        ) VALUES (
+            (participant_data->>'id')::UUID,
+            p_document_id,
+            (participant_data->>'userId')::UUID, -- May be NULL
+            participant_data->>'name',
+            participant_data->>'email',
+            (participant_data->>'role')::participant_role,
+            (participant_data->>'mode')::participant_mode,
+            COALESCE((participant_data->>'isOwner')::BOOLEAN, FALSE), -- Ensure default if missing
+            participant_data->>'color'
+        );
+    END LOOP;
+
+    -- Step 3: Insert document fields by iterating through the JSONB array AFTER participants exist
+    FOR field_data IN SELECT jsonb_array_elements(p_fields)
+    LOOP
+        INSERT INTO document_fields (
+            document_id,
+            participant_id,
+            type,
+            position_x,
+            position_y,
+            position_page,
+            size_width,
+            size_height,
+            required,
+            label,
+            value,
+            options,
+            signature_scale,
+            text_styles
+        ) VALUES (
+            p_document_id,
+            (field_data->>'assignedTo')::UUID,
+            (field_data->>'type')::document_field_type,
+            (field_data->'position'->>'x')::REAL,
+            (field_data->'position'->>'y')::REAL,
+            (field_data->'position'->>'page')::INTEGER,
+            (field_data->'size'->>'width')::REAL,
+            (field_data->'size'->>'height')::REAL,
+            (field_data->>'required')::BOOLEAN,
+            field_data->>'label',
+            field_data->>'value',
+            field_data->'options',
+            (field_data->>'signatureScale')::REAL,
+            field_data->'textStyles'
+        );
+    END LOOP;
+
+    -- If all operations succeeded, return true
+    RETURN TRUE;
+
+EXCEPTION
+    WHEN OTHERS THEN
+        -- Log the error (optional, depends on PostgreSQL setup)
+        RAISE WARNING 'Error in finalize_document_upload for document %: %', p_document_id, SQLERRM;
+        -- Re-raise the exception to ensure transaction rollback and propagate error to the caller
+        RAISE EXCEPTION 'finalize_document_upload failed: %', SQLERRM;
+        RETURN FALSE; -- Will not be reached due to RAISE EXCEPTION
+END;
+$$ LANGUAGE plpgsql;
+
+ALTER FUNCTION finalize_document_upload(UUID, UUID, TEXT, TEXT, TEXT, TEXT, JSONB, JSONB) OWNER TO postgres;
+
+
+--
+--
+-- dry_run_finalize_document_upload Function
+--
+--
+
+/**
+ * Performs a dry run of the finalize_document_upload process.
+ * It executes the finalize function within a transaction but immediately rolls it back.
+ * This allows checking if the operation would succeed without making permanent changes.
+ *
+ * @param p_document_id - The ID of the document
+ * @param p_user_id - The ID of the user
+ * @param p_content_hash - The content hash
+ * @param p_file_hash - The file hash
+ * @param p_metadata_hash - The metadata hash
+ * @param p_transaction_signature - The Solana transaction signature
+ * @param p_fields - JSONB array of fields
+ * @param p_participants - JSONB array of participants
+ * @return BOOLEAN - Returns true if the dry run succeeds (operation would have worked), raises error on failure.
+ */
+CREATE OR REPLACE FUNCTION dry_run_finalize_document_upload(
+    p_document_id UUID,
+    p_user_id UUID,
+    p_content_hash TEXT,
+    p_file_hash TEXT,
+    p_metadata_hash TEXT,
+    p_transaction_signature TEXT,
+    p_fields JSONB,
+    p_participants JSONB
+)
+RETURNS BOOLEAN AS $$
+DECLARE
+    v_success BOOLEAN;
+BEGIN
+    -- Start a transaction block (though nested transactions might behave differently depending on context, the core idea is isolation and rollback)
+    -- In standard PostgreSQL, SAVEPOINT might be more explicit for nested control,
+    -- but PERFORM within an EXCEPTION block achieves the rollback goal here.
+    BEGIN
+        -- Attempt to execute the real function. We don't need the return value.
+        PERFORM finalize_document_upload(
+            p_document_id,
+            p_user_id,
+            p_content_hash,
+            p_file_hash,
+            p_metadata_hash,
+            p_transaction_signature,
+            p_fields,
+            p_participants
+        );
+
+        -- If the above call succeeded without error, the dry run is successful.
+        v_success := TRUE;
+
+    EXCEPTION
+        WHEN OTHERS THEN
+            -- An error occurred within finalize_document_upload.
+            -- The transaction block automatically rolls back on error.
+            RAISE WARNING 'Dry run failed for document %: %', p_document_id, SQLERRM;
+            -- Re-raise the exception to inform the caller of the failure reason.
+            RAISE EXCEPTION 'Dry run failed: %', SQLERRM;
+            v_success := FALSE; -- Should not be reached due to RAISE EXCEPTION
+    END;
+
+    -- Crucially, we need to ensure the changes are rolled back even if no exception occurred.
+    -- PostgreSQL functions run within their own transaction context. Raising an exception
+    -- here specifically designed for rollback ensures any changes made by PERFORM are discarded.
+    IF v_success THEN
+       RAISE EXCEPTION 'SIMULATED_ROLLBACK_FOR_DRY_RUN';
+    END IF;
+
+    -- This part of the code will technically not be reached if successful
+    -- because of the RAISE EXCEPTION above, but demonstrates the intent.
+    -- The actual success signal comes from the RPC call *not* returning the
+    -- SIMULATED_ROLLBACK_FOR_DRY_RUN error.
+    RETURN v_success;
+
+EXCEPTION
+    -- Catch the specific rollback exception we raised
+    WHEN SQLSTATE 'P0001' THEN -- P0001 is the code for RAISE EXCEPTION
+        IF SQLERRM = 'SIMULATED_ROLLBACK_FOR_DRY_RUN' THEN
+            -- This means the PERFORM call succeeded, and we intentionally rolled back.
+            RETURN TRUE; -- Indicate dry run success
+        ELSE
+            -- It was some other RAISE EXCEPTION from within the BEGIN block (already handled)
+            -- or potentially another P0001 error. Re-raise for safety.
+            RAISE; -- Re-raise the original error
+            RETURN FALSE;
+        END IF;
+    WHEN OTHERS THEN
+        -- Catch any other unexpected errors during the dry run setup/teardown itself.
+        RAISE WARNING 'Unexpected error during dry_run_finalize_document_upload for document %: %', p_document_id, SQLERRM;
+        RAISE; -- Re-raise the original error
+        RETURN FALSE;
+END;
+$$ LANGUAGE plpgsql;
+
+ALTER FUNCTION dry_run_finalize_document_upload(UUID, UUID, TEXT, TEXT, TEXT, TEXT, JSONB, JSONB) OWNER TO postgres;
 

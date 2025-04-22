@@ -1,5 +1,4 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import { assert } from "node:console";
 
 export const getUser = async (supabase: SupabaseClient) => {
   const {

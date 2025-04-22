@@ -1,5 +1,5 @@
 /** Current version of the stamp protocol */
-export const STAMP_VERSION = "0.1";
+export const STAMP_VERSION = 0;
 
 /** Supported signing modes */
 export type SigningMode = "transparent" | "anonymous";
@@ -20,12 +20,7 @@ export const SignatureState = {
   EXPIRED: "expired",
 } as const;
 
-export type SignerRole =
-  | "owner"
-  | "reviewer"
-  | "witness"
-  | "notary"
-  | "participant";
+export type SignerRole = "reviewer" | "witness" | "notary" | "participant";
 
 export type SignatureStatus =
   (typeof SignatureState)[keyof typeof SignatureState];
@@ -49,7 +44,7 @@ type BaseDocumentType = Record<string, boolean | string | number | undefined>;
 export interface DocumentSigner extends BaseDocumentType {
   /** ID of the signer in the document properties */
   id: string;
-  /** User ID of the signer */
+  /** User ID of the signer - this will be set if the user is identified */
   userId?: string;
   /** Name of the signer */
   name: string;
@@ -94,7 +89,7 @@ export interface DocumentContentHash extends BaseDocumentType {
   /** Hash of complete PDF including metadata */
   fileHash: string;
   /** Hash of just the metadata */
-  metadataHash?: string;
+  metadataHash: string;
 }
 
 /** Base type to inherit basic dict structure */
@@ -207,18 +202,20 @@ export interface DocumentRules extends BaseDocumentRules {
  *
  * @property transaction - Blockchain transaction info
  * @property createdAt - Creation timestamp in milliseconds
- * @property creator - Creating wallet address
- * @property documentId `[optional]` - Optional reference ID
+ * @property creator - ID of the creator
+ * @property documentId - The document ID reference in the database
+ * @property version - The version number of the document
+ * @property password - Password for the document
  */
 export interface DocumentMetadata extends BaseDocumentType {
   /** Blockchain transaction signature */
   transaction: string;
-  /** Creation timestamp in milliseconds */
-  createdAt: number;
-  /** Creating wallet address */
-  creator: string;
-  /** Optional reference ID */
-  documentId?: string;
+  /** The document ID reference in the database */
+  documentId: string;
+  /** The version number of the document */
+  version: number;
+  /** Password for the document */
+  password?: string;
 }
 
 /**
@@ -233,7 +230,7 @@ export interface DocumentMetadata extends BaseDocumentType {
  */
 export interface DocumentStamp {
   /** Protocol version for backwards compatibility */
-  version: string;
+  version: number;
   /** Content of the document */
   contentHash: DocumentContentHash;
   /** History of the document - hash updates and signatures */

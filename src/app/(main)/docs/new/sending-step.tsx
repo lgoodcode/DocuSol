@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next-nprogress-bar";
 import { motion } from "framer-motion";
 import { captureException } from "@sentry/nextjs";
 import { CheckCircle, XCircle, Loader2, Send, ChevronLeft } from "lucide-react";
@@ -37,32 +37,33 @@ export function SendingStep() {
     const submitDocument = async () => {
       setSubmissionStatus("submitting");
       setError(null);
+
       try {
         const documentState = exportDocumentState();
 
-        // if (!documentState.documentContentHash) {
-        //   throw new Error("Document content hash is missing.");
-        // }
-        // if (documentState.signers.length === 0) {
-        //   throw new Error("At least one signer is required.");
-        // }
-        // // Basic field validation (ensure every signer has at least one field)
-        // const signerIdsWithFields = new Set(
-        //   documentState.fields.map((f) => f.assignedTo),
-        // );
-        // const allSignersHaveFields = documentState.signers.every((s) =>
-        //   signerIdsWithFields.has(s.id),
-        // );
-        // if (!allSignersHaveFields && documentState.fields.length > 0) {
-        //   // Allow submission if no fields are placed
-        //   throw new Error("Every signer must be assigned at least one field.");
-        // }
+        if (!documentState.documentContentHash) {
+          throw new Error("Document content hash is missing.");
+        }
+        if (documentState.signers.length === 0) {
+          throw new Error("At least one signer is required.");
+        }
+        // Basic field validation (ensure every signer has at least one field)
+        const signerIdsWithFields = new Set(
+          documentState.fields.map((f) => f.assignedTo),
+        );
+        const allSignersHaveFields = documentState.signers.every((s) =>
+          signerIdsWithFields.has(s.id),
+        );
+        if (!allSignersHaveFields && documentState.fields.length > 0) {
+          // Allow submission if no fields are placed
+          throw new Error("Every signer must be assigned at least one field.");
+        }
 
-        // await sendDraftDocument(documentState);
-
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        const resp = await sendDraftDocument(documentState);
+        console.log("resp", resp);
 
         setSubmissionStatus("success");
+        resetDocumentState(true);
       } catch (err: unknown) {
         console.error("Error submitting document:", err);
         captureException(err);
@@ -95,69 +96,6 @@ export function SendingStep() {
     router.push("/docs/new");
   };
 
-  const renderContent = () => {
-    switch (submissionStatus) {
-      case "submitting":
-        return (
-          <div className="flex flex-col items-center justify-center space-y-4">
-            <Loader2 className="h-16 w-16 animate-spin text-primary" />
-            <p className="text-lg font-medium">Sending your document...</p>
-            <p className="text-sm text-muted-foreground">
-              Please wait while we process and send your document for signing.
-            </p>
-          </div>
-        );
-      case "success":
-        return (
-          <div className="flex flex-col items-center justify-center space-y-6">
-            <CheckCircle className="h-16 w-16 text-green-500" />
-            <p className="text-xl font-semibold">Document Sent Successfully!</p>
-            <p className="text-center text-muted-foreground">
-              Your document has been sent to all recipients. You can track its
-              status in your dashboard.
-            </p>
-            {/* Add button group for multiple actions */}
-            <div className="flex space-x-4">
-              <Button onClick={handleGoToDashboard} size="lg">
-                Go to Dashboard
-              </Button>
-              <Button
-                onClick={handleStartNewDocument}
-                variant="outline"
-                size="lg"
-              >
-                Start a New Document
-              </Button>
-            </div>
-          </div>
-        );
-      case "error":
-        return (
-          <div className="flex flex-col items-center justify-center space-y-6">
-            <XCircle className="h-16 w-16 text-destructive" />
-            <p className="text-xl font-semibold">Submission Failed</p>
-            <Alert variant="destructive">
-              <XCircle className="h-4 w-4" />
-              <AlertDescription>
-                {error || "An unexpected error occurred. Please try again."}
-              </AlertDescription>
-            </Alert>
-            <div className="flex space-x-4">
-              <Button onClick={handleRetry} variant="outline" size="lg">
-                Retry Submission
-              </Button>
-              <Button onClick={handleGoToDashboard} size="lg">
-                Go to Dashboard
-              </Button>
-            </div>
-          </div>
-        );
-      case "idle": // Should not technically be visible due to useEffect trigger
-      default:
-        return null; // Or a placeholder/initial state if needed
-    }
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -180,7 +118,74 @@ export function SendingStep() {
           )}
         </CardHeader>
         <CardContent className="flex min-h-[400px] items-center justify-center p-6 md:p-10">
-          {renderContent()}
+          {(() => {
+            switch (submissionStatus) {
+              case "submitting":
+                return (
+                  <div className="flex flex-col items-center justify-center space-y-4">
+                    <Loader2 className="h-16 w-16 animate-spin text-primary" />
+                    <p className="text-lg font-medium">
+                      Sending your document...
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Please wait while we process and send your document for
+                      signing.
+                    </p>
+                  </div>
+                );
+              case "success":
+                return (
+                  <div className="flex flex-col items-center justify-center space-y-6">
+                    <CheckCircle className="h-16 w-16 text-green-500" />
+                    <p className="text-xl font-semibold">
+                      Document Sent Successfully!
+                    </p>
+                    <p className="text-center text-muted-foreground">
+                      Your document has been sent to all recipients. You can
+                      track its status in your dashboard.
+                    </p>
+                    {/* Add button group for multiple actions */}
+                    <div className="flex space-x-4">
+                      <Button onClick={handleGoToDashboard} size="lg">
+                        Go to Dashboard
+                      </Button>
+                      <Button
+                        onClick={handleStartNewDocument}
+                        variant="outline"
+                        size="lg"
+                      >
+                        Start a New Document
+                      </Button>
+                    </div>
+                  </div>
+                );
+              case "error":
+                return (
+                  <div className="flex flex-col items-center justify-center space-y-6">
+                    <XCircle className="h-16 w-16 text-destructive" />
+                    <p className="text-xl font-semibold">Submission Failed</p>
+                    <Alert variant="destructive">
+                      <XCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        {error ||
+                          "An unexpected error occurred. Please try again."}
+                      </AlertDescription>
+                    </Alert>
+                    <div className="flex space-x-4">
+                      <Button onClick={handleRetry} variant="outline" size="lg">
+                        Retry Submission
+                      </Button>
+                      <Button onClick={handleGoToDashboard} size="lg">
+                        Go to Dashboard
+                      </Button>
+                    </div>
+                  </div>
+                );
+              case "idle":
+              default:
+                return null;
+            }
+          })()}
         </CardContent>
       </Card>
     </motion.div>

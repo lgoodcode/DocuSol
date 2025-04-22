@@ -132,10 +132,11 @@ export function SignersStep({
 
         // Add myself to the store
         addSigner({
+          userId: user.id,
           name: `${user.firstName} ${user.lastName}`,
           email,
           isOwner: true,
-          role: "owner",
+          role: "participant",
           mode: "transparent",
         });
 

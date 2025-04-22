@@ -5,6 +5,18 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function getEnvVar(key: string): string | undefined {
+  return process.env[key];
+}
+
+export function getRequiredEnvVar(key: string): string {
+  const value = process.env[key];
+  if (!value) {
+    throw new Error(`Environment variable ${key} is not set.`);
+  }
+  return value;
+}
+
 export const previewBlob = (blob: Blob) => {
   const url = URL.createObjectURL(blob);
   window.open(url, "_blank");

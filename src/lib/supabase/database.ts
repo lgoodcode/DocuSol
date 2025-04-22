@@ -9,6 +9,125 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      document_fields: {
+        Row: {
+          created_at: string
+          document_id: string
+          id: string
+          label: string | null
+          options: Json | null
+          participant_id: string | null
+          position_page: number
+          position_x: number
+          position_y: number
+          required: boolean
+          signature_scale: number | null
+          size_height: number
+          size_width: number
+          text_styles: Json | null
+          type: Database["public"]["Enums"]["document_field_type"]
+          updated_at: string
+          value: string | null
+        }
+        Insert: {
+          created_at?: string
+          document_id: string
+          id?: string
+          label?: string | null
+          options?: Json | null
+          participant_id?: string | null
+          position_page: number
+          position_x: number
+          position_y: number
+          required?: boolean
+          signature_scale?: number | null
+          size_height: number
+          size_width: number
+          text_styles?: Json | null
+          type: Database["public"]["Enums"]["document_field_type"]
+          updated_at?: string
+          value?: string | null
+        }
+        Update: {
+          created_at?: string
+          document_id?: string
+          id?: string
+          label?: string | null
+          options?: Json | null
+          participant_id?: string | null
+          position_page?: number
+          position_x?: number
+          position_y?: number
+          required?: boolean
+          signature_scale?: number | null
+          size_height?: number
+          size_width?: number
+          text_styles?: Json | null
+          type?: Database["public"]["Enums"]["document_field_type"]
+          updated_at?: string
+          value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_fields_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_fields_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "document_participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_participants: {
+        Row: {
+          color: string | null
+          created_at: string
+          document_id: string
+          id: string
+          is_owner: boolean
+          mode: Database["public"]["Enums"]["participant_mode"]
+          role: Database["public"]["Enums"]["participant_role"]
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          document_id: string
+          id: string
+          is_owner?: boolean
+          mode?: Database["public"]["Enums"]["participant_mode"]
+          role?: Database["public"]["Enums"]["participant_role"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          document_id?: string
+          id?: string
+          is_owner?: boolean
+          mode?: Database["public"]["Enums"]["participant_mode"]
+          role?: Database["public"]["Enums"]["participant_role"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_participants_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_signers: {
         Row: {
           created_at: string
@@ -188,6 +307,20 @@ export type Database = {
           version_id: string | null
         }[]
       }
+      add_document_version: {
+        Args: {
+          p_document_id: string
+          p_content_hash: string
+          p_file_hash: string
+          p_metadata_hash: string
+          p_user_id: string
+          p_transaction_signature: string
+        }
+        Returns: {
+          version_id: string
+          version_number: number
+        }[]
+      }
       create_document_with_version: {
         Args: {
           p_name: string
@@ -199,8 +332,47 @@ export type Database = {
         Returns: {
           document_id: string
           version_id: string
-          version_number: number
+          out_version_number: number
         }[]
+      }
+      create_draft_document: {
+        Args: {
+          p_name: string
+          p_content_hash: string
+          p_file_hash: string
+          p_metadata_hash: string
+        }
+        Returns: {
+          document_id: string
+          version_id: string
+          out_version_number: number
+        }[]
+      }
+      dry_run_finalize_document_upload: {
+        Args: {
+          p_document_id: string
+          p_user_id: string
+          p_content_hash: string
+          p_file_hash: string
+          p_metadata_hash: string
+          p_transaction_signature: string
+          p_fields: Json
+          p_participants: Json
+        }
+        Returns: boolean
+      }
+      finalize_document_upload: {
+        Args: {
+          p_document_id: string
+          p_user_id: string
+          p_content_hash: string
+          p_file_hash: string
+          p_metadata_hash: string
+          p_transaction_signature: string
+          p_fields: Json
+          p_participants: Json
+        }
+        Returns: boolean
       }
       get_document_with_version: {
         Args: {
@@ -254,6 +426,7 @@ export type Database = {
       }
     }
     Enums: {
+      document_field_type: "text" | "date" | "initials" | "signature"
       document_signer_status: "pending" | "signed" | "rejected"
       document_status:
         | "draft"
@@ -262,6 +435,13 @@ export type Database = {
         | "completed"
         | "rejected"
         | "expired"
+      participant_mode: "transparent" | "anonymous"
+      participant_role:
+        | "owner"
+        | "reviewer"
+        | "witness"
+        | "notary"
+        | "participant"
     }
     CompositeTypes: {
       [_ in never]: never
