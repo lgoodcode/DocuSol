@@ -89,9 +89,11 @@ export type Database = {
           color: string | null
           created_at: string
           document_id: string
+          email: string | null
           id: string
           is_owner: boolean
           mode: Database["public"]["Enums"]["participant_mode"]
+          name: string | null
           role: Database["public"]["Enums"]["participant_role"]
           updated_at: string
           user_id: string | null
@@ -100,9 +102,11 @@ export type Database = {
           color?: string | null
           created_at?: string
           document_id: string
+          email?: string | null
           id: string
           is_owner?: boolean
           mode?: Database["public"]["Enums"]["participant_mode"]
+          name?: string | null
           role?: Database["public"]["Enums"]["participant_role"]
           updated_at?: string
           user_id?: string | null
@@ -111,9 +115,11 @@ export type Database = {
           color?: string | null
           created_at?: string
           document_id?: string
+          email?: string | null
           id?: string
           is_owner?: boolean
           mode?: Database["public"]["Enums"]["participant_mode"]
+          name?: string | null
           role?: Database["public"]["Enums"]["participant_role"]
           updated_at?: string
           user_id?: string | null
@@ -278,6 +284,44 @@ export type Database = {
             columns: ["current_version_id"]
             isOneToOne: false
             referencedRelation: "document_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_verification_tokens: {
+        Row: {
+          created_at: string
+          document_id: string
+          email: string
+          expires_at: string
+          id: string
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          document_id: string
+          email: string
+          expires_at: string
+          id?: string
+          token?: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          document_id?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_verification_tokens_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
             referencedColumns: ["id"]
           },
         ]

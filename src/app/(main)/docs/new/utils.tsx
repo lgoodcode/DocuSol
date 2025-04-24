@@ -310,7 +310,15 @@ export async function uploadInitialDocument(
  */
 export async function sendDraftDocument(
   documentState: DocumentStateExport,
-  dryRun: boolean = false,
+  dryRun: {
+    memo: boolean;
+    email: boolean;
+    database: boolean;
+  } = {
+    memo: false,
+    email: false,
+    database: false,
+  },
 ) {
   const response = await fetch(API_PATHS.DOCS.UPLOAD, {
     method: "POST",
@@ -321,7 +329,7 @@ export async function sendDraftDocument(
   });
 
   if (!response.ok) {
-    throw new Error("Failed to send draft document metadata");
+    throw new Error("Failed to complete document upload and send emails");
   }
 
   return await response.json();

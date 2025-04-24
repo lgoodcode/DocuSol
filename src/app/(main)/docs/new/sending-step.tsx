@@ -59,11 +59,15 @@ export function SendingStep() {
           throw new Error("Every signer must be assigned at least one field.");
         }
 
-        const resp = await sendDraftDocument(documentState);
+        const resp = await sendDraftDocument(documentState, {
+          memo: true,
+          email: false,
+          database: true,
+        });
         console.log("resp", resp);
 
+        // resetDocumentState(true);
         setSubmissionStatus("success");
-        resetDocumentState(true);
       } catch (err: unknown) {
         console.error("Error submitting document:", err);
         captureException(err);

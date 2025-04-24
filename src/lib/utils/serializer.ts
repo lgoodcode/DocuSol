@@ -1,6 +1,7 @@
 import { pack, unpack } from "msgpackr";
 import { Buffer } from "buffer"; // Ensure Buffer is available
 
+import { getRequiredEnvVar } from "@/lib/utils";
 import {
   SignatureState,
   type DocumentStamp,
@@ -338,21 +339,10 @@ export class ObfuscatedStampSerializer {
 
   /**
    * Initializes the serializer, retrieving the obfuscation key from environment variables.
-   *
-   * @param envKey - The environment variable name for the obfuscation key. Defaults to 'STAMP_OBFUSCATION_KEY'.
-   * @param defaultKey - A default key to use if the environment variable is not set (use for testing only, logs a warning).
    */
-  constructor(
-    envKey: string = "STAMP_OBFUSCATION_KEY",
-    defaultKey: string = "default-very-secret-key", // WARNING: Insecure default
-  ) {
-    this.obfuscationKey = process.env[envKey] || defaultKey;
-    if (this.obfuscationKey === defaultKey && process.env.NODE_ENV !== "test") {
-      console.warn(
-        `ObfuscatedStampSerializer: Using default or missing obfuscation key ('${envKey}'). Set this environment variable securely!`,
-      );
-    }
-    this.keySerializer = new DocumentStampSerializer(); // Uses the default key/reverseKey maps
+  constructor() {
+    this.obfuscationKey = getRequiredEnvVar("STAMP_OBFUSCATION_KEY");
+    this.keySerializer = new DocumentStampSerializer();
   }
 
   /**

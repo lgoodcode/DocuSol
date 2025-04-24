@@ -12,6 +12,9 @@ import {
 } from "@/lib/types/stamp";
 import { sendMemoTransaction } from "@/lib/utils/solana";
 import { ObfuscatedStampSerializer } from "@/lib/utils/serializer";
+import { sendEmails } from "@/lib/utils/email";
+
+import { generateSigningLinkForParticipants } from "./utils";
 
 const createErrorResponse = (message: string, status: number) => {
   console.error(`Upload API Error: ${message}`);
@@ -21,7 +24,11 @@ const createErrorResponse = (message: string, status: number) => {
 
 // Extend the schema to include an optional dryRun flag
 const uploadRequestSchema = documentStateExportSchema.extend({
-  dryRun: z.boolean().optional().default(false),
+  dryRun: z.object({
+    memo: z.boolean().optional().default(false),
+    email: z.boolean().optional().default(false),
+    database: z.boolean().optional().default(false),
+  }),
 });
 
 export async function POST(request: Request) {
@@ -33,6 +40,7 @@ export async function POST(request: Request) {
     // Validate the extended schema including the optional dryRun flag
     const {
       documentId,
+      documentName,
       documentContentHash,
       signers: participants,
       fields,
@@ -85,10 +93,16 @@ export async function POST(request: Request) {
     const formattedMemo = `v${STAMP_VERSION}:${obfuscatedStamp}`;
 
     // Step 4: Store the stamp in the Solana memo blockchain
-    const txSignature = await sendMemoTransaction(formattedMemo);
+    const txSignature = dryRun.memo
+      ? "dry_run_memo_transaction"
+      : await sendMemoTransaction(formattedMemo);
+
+    if (dryRun.memo) {
+      console.log("Dry run memo transaction");
+    }
 
     // Step 5: Call the appropriate RPC function based on the dryRun flag
-    const rpcName = dryRun
+    const rpcName = dryRun.database
       ? "dry_run_finalize_document_upload"
       : "finalize_document_upload";
     const { error: finalizeError } = await supabase.rpc(rpcName, {
@@ -101,6 +115,10 @@ export async function POST(request: Request) {
       p_fields: fields,
       p_participants: participants,
     });
+
+    if (dryRun.database) {
+      console.log("Dry run finalize document upload");
+    }
 
     if (finalizeError) {
       // Log the specific error from the RPC call.
@@ -118,10 +136,48 @@ export async function POST(request: Request) {
       throw new Error(errorMessage);
     }
 
-    // Step 7: Send email notifications (TODO)
-    // TODO: Implement email sending logic here (potentially skip for dry runs?)
-    if (!dryRun) {
-      // Send emails only if it was not a dry run
+    // Step 6: Generate verification token and signing links
+    let signingLinks: string[] = [];
+    try {
+      signingLinks = await generateSigningLinkForParticipants(
+        participants,
+        documentId,
+      );
+    } catch (error) {
+      console.error("Error generating signing links:", error);
+      captureException(error);
+      return createErrorResponse("Error generating signing links", 500);
+    }
+
+    // Step 7: Send emails to participants
+    if (!dryRun.email) {
+      const emailPayloads = participants.map((participant, index) => ({
+        email: participant.email,
+        name: participant.name,
+        link: signingLinks[index],
+      }));
+
+      try {
+        await sendEmails(
+          emailPayloads,
+          {
+            email: user.email,
+            name: `${user.firstName} ${user.lastName}`,
+          },
+          "Document Ready for Signature",
+          documentName,
+        );
+      } catch (emailError) {
+        console.error("Error during email sending:", emailError);
+        captureException(emailError);
+        const message =
+          emailError instanceof Error
+            ? emailError.message
+            : "An error occurred while sending emails.";
+        return createErrorResponse(message, 500);
+      }
+    } else {
+      console.log("Dry run: Skipped sending emails.");
     }
 
     return NextResponse.json({
@@ -130,10 +186,7 @@ export async function POST(request: Request) {
       transactionSignature: txSignature,
     });
   } catch (error: unknown) {
-    console.error(
-      `Unexpected error in POST /api/docs/upload (dryRun=${(error as any)?.requestBody?.dryRun ?? "unknown"}):`,
-      error,
-    );
+    console.error(error);
     // If the error is a Zod validation error, return 400
     if (error instanceof z.ZodError) {
       return createErrorResponse(

@@ -24,6 +24,10 @@ export declare global {
       UPSTASH_REDIS_REST_URL: string;
       UPSTASH_REDIS_REST_TOKEN: string;
 
+      RESEND_API_KEY: string;
+
+      STAMP_OBFUSCATION_KEY: string;
+
       PRIVATE_KEY: string;
     }
   }
