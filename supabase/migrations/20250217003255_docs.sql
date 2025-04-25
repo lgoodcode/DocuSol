@@ -55,6 +55,9 @@ CREATE INDEX idx_documents_status ON documents(status);
 CREATE INDEX idx_documents_created_at ON documents(created_at);
 CREATE INDEX idx_documents_updated_at ON documents(updated_at);
 
+-- Enable Row Level Security for documents
+ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
+
 -- Users can view their own documents
 CREATE POLICY "Users can view their own documents"
 ON documents
@@ -158,6 +161,9 @@ CREATE INDEX idx_document_versions_document_id ON document_versions(document_id)
 CREATE UNIQUE INDEX idx_document_versions_document_version
   ON document_versions(document_id, version_number)
   WHERE document_id IS NOT NULL;
+
+-- Enable Row Level Security for document_versions
+ALTER TABLE document_versions ENABLE ROW LEVEL SECURITY;
 
 -- Users can view versions of documents they own
 CREATE POLICY "Users can view versions of their documents"
@@ -386,6 +392,9 @@ CREATE INDEX idx_document_signers_document_id ON document_signers(document_id);
 CREATE INDEX idx_document_signers_user_id ON document_signers(user_id);
 CREATE INDEX idx_document_signers_status ON document_signers(status);
 CREATE INDEX idx_document_signers_version_id ON document_signers(version_id);
+
+-- Enable Row Level Security for document_signers
+ALTER TABLE document_signers ENABLE ROW LEVEL SECURITY;
 
 -- Users can view signers for documents they own OR where they are a signer
 CREATE POLICY "Users can view signers for their documents or where they are a signer"
@@ -792,6 +801,95 @@ ALTER FUNCTION get_document_with_version(UUID, INTEGER) OWNER TO postgres;
 
 --
 --
+-- document_participants
+--
+--
+
+CREATE TYPE participant_role AS ENUM (
+    'reviewer',
+    'witness',
+    'notary',
+    'participant'
+);
+
+CREATE TYPE participant_mode AS ENUM (
+    'transparent',
+    'anonymous'
+);
+
+/**
+ * Defines the participants involved in a document process.
+ * This table stores the configuration of each participant before
+ * they necessarily interact (sign/reject).
+ *
+ * id - The ID of the participant entry
+ * document_id - The ID of the document this participant belongs to
+ * user_id - The ID of the user who is the participant
+ * role - The role of the participant (e.g., owner, signer, reviewer)
+ * mode - The signing mode for the participant (e.g., transparent, anonymous)
+ * is_owner - Flag indicating if this participant is the document owner
+ * color - A color associated with the participant (e.g., for UI highlighting)
+ * created_at - Timestamp when the participant was added
+ * updated_at - Timestamp when the participant was last updated
+ */
+CREATE TABLE document_participants (
+    id UUID PRIMARY KEY,
+    document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES auth.users(id), -- Can be NULL for non-users
+    name TEXT,
+    email TEXT,
+    role participant_role NOT NULL DEFAULT 'participant',
+    mode participant_mode NOT NULL DEFAULT 'transparent',
+    is_owner BOOLEAN NOT NULL DEFAULT FALSE,
+    color TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE document_participants OWNER TO postgres;
+
+-- Add indexes
+CREATE INDEX idx_document_participants_document_id ON document_participants(document_id);
+CREATE INDEX idx_document_participants_user_id ON document_participants(user_id);
+
+-- Enable Row Level Security for document_participants
+ALTER TABLE document_participants ENABLE ROW LEVEL SECURITY;
+
+-- RLS: Document owners can manage participants for their documents
+CREATE POLICY "Owners can manage participants for their documents"
+ON document_participants
+FOR ALL
+TO authenticated
+USING (
+    EXISTS (
+        SELECT 1 FROM documents
+        WHERE documents.id = document_participants.document_id
+        AND documents.user_id = auth.uid()
+    )
+)
+WITH CHECK (
+    EXISTS (
+        SELECT 1 FROM documents
+        WHERE documents.id = document_participants.document_id
+        AND documents.user_id = auth.uid()
+    )
+);
+
+-- RLS: Participants can view their own participation entry
+CREATE POLICY "Participants can view their own entry"
+ON document_participants
+FOR SELECT
+TO authenticated
+USING (user_id = auth.uid());
+
+-- Trigger for updated_at
+CREATE TRIGGER update_document_participants_updated_at
+    BEFORE UPDATE ON document_participants
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+--
+--
 -- document_fields
 --
 --
@@ -851,6 +949,9 @@ ALTER TABLE document_fields OWNER TO postgres;
 CREATE INDEX idx_document_fields_document_id ON document_fields(document_id);
 CREATE INDEX idx_document_fields_participant_id ON document_fields(participant_id);
 
+-- Enable Row Level Security for document_fields
+ALTER TABLE document_fields ENABLE ROW LEVEL SECURITY;
+
 -- RLS Policies: Owners can manage fields for their documents
 CREATE POLICY "Owners can manage fields for their documents"
 ON document_fields
@@ -877,92 +978,6 @@ CREATE TRIGGER update_document_fields_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
---
---
--- document_participants
---
---
-
--- Create ENUM types for participant roles and modes
-CREATE TYPE participant_role AS ENUM (
-    'reviewer',
-    'witness',
-    'notary',
-    'participant'
-);
-
-CREATE TYPE participant_mode AS ENUM (
-    'transparent',
-    'anonymous'
-);
-
-/**
- * Defines the participants involved in a document process.
- * This table stores the configuration of each participant before
- * they necessarily interact (sign/reject).
- *
- * id - The ID of the participant entry
- * document_id - The ID of the document this participant belongs to
- * user_id - The ID of the user who is the participant
- * role - The role of the participant (e.g., owner, signer, reviewer)
- * mode - The signing mode for the participant (e.g., transparent, anonymous)
- * is_owner - Flag indicating if this participant is the document owner
- * color - A color associated with the participant (e.g., for UI highlighting)
- * created_at - Timestamp when the participant was added
- * updated_at - Timestamp when the participant was last updated
- */
-CREATE TABLE document_participants (
-    id UUID PRIMARY KEY,
-    document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
-    user_id UUID REFERENCES auth.users(id), -- Can be NULL for non-users
-    name TEXT,
-    email TEXT,
-    role participant_role NOT NULL DEFAULT 'participant',
-    mode participant_mode NOT NULL DEFAULT 'transparent',
-    is_owner BOOLEAN NOT NULL DEFAULT FALSE,
-    color TEXT,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-ALTER TABLE document_participants OWNER TO postgres;
-
--- Add indexes
-CREATE INDEX idx_document_participants_document_id ON document_participants(document_id);
-CREATE INDEX idx_document_participants_user_id ON document_participants(user_id);
-
--- RLS: Document owners can manage participants for their documents
-CREATE POLICY "Owners can manage participants for their documents"
-ON document_participants
-FOR ALL
-TO authenticated
-USING (
-    EXISTS (
-        SELECT 1 FROM documents
-        WHERE documents.id = document_participants.document_id
-        AND documents.user_id = auth.uid()
-    )
-)
-WITH CHECK (
-    EXISTS (
-        SELECT 1 FROM documents
-        WHERE documents.id = document_participants.document_id
-        AND documents.user_id = auth.uid()
-    )
-);
-
--- RLS: Participants can view their own participation entry
-CREATE POLICY "Participants can view their own entry"
-ON document_participants
-FOR SELECT
-TO authenticated
-USING (user_id = auth.uid());
-
--- Trigger for updated_at
-CREATE TRIGGER update_document_participants_updated_at
-    BEFORE UPDATE ON document_participants
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
 
 --
 --
