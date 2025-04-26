@@ -19,27 +19,27 @@ export function ErrorPageContent({
   retry,
 }: ErrorPageProps) {
   return (
-    <div className="relative overflow-hidden min-h-[calc(100dvh-200px)] flex items-center justify-center">
+    <div className="relative flex min-h-[calc(100dvh-200px)] items-center justify-center overflow-hidden">
       <div
         className={cn(
-          "relative mx-auto flex flex-col items-center justify-center max-w-4xl text-center gap-4 px-4",
-          className
+          "relative mx-auto flex max-w-4xl flex-col items-center justify-center gap-4 px-4 text-center",
+          className,
         )}
       >
         <div className="space-y-4">
-          <AlertCircle className="h-24 w-24 text-muted-foreground/50 mx-auto" />
+          <AlertCircle className="mx-auto h-24 w-24 text-destructive/80" />
 
-          <h1 className="p-2 text-4xl sm:text-5xl md:text-6xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-destructive to-destructive/60 dark:to-destructive/50">
+          <h1 className="bg-gradient-to-r from-destructive to-destructive/60 bg-clip-text p-2 text-4xl font-bold tracking-tighter text-transparent dark:to-destructive/50 sm:text-5xl md:text-6xl">
             {title}
           </h1>
         </div>
 
         <div className="w-full space-y-8">
-          <p className="sm:text-lg md:text-xl text-muted-foreground mx-auto">
+          <p className="mx-auto text-muted-foreground sm:text-lg md:text-xl">
             {message}
           </p>
 
-          <p className="sm:text-lg md:text-xl max-w-xl text-muted-foreground mx-auto">
+          <p className="mx-auto max-w-xl text-muted-foreground sm:text-lg md:text-xl">
             If this was a mistake, please contact support via{" "}
             <Link
               href={`mailto:${SUPPORT_EMAIL}`}

@@ -34,6 +34,14 @@ export const PAGE_ROUTES: Record<string, PageRoute> = {
     description: "View your documents.",
     protected: true,
   },
+  sign: {
+    name: "Sign",
+    path: "/sign",
+    Icon: Folder,
+    description: "Sign documents.",
+    protected: false,
+    noNav: true,
+  },
   // "docs.explore": {
   //   name: "Explore",
   //   path: "/docs/explore",
@@ -85,6 +93,7 @@ export const PAGE_PATHS = {
     // EXPLORE: PAGE_ROUTES["docs.explore"].path,
     // VERIFY: PAGE_ROUTES["docs.verify"].path,
   },
+  SIGN: PAGE_ROUTES["sign"].path,
   // DASHBOARD: PAGE_ROUTES["dashboard"].path,
   // WRITER: PAGE_ROUTES["writer"].path,
   // TEMPLATES: PAGE_ROUTES["templates"].path,

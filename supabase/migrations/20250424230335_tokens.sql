@@ -6,6 +6,7 @@ CREATE TABLE email_verification_tokens (
     email text NOT NULL,
     document_id uuid NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
     expires_at timestamptz NOT NULL,
+    invalidated_at timestamptz DEFAULT NULL,
     created_at timestamptz DEFAULT NOW() NOT NULL,
     used_at timestamptz DEFAULT NULL
 );

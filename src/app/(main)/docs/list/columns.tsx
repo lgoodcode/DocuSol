@@ -171,13 +171,6 @@ export function useColumns({
         },
       },
       {
-        accessorKey: "expired",
-        header: "Expired",
-        cell: ({ row }) => {
-          return row.getValue("expired") ? "Yes" : "No";
-        },
-      },
-      {
         accessorKey: "createdAt",
         header: "Created",
         size: 180,

@@ -14,6 +14,7 @@ import {
   LucideIcon,
 } from "lucide-react";
 
+import { PAGE_PATHS } from "@/config/routes/pages";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,7 +27,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
 type ConnectionStep =
   | "idle"
   | "signing"
@@ -163,7 +163,7 @@ export function LoginContent() {
   useEffect(() => {
     if (authenticated) {
       setStep("success");
-      router.push("/docs/list");
+      router.push(PAGE_PATHS.DOCS.LIST);
     } else if (signing) {
       setStep("signing");
     } else if (authenticating) {

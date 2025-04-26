@@ -7,11 +7,11 @@ import { captureException } from "@sentry/nextjs";
 import { CheckCircle, XCircle, Loader2, Send, ChevronLeft } from "lucide-react";
 
 import { IS_PROD } from "@/constants";
+import { PAGE_PATHS } from "@/config/routes/pages";
 import { useDocumentStore } from "@/lib/pdf-editor/stores/useDocumentStore";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-
 import { sendDraftDocument } from "./utils";
 
 type SubmissionStatus = "idle" | "submitting" | "success" | "error";
@@ -91,7 +91,7 @@ export function SendingStep() {
   }, [isMounted, submissionStatus]);
 
   const handleGoToDashboard = () => {
-    router.push("/docs/list");
+    router.push(PAGE_PATHS.DOCS.LIST);
   };
 
   const handleRetry = () => {

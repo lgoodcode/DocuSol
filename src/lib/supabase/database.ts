@@ -295,6 +295,7 @@ export type Database = {
           email: string
           expires_at: string
           id: string
+          invalidated_at: string | null
           token: string
           used_at: string | null
         }
@@ -304,6 +305,7 @@ export type Database = {
           email: string
           expires_at: string
           id?: string
+          invalidated_at?: string | null
           token?: string
           used_at?: string | null
         }
@@ -313,6 +315,7 @@ export type Database = {
           email?: string
           expires_at?: string
           id?: string
+          invalidated_at?: string | null
           token?: string
           used_at?: string | null
         }

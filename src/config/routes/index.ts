@@ -6,11 +6,16 @@ export interface Route {
   description?: string;
   disabled?: boolean;
   protected?: boolean;
+  noNav?: boolean;
 }
 
-export interface PageRoute extends Route {
-  Icon: LucideIcon;
-}
+export type PageRoute =
+  | (Route & {
+      Icon: LucideIcon;
+    })
+  | (Route & {
+      noNav: true;
+    });
 
 export interface ApiRoute extends Route {
   path: `/api/${string}`;
