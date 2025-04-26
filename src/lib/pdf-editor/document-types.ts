@@ -148,7 +148,7 @@ export interface DocumentState {
   createdAt: number;
 
   // Document metadata
-  documentId: string | null;
+  documentId: string;
   documentName: string;
   documentDataUrl: string | null;
   documentPreviewUrl: string | null;
@@ -218,6 +218,6 @@ export interface DocumentState {
 
   setFormDocumentMetadata: (metadata: FormDocumentMetadata) => void;
 
-  resetDocumentState: () => void;
+  resetDocumentState: (completed?: boolean) => void;
   exportDocumentState: () => DocumentStateExport;
 }

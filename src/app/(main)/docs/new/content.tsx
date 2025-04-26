@@ -15,6 +15,8 @@ import { EditingStep } from "./editing-step";
 import { ReviewStep } from "./review-step";
 import { SendingStep } from "./sending-step";
 
+const TESTING = false;
+
 const EXPIRATION_TIME = 1000 * 60 * 60 * 24; // 1 day
 
 const isStoreExpired = (createdAt: number) => {
@@ -24,6 +26,7 @@ const isStoreExpired = (createdAt: number) => {
 export function NewDocContent() {
   const {
     currentStep,
+    documentId,
     setCurrentStep,
     resetDocumentState: reset,
     viewType,
@@ -43,7 +46,13 @@ export function NewDocContent() {
   // Run only once on mount to check initial state and expiration
   useEffect(() => {
     const { currentStep, createdAt } = useDocumentStore.getState();
-    if (IS_PROD && (!currentStep || isStoreExpired(createdAt))) {
+    if (
+      !TESTING &&
+      (!currentStep ||
+        isStoreExpired(createdAt) ||
+        // Reset if the user has completed and sent the document and refreshes
+        (currentStep === "sending" && !documentId))
+    ) {
       reset();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

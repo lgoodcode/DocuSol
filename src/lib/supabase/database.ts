@@ -243,7 +243,7 @@ export type Database = {
           completed_at: string | null
           created_at: string
           current_version_id: string | null
-          expired_at: string | null
+          expires_at: string | null
           id: string
           name: string
           password: string | null
@@ -256,7 +256,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           current_version_id?: string | null
-          expired_at?: string | null
+          expires_at?: string | null
           id?: string
           name: string
           password?: string | null
@@ -269,7 +269,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           current_version_id?: string | null
-          expired_at?: string | null
+          expires_at?: string | null
           id?: string
           name?: string
           password?: string | null
@@ -365,20 +365,6 @@ export type Database = {
           version_number: number
         }[]
       }
-      create_document_with_version: {
-        Args: {
-          p_name: string
-          p_content_hash: string
-          p_file_hash: string
-          p_metadata_hash: string
-          p_password?: string
-        }
-        Returns: {
-          document_id: string
-          version_id: string
-          out_version_number: number
-        }[]
-      }
       create_draft_document: {
         Args: {
           p_name: string
@@ -402,6 +388,8 @@ export type Database = {
           p_transaction_signature: string
           p_fields: Json
           p_participants: Json
+          p_expires_at?: string
+          p_password?: string
         }
         Returns: boolean
       }
@@ -415,6 +403,8 @@ export type Database = {
           p_transaction_signature: string
           p_fields: Json
           p_participants: Json
+          p_expires_at?: string
+          p_password?: string
         }
         Returns: boolean
       }
@@ -433,6 +423,20 @@ export type Database = {
           filehash: string
           metadatahash: string
           tx_signature: string
+          encryption_key: string
+        }[]
+      }
+      get_documents_to_list: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          name: string
+          has_password: boolean
+          status: Database["public"]["Enums"]["document_status"]
+          tx_signature: string
+          expires_at: string
+          created_at: string
+          updated_at: string
         }[]
       }
       get_next_document_version_number: {
@@ -480,12 +484,7 @@ export type Database = {
         | "rejected"
         | "expired"
       participant_mode: "transparent" | "anonymous"
-      participant_role:
-        | "owner"
-        | "reviewer"
-        | "witness"
-        | "notary"
-        | "participant"
+      participant_role: "reviewer" | "witness" | "notary" | "participant"
     }
     CompositeTypes: {
       [_ in never]: never

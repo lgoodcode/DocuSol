@@ -39,6 +39,7 @@ export function FieldProperties({
             value={field.label}
             onChange={(e) => updateField({ label: e.target.value })}
             placeholder="Enter label"
+            autoComplete="off"
           />
         </div>
 

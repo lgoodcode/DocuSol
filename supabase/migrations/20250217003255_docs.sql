@@ -27,7 +27,7 @@ CREATE TYPE document_status AS ENUM (
  * password - The password of the document
  * filename - The original filename of the document
  * completed_at - The timestamp when the document was completed
- * expired_at - The timestamp when the document expired
+ * expires_at - The timestamp when the document expires
  * rejected_at - The timestamp when the document was rejected
  * created_at - The timestamp when the document was created
  * updated_at - The timestamp when the document was last updated
@@ -40,7 +40,7 @@ CREATE TABLE documents (
     name TEXT NOT NULL,
     password TEXT,
     completed_at TIMESTAMPTZ,
-    expired_at TIMESTAMPTZ,
+    expires_at TIMESTAMPTZ,
     rejected_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -330,7 +330,7 @@ BEGIN
     -- Update the document's current version ID
     UPDATE documents
     SET current_version_id = v_version_id,
-        updated_at = CURRENT_TIMESTAMP -- Also update the document's timestamp
+        updated_at = CURRENT_TIMESTAMP
     WHERE id = p_document_id;
 
     -- Return the new version details
@@ -998,6 +998,8 @@ CREATE TRIGGER update_document_fields_updated_at
  * @param p_transaction_signature - The Solana transaction signature storing the encrypted stamp
  * @param p_fields - JSONB array of document fields to insert
  * @param p_participants - JSONB array of document participants (signers/reviewers etc.) to insert
+ * @param p_expires_at - The timestamp when the document should expire (optional)
+ * @param p_password - The password for the document (optional)
  * @return BOOLEAN - Returns true if successful, raises an exception on failure (causing rollback)
  */
 CREATE OR REPLACE FUNCTION finalize_document_upload(
@@ -1008,7 +1010,9 @@ CREATE OR REPLACE FUNCTION finalize_document_upload(
     p_metadata_hash TEXT,
     p_transaction_signature TEXT,
     p_fields JSONB,
-    p_participants JSONB
+    p_participants JSONB,
+    p_expires_at TIMESTAMPTZ DEFAULT NULL,
+    p_password TEXT DEFAULT NULL
 )
 RETURNS BOOLEAN AS $$
 DECLARE
@@ -1092,6 +1096,13 @@ BEGIN
         );
     END LOOP;
 
+    -- Step 4: Update the document status to awaiting_signatures and set expiry
+    UPDATE documents
+    SET status = 'awaiting_signatures',
+        password = p_password,
+        expires_at = p_expires_at
+    WHERE id = p_document_id;
+
     -- If all operations succeeded, return true
     RETURN TRUE;
 
@@ -1105,7 +1116,7 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-ALTER FUNCTION finalize_document_upload(UUID, UUID, TEXT, TEXT, TEXT, TEXT, JSONB, JSONB) OWNER TO postgres;
+ALTER FUNCTION finalize_document_upload(UUID, UUID, TEXT, TEXT, TEXT, TEXT, JSONB, JSONB, TIMESTAMPTZ, TEXT) OWNER TO postgres;
 
 
 --
@@ -1127,6 +1138,8 @@ ALTER FUNCTION finalize_document_upload(UUID, UUID, TEXT, TEXT, TEXT, TEXT, JSON
  * @param p_transaction_signature - The Solana transaction signature
  * @param p_fields - JSONB array of fields
  * @param p_participants - JSONB array of participants
+ * @param p_expires_at - The timestamp when the document should expire (optional)
+ * @param p_password - The password for the document (optional)
  * @return BOOLEAN - Returns true if the dry run succeeds (operation would have worked), raises error on failure.
  */
 CREATE OR REPLACE FUNCTION dry_run_finalize_document_upload(
@@ -1137,7 +1150,9 @@ CREATE OR REPLACE FUNCTION dry_run_finalize_document_upload(
     p_metadata_hash TEXT,
     p_transaction_signature TEXT,
     p_fields JSONB,
-    p_participants JSONB
+    p_participants JSONB,
+    p_expires_at TIMESTAMPTZ DEFAULT NULL,
+    p_password TEXT DEFAULT NULL
 )
 RETURNS BOOLEAN AS $$
 DECLARE
@@ -1155,8 +1170,10 @@ BEGIN
             p_file_hash,
             p_metadata_hash,
             p_transaction_signature,
+            p_expires_at,
             p_fields,
-            p_participants
+            p_participants,
+            p_password
         );
 
         -- If the above call succeeded without error, the dry run is successful.
@@ -1205,5 +1222,49 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-ALTER FUNCTION dry_run_finalize_document_upload(UUID, UUID, TEXT, TEXT, TEXT, TEXT, JSONB, JSONB) OWNER TO postgres;
+ALTER FUNCTION dry_run_finalize_document_upload(UUID, UUID, TEXT, TEXT, TEXT, TEXT, JSONB, JSONB, TIMESTAMPTZ, TEXT) OWNER TO postgres;
+
+
+--
+--
+-- get_documents_to_list Function
+--
+--
+
+/**
+ * Retrieves a list of documents for a specific user, formatted for display.
+ * Joins documents with their latest version to include the transaction signature.
+ *
+ * @return TABLE - Returns document details matching the ViewDocument type.
+ */
+CREATE OR REPLACE FUNCTION get_documents_to_list()
+RETURNS TABLE(
+    id UUID,
+    name TEXT,
+    has_password BOOLEAN,
+    status document_status,
+    tx_signature TEXT,
+    expires_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        d.id,
+        d.name,
+        (d.password IS NOT NULL) AS has_password,
+        d.status,
+        dv.transaction_signature,
+        d.expires_at,
+        d.created_at,
+        d.updated_at
+    FROM documents d
+    LEFT JOIN document_versions dv ON d.current_version_id = dv.id
+    WHERE d.user_id = auth.uid()
+    ORDER BY d.updated_at DESC;
+END;
+$$ LANGUAGE plpgsql STABLE SECURITY INVOKER;
+
+ALTER FUNCTION get_documents_to_list() OWNER TO postgres;
 

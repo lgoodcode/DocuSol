@@ -94,23 +94,6 @@ export declare global {
     signedHash: string;
   }
 
-  interface ViewDocument {
-    id: string;
-    name: string;
-    password: string | null;
-    status: "signed" | "pending";
-    mimeType: string;
-    unsignedTxSignature: string;
-    signedTxSignature: string | null;
-    unsignedHash: string;
-    signedHash: string | null;
-    is_signed: boolean;
-    unsignedDocumentHex: string;
-    signedDocumentHex: string | null;
-    createdAt: string;
-    updatedAt: string;
-  }
-
   interface VerifyDocumentData {
     id: string;
     name: string;

@@ -16,6 +16,15 @@ import { sendDraftDocument } from "./utils";
 
 type SubmissionStatus = "idle" | "submitting" | "success" | "error";
 
+const TESTING = false;
+const DRY_RUN = !TESTING
+  ? undefined
+  : {
+      memo: true,
+      email: true,
+      database: true,
+    };
+
 /**
  * Sending component for the document creation flow.
  * Handles the final submission of the document and displays the status.
@@ -55,18 +64,16 @@ export function SendingStep() {
           signerIdsWithFields.has(s.id),
         );
         if (!allSignersHaveFields && documentState.fields.length > 0) {
-          // Allow submission if no fields are placed
           throw new Error("Every signer must be assigned at least one field.");
         }
 
-        const resp = await sendDraftDocument(documentState, {
-          memo: true,
-          email: false,
-          database: true,
-        });
-        console.log("resp", resp);
+        const resp = await sendDraftDocument(documentState, DRY_RUN);
+        if (!DRY_RUN) {
+          resetDocumentState(true);
+        } else {
+          console.log("DRY RUN", resp);
+        }
 
-        // resetDocumentState(true);
         setSubmissionStatus("success");
       } catch (err: unknown) {
         console.error("Error submitting document:", err);
@@ -84,7 +91,7 @@ export function SendingStep() {
   }, [isMounted, submissionStatus]);
 
   const handleGoToDashboard = () => {
-    router.push("/docs");
+    router.push("/docs/list");
   };
 
   const handleRetry = () => {
@@ -151,7 +158,7 @@ export function SendingStep() {
                     {/* Add button group for multiple actions */}
                     <div className="flex space-x-4">
                       <Button onClick={handleGoToDashboard} size="lg">
-                        Go to Dashboard
+                        Go to My Documents
                       </Button>
                       <Button
                         onClick={handleStartNewDocument}

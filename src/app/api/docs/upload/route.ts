@@ -98,7 +98,7 @@ export async function POST(request: Request) {
       : await sendMemoTransaction(formattedMemo);
 
     if (dryRun.memo) {
-      console.log("Dry run memo transaction");
+      console.log("Dry run: Skipped memo transaction");
     }
 
     // Step 5: Call the appropriate RPC function based on the dryRun flag
@@ -113,11 +113,15 @@ export async function POST(request: Request) {
       p_metadata_hash: documentContentHash.metadataHash,
       p_transaction_signature: txSignature,
       p_fields: fields,
+      p_password: encryptionPassword,
+      p_expires_at: expirationDate
+        ? new Date(expirationDate).toISOString()
+        : undefined,
       p_participants: participants,
     });
 
     if (dryRun.database) {
-      console.log("Dry run finalize document upload");
+      console.log("Dry run: Skipped database operations");
     }
 
     if (finalizeError) {
@@ -187,7 +191,6 @@ export async function POST(request: Request) {
     });
   } catch (error: unknown) {
     console.error(error);
-    // If the error is a Zod validation error, return 400
     if (error instanceof z.ZodError) {
       return createErrorResponse(
         `Invalid request body: ${error.errors.map((e) => `${e.path.join(".")} - ${e.message}`).join(", ")}`,

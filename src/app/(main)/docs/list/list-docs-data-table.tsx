@@ -36,7 +36,7 @@ import { Input } from "@/components/ui/input";
 import { useColumns } from "./columns";
 import { RenameDocDialog } from "./rename-doc-dialog";
 import { DeleteDocDialog } from "./delete-doc-dialog";
-
+import type { ViewDocument } from "./types";
 export function DataTable({
   data,
   isLoading,

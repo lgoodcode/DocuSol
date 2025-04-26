@@ -1,93 +1,88 @@
-import { getAllStoredDocuments } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 
+import type { ViewDocument } from "./types";
+
 export const getDocuments = async (): Promise<ViewDocument[]> => {
-  const ids = await getAllStoredDocuments().then((docs) =>
-    docs.map((doc) => doc.id),
-  );
   const supabase = createClient();
-  const { data, error } = await supabase
-    .from("documents")
-    .select(
-      `
-      id,
-      name,
-      password,
-      is_signed,
-      mime_type,
-      unsigned_transaction_signature,
-      signed_transaction_signature,
-      unsigned_hash,
-      signed_hash,
-      unsigned_document,
-      signed_document,
-      created_at,
-      updated_at
-      `,
-    )
-    .in("id", ids);
+  const { data, error } = await supabase.rpc("get_documents_to_list");
 
   if (error) {
     throw error;
-  } else if (!data) {
-    return [];
   }
-
-  const documents: ViewDocument[] = data.map((doc) => ({
-    id: doc.id,
-    name: doc.name,
-    password: doc.password,
-    status: doc.is_signed ? "signed" : "pending",
-    mimeType: doc.mime_type,
-    is_signed: doc.is_signed,
-    unsignedTxSignature: doc.unsigned_transaction_signature,
-    signedTxSignature: doc.signed_transaction_signature,
-    unsignedHash: doc.unsigned_hash,
-    signedHash: doc.signed_hash,
-    unsignedDocumentHex: doc.unsigned_document,
-    signedDocumentHex: doc.signed_document,
+  return data.map((doc) => ({
+    ...doc,
+    hasPassword: doc.has_password,
+    txSignature: doc.tx_signature,
+    expiresAt: doc.expires_at,
     createdAt: doc.created_at,
     updatedAt: doc.updated_at,
   }));
-
-  return documents;
 };
 
 type DocumentData = {
-  unsigned_document: string;
-  signed_document: string | null;
-  mime_type: string;
   name: string;
+  contentHash: string;
+  fileHash: string;
+  metadataHash: string;
 };
 
 export const getDocumentData = async (id: string): Promise<DocumentData> => {
   const supabase = createClient();
+
+  // Fetch document name and current version hashes
   const { error, data } = await supabase
     .from("documents")
-    .select("unsigned_document,signed_document,mime_type,name")
+    .select(
+      `
+      name,
+      document_versions ( contentHash, fileHash, metadataHash )
+      `,
+      // Old query:
+      // "unsigned_document,signed_document,mime_type,name"
+    )
     .eq("id", id)
+    // Ensure we fetch the version linked by current_version_id
+    // Supabase automatically joins based on the foreign key relationship
+    // if the select syntax is correct and RLS permits.
+    // We might need to adjust RLS on document_versions if access fails.
     .single();
 
   if (error) {
+    console.error(`Error fetching document data for ID ${id}:`, error);
     throw error;
   }
 
   if (!data) {
-    throw new Error("No document found");
+    throw new Error(`No document found with ID ${id}`);
   }
 
-  const { unsigned_document, signed_document, mime_type, name } = data;
-  const documentDataString = unsigned_document || signed_document;
+  // Extract data - Supabase returns related records as an object or array.
+  // Assuming document_versions is an object because of .single() and one-to-one FK (current_version_id)
+  // If current_version_id can be null or the relationship is one-to-many, this might be an array.
+  const versionData = Array.isArray(data.document_versions)
+    ? data.document_versions[0]
+    : data.document_versions;
 
-  if (!documentDataString) {
-    throw new Error("No document data found");
+  if (!versionData) {
+    throw new Error(`No current version data found for document ID ${id}`);
   }
+
+  // Removed old destructuring:
+  // const { unsigned_document, signed_document, mime_type, name } = data;
+  // const documentDataString = unsigned_document || signed_document;
+  // if (!documentDataString) {
+  //   throw new Error("No document data found");
+  // }
 
   return {
-    name: name,
-    unsigned_document: unsigned_document,
-    signed_document: signed_document,
-    mime_type: mime_type,
+    name: data.name,
+    contentHash: versionData.contentHash,
+    fileHash: versionData.fileHash,
+    metadataHash: versionData.metadataHash,
+    // Removed old fields:
+    // unsigned_document: unsigned_document,
+    // signed_document: signed_document,
+    // mime_type: mime_type,
   };
 };
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useCallback } from "react";
-import type { ColumnDef } from "@tanstack/react-table";
 import { captureException } from "@sentry/nextjs";
 import { QueryClient, useQueryClient } from "@tanstack/react-query";
 import {
@@ -9,14 +8,13 @@ import {
   Download,
   Eye,
   Trash,
-  Lock,
-  Globe,
   Compass,
   Copy,
   Link,
   Share,
   Pencil,
 } from "lucide-react";
+import type { ColumnDef } from "@tanstack/react-table";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,39 +22,47 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+import type { SignatureStatus } from "@/lib/types/stamp";
+
+import type { ViewDocument } from "./types";
 
 import {
-  viewDocument,
+  // viewDocument,
   viewTransaction,
   copyTxSignature,
-  copyDocumentSignUrl,
-  copyViewUrl,
-  downloadDocument,
+  // copyDocumentSignUrl,
+  // copyViewUrl,
+  // downloadDocument,
 } from "./list-docs-actions";
 
-type ActionType =
-  | "view"
-  | "viewTransaction"
-  | "copyTxSignature"
-  | "copyDocumentSignUrl"
-  | "copyViewUrl"
-  | "download";
+type ActionType = "viewTransaction" | "copyTxSignature";
+// | "copyDocumentSignUrl"
+// | "copyViewUrl"
+// | "download";
+
+const statusMap: Record<SignatureStatus, string> = {
+  draft: "Draft",
+  awaiting_signatures: "Awaiting Signatures",
+  partially_signed: "Partially Signed",
+  completed: "Completed",
+  rejected: "Rejected",
+  expired: "Expired",
+};
 
 const actionMap: Record<
   ActionType,
   (doc: ViewDocument, queryClient: QueryClient) => Promise<void | string>
 > = {
-  view: viewDocument,
+  // view: viewDocument,
   viewTransaction,
   copyTxSignature,
-  copyDocumentSignUrl,
-  copyViewUrl,
-  download: downloadDocument,
+  // copyDocumentSignUrl,
+  // copyViewUrl,
+  // download: downloadDocument,
 } as const;
 
 export function useColumns({
@@ -80,11 +86,7 @@ export function useColumns({
       try {
         const result = await actionMap[actionType](doc, queryClient);
 
-        if (
-          actionType === "copyTxSignature" ||
-          actionType === "copyDocumentSignUrl" ||
-          actionType === "copyViewUrl"
-        ) {
+        if (actionType === "copyTxSignature") {
           toast({
             title: "Copied to Clipboard",
             description: (
@@ -109,12 +111,12 @@ export function useColumns({
   }, []);
 
   const wrappedActions = {
-    handleViewDocument: createActionHandler("view"),
+    // handleViewDocument: createActionHandler("view"),
     handleViewTransaction: createActionHandler("viewTransaction"),
     handleCopyTxSignature: createActionHandler("copyTxSignature"),
-    handleCopyDocumentSignUrl: createActionHandler("copyDocumentSignUrl"),
-    handleCopyViewUrl: createActionHandler("copyViewUrl"),
-    handleDownloadDocument: createActionHandler("download"),
+    // handleCopyDocumentSignUrl: createActionHandler("copyDocumentSignUrl"),
+    // handleCopyViewUrl: createActionHandler("copyViewUrl"),
+    // handleDownloadDocument: createActionHandler("download"),
   };
 
   const columns = useMemo<ColumnDef<ViewDocument>[]>(
@@ -128,13 +130,6 @@ export function useColumns({
           return (
             <div className="flex min-w-[200px] items-center gap-2">
               <span className="truncate font-medium">{doc.name}</span>
-              <div className="flex flex-shrink-0 gap-1">
-                {doc.password ? (
-                  <Lock className="h-4 w-4 text-muted-foreground" />
-                ) : (
-                  <Globe className="h-4 w-4 text-muted-foreground" />
-                )}
-              </div>
             </div>
           );
         },
@@ -148,32 +143,38 @@ export function useColumns({
           return (
             <Badge
               variant={
-                status === "signed"
+                status === "completed"
                   ? "success"
                   : status === "expired"
                     ? "destructive"
                     : "secondary"
               }
             >
-              {status}
+              {statusMap[status as SignatureStatus]}
             </Badge>
           );
         },
       },
-      // {
-      //   accessorKey: "expiresAt",
-      //   header: "Expires",
-      //   cell: ({ row }) => {
-      //     const date = row.getValue("expiresAt") as string;
-      //     return date ? new Date(date).toLocaleDateString() : "Never";
-      //   },
-      // },
       {
-        accessorKey: "mimeType",
-        header: "Type",
-        size: 100,
+        accessorKey: "password",
+        header: "Password",
         cell: ({ row }) => {
-          return row.getValue("mimeType") as string;
+          return row.getValue("password") ? "Yes" : "No";
+        },
+      },
+      {
+        accessorKey: "expiresAt",
+        header: "Expires",
+        cell: ({ row }) => {
+          const date = row.getValue("expiresAt") as string;
+          return date ? new Date(date).toLocaleDateString() : "Never";
+        },
+      },
+      {
+        accessorKey: "expired",
+        header: "Expired",
+        cell: ({ row }) => {
+          return row.getValue("expired") ? "Yes" : "No";
         },
       },
       {
@@ -197,7 +198,8 @@ export function useColumns({
         enableHiding: false,
         size: 50,
         cell: ({ row }) => {
-          // const document = row.original;
+          const document = row.original;
+          console.log(document);
           return (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -207,15 +209,14 @@ export function useColumns({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuItem
+                {/* <DropdownMenuItem
                   onClick={() =>
                     wrappedActions.handleViewDocument(row.original)
                   }
                 >
                   <Eye className="mr-1 h-4 w-4" />
                   View
-                </DropdownMenuItem>
+                </DropdownMenuItem> */}
                 <DropdownMenuItem
                   onClick={() =>
                     wrappedActions.handleViewTransaction(row.original)
@@ -232,7 +233,7 @@ export function useColumns({
                   <Copy className="mr-1 h-4 w-4" />
                   Copy Tx Signature
                 </DropdownMenuItem>
-                {!row.original.is_signed && (
+                {/* {!row.original.is_signed && (
                   <DropdownMenuItem
                     onClick={() =>
                       wrappedActions.handleCopyDocumentSignUrl(row.original)
@@ -241,13 +242,13 @@ export function useColumns({
                     <Share className="mr-1 h-4 w-4" />
                     Share Sign Link
                   </DropdownMenuItem>
-                )}
-                <DropdownMenuItem
+                )} */}
+                {/* <DropdownMenuItem
                   onClick={() => wrappedActions.handleCopyViewUrl(row.original)}
                 >
                   <Link className="mr-1 h-4 w-4" />
                   Copy View Link
-                </DropdownMenuItem>
+                </DropdownMenuItem> */}
 
                 <DropdownMenuItem
                   onClick={() => renameDoc.setDocToRename(row.original)}
@@ -255,14 +256,14 @@ export function useColumns({
                   <Pencil className="mr-1 h-4 w-4" />
                   Rename
                 </DropdownMenuItem>
-                <DropdownMenuItem
+                {/* <DropdownMenuItem
                   onClick={() =>
                     wrappedActions.handleDownloadDocument(row.original)
                   }
                 >
                   <Download className="mr-1 h-4 w-4" />
                   Download
-                </DropdownMenuItem>
+                </DropdownMenuItem> */}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => deleteDoc.setDocToDelete(row.original)}

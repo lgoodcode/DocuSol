@@ -38,7 +38,7 @@ export const useDocumentStore = create<DocumentState>()(
     (set, get) => ({
       createdAt: Date.now(),
 
-      documentId: null,
+      documentId: "",
       documentName: "",
       documentDataUrl: null,
       documentPreviewUrl: null,
@@ -200,7 +200,7 @@ export const useDocumentStore = create<DocumentState>()(
 
       resetDocumentState: (completed = false) =>
         set({
-          documentId: null,
+          documentId: "",
           documentName: "",
           documentDataUrl: null,
           documentPreviewUrl: null,

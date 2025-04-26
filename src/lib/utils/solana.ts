@@ -10,10 +10,10 @@ import {
 } from "@solana/web3.js";
 
 import { PLATFORM_FEE } from "@/constants";
-import { getRequiredEnvVar } from "@/lib/utils";
+import { getEnvVar } from "@/lib/utils";
 
-const RPC_URL = getRequiredEnvVar("NEXT_PUBLIC_HELIUS_API_URL") as string;
-const PRIVATE_KEY = getRequiredEnvVar("PRIVATE_KEY");
+const RPC_URL = getEnvVar("NEXT_PUBLIC_HELIUS_API_URL") as string;
+const PRIVATE_KEY = getEnvVar("PRIVATE_KEY") as string;
 const MEMO_PROGRAM_ID = new PublicKey(
   "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
 );

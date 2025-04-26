@@ -1,4 +1,8 @@
 -- Documents are stored in users/{userId}/{fileName}_V{version}
+insert into storage.buckets
+  (id, name)
+values
+  ('documents', 'documents');
 
 CREATE POLICY "Users can upload their own objects"
 ON storage.objects
