@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
+import { StorageService } from "@/lib/supabase/storage";
 
 import type { ViewDocument } from "./types";
 
@@ -98,11 +99,80 @@ export const renameDocument = async (doc: ViewDocument) => {
   }
 };
 
+// TODO: test this
 export const deleteDocument = async (doc: ViewDocument) => {
   const supabase = createClient();
-  const { error } = await supabase.from("documents").delete().eq("id", doc.id);
 
-  if (error) {
-    throw error;
+  // 1. Fetch user_id and current_version_id associated with the document
+  // Assuming the 'documents' table has 'user_id' and 'current_version_id' columns
+  // And 'document_versions' table has a 'version_number' column linked by ID.
+  // We need the version *number*, not just the version ID.
+  // Let's modify the query to fetch necessary details.
+  const { data: docDetails, error: fetchError } = await supabase
+    .from("documents")
+    .select(
+      `
+      user_id,
+      document_versions ( version_number )
+    `,
+    )
+    .eq("id", doc.id)
+    .single();
+
+  if (fetchError) {
+    console.error("Error fetching document details for deletion:", fetchError);
+    throw fetchError; // Rethrow to be caught by the caller
+  }
+
+  if (!docDetails || !docDetails.document_versions) {
+    // Handle case where document or its version info is missing
+    // Maybe the document was already deleted? Log a warning or proceed carefully.
+    console.warn(
+      `Document details or version info not found for ID ${doc.id}. Skipping S3 deletion.`,
+    );
+  } else {
+    // 2. Delete from S3 storage if details were found
+    const storageService = new StorageService(supabase);
+    const versionData = Array.isArray(docDetails.document_versions)
+      ? docDetails.document_versions[0]
+      : docDetails.document_versions;
+
+    if (versionData?.version_number && docDetails.user_id) {
+      const filePath = storageService.getFilePath(
+        docDetails.user_id,
+        doc.name, // Using the name from the ViewDocument passed in
+        versionData.version_number,
+      );
+
+      try {
+        await storageService.deleteFiles([filePath]);
+      } catch (storageError) {
+        console.error(
+          `Error deleting document ${filePath} from storage:`,
+          storageError,
+        );
+        // Decide if you want to stop the whole process if S3 delete fails
+        // For now, we'll throw, assuming deletion should be atomic.
+        throw storageError;
+      }
+    } else {
+      console.warn(
+        `Missing user_id or version_number for document ID ${doc.id}. Skipping S3 deletion.`,
+      );
+    }
+  }
+
+  // 3. Delete from database
+  const { error: deleteDbError } = await supabase
+    .from("documents")
+    .delete()
+    .eq("id", doc.id);
+
+  if (deleteDbError) {
+    console.error(
+      "Error deleting document record from database:",
+      deleteDbError,
+    );
+    throw deleteDbError;
   }
 };

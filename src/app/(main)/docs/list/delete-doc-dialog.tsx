@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { QueryClient, useQueryClient } from "@tanstack/react-query";
 
-import { removeStoredDocument } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -16,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 
 import { deleteDocument as deleteDocumentDb } from "./db";
+import type { ViewDocument } from "./types";
 
 interface DeleteDocDialogProps {
   doc: ViewDocument | null;
@@ -29,7 +29,7 @@ const deleteDocument = async (
 ): Promise<void> => {
   await deleteDocumentDb(doc);
   // TODO: remove once indexedDB is gone
-  await removeStoredDocument(doc.id);
+  // await removeStoredDocument(doc.id);
 
   queryClient.invalidateQueries({ queryKey: ["documents"] });
   queryClient.setQueryData<ViewDocument[]>(["documents"], (oldData) => {
