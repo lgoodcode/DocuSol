@@ -33,7 +33,7 @@ export const copyTxSignature = async (doc: ViewDocument): Promise<string> => {
 //   doc: ViewDocument,
 // ): Promise<string> => {
 //   const url = window.location.origin;
-//   navigator.clipboard.writeText(`${url}/sign/${doc.id}`);
+//   navigator.clipboard.writeText(`${url}/docs/sign/${doc.id}`);
 //   return `${url}/sign/${doc.id}`;
 // };
 
