@@ -837,7 +837,7 @@ CREATE TABLE document_participants (
     document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
     user_id UUID REFERENCES auth.users(id), -- Can be NULL for non-users
     name TEXT,
-    email TEXT,
+    email TEXT NOT NULL,
     role participant_role NOT NULL DEFAULT 'participant',
     mode participant_mode NOT NULL DEFAULT 'transparent',
     is_owner BOOLEAN NOT NULL DEFAULT FALSE,
@@ -851,6 +851,7 @@ ALTER TABLE document_participants OWNER TO postgres;
 -- Add indexes
 CREATE INDEX idx_document_participants_document_id ON document_participants(document_id);
 CREATE INDEX idx_document_participants_user_id ON document_participants(user_id);
+CREATE INDEX idx_document_participants_email ON document_participants(email);
 
 -- Enable Row Level Security for document_participants
 ALTER TABLE document_participants ENABLE ROW LEVEL SECURITY;
@@ -1268,3 +1269,106 @@ $$ LANGUAGE plpgsql STABLE SECURITY INVOKER;
 
 ALTER FUNCTION get_documents_to_list() OWNER TO postgres;
 
+--
+--
+-- get_document_details_for_signing Function
+--
+--
+
+/**
+ * Retrieves detailed document metadata needed for the signing page,
+ * including the current version number.
+ *
+ * @param p_document_id - The ID of the document to retrieve details for.
+ * @return TABLE - Returns document details including current version info.
+ */
+CREATE OR REPLACE FUNCTION get_document_details_for_signing(p_document_id UUID)
+RETURNS TABLE(
+    id UUID,
+    name TEXT,
+    current_version_id UUID,
+    current_version_number INTEGER,
+    password TEXT,
+    status document_status,
+    completed_at TIMESTAMPTZ,
+    expires_at TIMESTAMPTZ,
+    rejected_at TIMESTAMPTZ
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        d.id,
+        d.name,
+        d.current_version_id,
+        dv.version_number AS current_version_number,
+        d.password,
+        d.status,
+        d.completed_at,
+        d.expires_at,
+        d.rejected_at
+    FROM documents d
+    LEFT JOIN document_versions dv ON d.current_version_id = dv.id
+    WHERE d.id = p_document_id;
+END;
+$$ LANGUAGE plpgsql STABLE; -- Use STABLE as it only reads data
+
+ALTER FUNCTION get_document_details_for_signing(UUID) OWNER TO postgres;
+
+--
+--
+-- get_document_signing_data Function
+--
+--
+
+/**
+ * Retrieves all necessary data for a specific signer to sign a document.
+ * Includes document details, the signer's participant info, and their assigned fields.
+ * Assumes access control (e.g., token validation) is handled before calling this function.
+ *
+ * @param p_document_id - The ID of the document.
+ * @param p_signer_email - The email of the signer whose data is being requested.
+ * @return TABLE - Returns document details, signer participant info, and assigned fields.
+ */
+CREATE OR REPLACE FUNCTION get_document_signing_data(
+    p_document_id UUID,
+    p_signer_email TEXT
+)
+RETURNS TABLE(
+    signer JSONB, -- The document_participants record for the signer
+    fields JSONB -- JSON array of document_fields assigned to the signer
+) AS $$
+DECLARE
+    v_participant_id UUID;
+BEGIN
+    -- Find the participant ID for the given email and document, case-insensitively
+    SELECT dp.id INTO v_participant_id
+    FROM document_participants dp
+    WHERE dp.document_id = p_document_id AND LOWER(dp.email) = LOWER(p_signer_email) -- Use LOWER() for case-insensitive match
+    LIMIT 1;
+
+    -- If participant not found, return no rows (or handle error as needed)
+    IF v_participant_id IS NULL THEN
+        -- Raise an error if the participant is not found for the given document and email
+        RAISE EXCEPTION 'Participant with email % not found for document %', p_signer_email, p_document_id;
+        -- The RETURN statement below is now unreachable but kept for clarity if the RAISE were removed
+        RETURN;
+    END IF;
+
+    RETURN QUERY
+    SELECT
+        -- Select the signer's participant record as JSON
+        row_to_json(dp.*)::JSONB,
+        -- Aggregate the fields assigned to this signer into a JSON array
+        COALESCE(
+            (SELECT jsonb_agg(df.*)
+             FROM document_fields df
+             WHERE df.document_id = p_document_id AND df.participant_id = v_participant_id),
+            '[]'::JSONB -- Return empty array if no fields
+        ) AS fields
+    FROM document_participants dp -- Query directly from participants
+    WHERE dp.id = v_participant_id; -- Filter by the found participant ID
+
+END;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER; -- Use DEFINER to bypass RLS temporarily if needed, ensure function logic is secure
+
+ALTER FUNCTION get_document_signing_data(UUID, TEXT) OWNER TO postgres;

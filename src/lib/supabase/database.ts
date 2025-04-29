@@ -411,6 +411,32 @@ export type Database = {
         }
         Returns: boolean
       }
+      get_document_details_for_signing: {
+        Args: {
+          p_document_id: string
+        }
+        Returns: {
+          id: string
+          name: string
+          current_version_id: string
+          current_version_number: number
+          password: string
+          status: Database["public"]["Enums"]["document_status"]
+          completed_at: string
+          expires_at: string
+          rejected_at: string
+        }[]
+      }
+      get_document_signing_data: {
+        Args: {
+          p_document_id: string
+          p_signer_email: string
+        }
+        Returns: {
+          signer: Json
+          fields: Json
+        }[]
+      }
       get_document_with_version: {
         Args: {
           p_document_id: string

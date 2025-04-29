@@ -1,7 +1,10 @@
 import { validate as uuidValidate } from "uuid";
 import { captureException } from "@sentry/nextjs";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { createServerClient } from "@/lib/supabase/server";
+import { getUser } from "@/lib/supabase/utils";
+import { StorageService } from "@/lib/supabase/storage";
 
 export type InvalidTokenReason =
   | "expired"
@@ -24,7 +27,15 @@ export type ValidateDocumentAccessResult =
   | { status: "already_signed"; signed_at: string }
   | { status: "rejected"; rejected_at: string | null }
   | { status: "expired" }
-  | { status: "ready"; password?: string }
+  | {
+      status: "ready";
+      password?: string;
+      signerEmail: string;
+      documentId: string;
+      documentName: string;
+      versionId: string;
+      versionNumber: number;
+    }
   | { status: "error"; error: Error };
 
 /**
@@ -58,7 +69,7 @@ export const validateDocumentAccess = async (
     // 1. Verify the token
     const { data: tokenData, error: tokenError } = await supabase
       .from("email_verification_tokens")
-      .select("document_id, expires_at, invalidated_at, used_at")
+      .select("document_id, email, expires_at, invalidated_at, used_at")
       .eq("token", token)
       .single();
 
@@ -68,6 +79,10 @@ export const validateDocumentAccess = async (
       console.error("Token Fetch Error:", tokenError);
       captureException(tokenError, { extra: { id, token } });
       return { status: "error", error: tokenError };
+    } else if (!tokenData) {
+      return { status: "invalid_token", reason: "unknown" };
+    } else if (!tokenData.email) {
+      return { status: "invalid_token", reason: "unknown" };
     }
 
     // Validate token details
@@ -81,9 +96,7 @@ export const validateDocumentAccess = async (
 
     // 2. Token is valid, check document metadata
     const { data: docData, error: docError } = await supabase
-      .from("documents")
-      .select("id, password, status, completed_at, expires_at, rejected_at")
-      .eq("id", id)
+      .rpc("get_document_details_for_signing", { p_document_id: id })
       .single();
 
     if (docError) {
@@ -126,14 +139,7 @@ export const validateDocumentAccess = async (
       return { status: "not_found" }; // Or a more specific error?
     }
 
-    // 4. Check password (only if document is in a signable state)
-    if (docData.password) {
-      // Token is valid, but password required to proceed.
-      // Client needs to prompt for password, then fetch content.
-      return { status: "ready", password: docData.password };
-    }
-
-    // 5. Document is ready for signing
+    // 4. Document is ready for signing
     // Ensure it's in a signable state (e.g., awaiting_signatures or partially_signed)
     if (
       docData.status !== "awaiting_signatures" &&
@@ -154,10 +160,37 @@ export const validateDocumentAccess = async (
       };
     }
 
-    return { status: "ready" };
+    return {
+      status: "ready",
+      password: docData.password,
+      documentId: docData.id,
+      documentName: docData.name,
+      signerEmail: tokenData.email,
+      versionId: docData.current_version_id,
+      versionNumber: docData.current_version_number,
+    };
   } catch (error) {
     console.error("Unexpected Validation Error:", error);
     captureException(error, { extra: { id, token } });
     return { status: "error", error: error as Error };
   }
+};
+
+/**
+ * Get the PDF document from the storage service
+ * @param documentName - The name of the document
+ * @param version - The version number of the document
+ * @returns The PDF document
+ */
+export const getPdfDocument = async (
+  supabase: SupabaseClient,
+  documentName: string,
+  version: number,
+) => {
+  const user = await getUser(supabase);
+  const storage = new StorageService(supabase);
+  // Subtract 1 from version number because the document is always
+  // uploaded with version 0 so it will be 1 behind the version number
+  // in the database
+  return await storage.getDocument(user.id, documentName, version - 1);
 };

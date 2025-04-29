@@ -77,6 +77,16 @@ export class StorageService {
     if (error) throw error;
   }
 
+  async getDocument(userId: string, documentName: string, version: number) {
+    const filePath = this.getFilePath(userId, documentName, version);
+    const { data, error } = await this.supabase.storage
+      .from(this.bucket)
+      .download(filePath);
+
+    if (error) throw error;
+    return data;
+  }
+
   async getDownloadUrl(filePath: string) {
     const { error, data } = await this.supabase.storage
       .from(this.bucket)

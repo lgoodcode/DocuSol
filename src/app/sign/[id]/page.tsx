@@ -4,6 +4,8 @@ import { captureException } from "@sentry/nextjs";
 
 import { ErrorPageContent } from "@/components/error-page-content";
 import { DocumentNotFound } from "@/components/doc-not-found";
+import { createServerClient } from "@/lib/supabase/server";
+import { getUser } from "@/lib/supabase/utils";
 
 import { validateDocumentAccess } from "./utils";
 import { DocAlreadySigned } from "./already-signed";
@@ -31,7 +33,16 @@ export default async function SignDocumentPage({
   // const validationResult = await validateDocumentAccess(id, token);
   const validationResult = {
     status: "ready",
-    password: "test",
+    password: "",
+    signerEmail: "lawrence@docusol.app",
+    documentId: "4a3e0d88-372c-4848-b7f0-b0e22668cbc3",
+    documentName: "test",
+    versionId: "ac8dafd8-2ba7-4147-a655-4edcb0192288",
+    versionNumber: 1,
+    reason: undefined,
+    signed_at: undefined,
+    rejected_at: undefined,
+    error: undefined,
   };
 
   // Handle validating the document access
@@ -52,7 +63,15 @@ export default async function SignDocumentPage({
     case "ready":
       return (
         <div className="container mx-auto max-w-4xl space-y-8 py-8">
-          <SignDocContent token={token} password={validationResult?.password} />
+          <SignDocContent
+            token={token}
+            password={validationResult?.password}
+            documentId={validationResult?.documentId}
+            documentName={validationResult?.documentName}
+            signerEmail={validationResult?.signerEmail}
+            versionId={validationResult?.versionId}
+            versionNumber={validationResult?.versionNumber}
+          />
         </div>
       );
     default:
