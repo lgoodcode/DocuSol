@@ -1,4 +1,4 @@
-import { useState, memo } from "react";
+import { useState, memo, useCallback } from "react";
 
 import {
   BaseField,
@@ -9,53 +9,46 @@ import { useField } from "@/lib/pdf-editor/hooks/useField";
 
 interface SignatureFieldProps {
   fieldId: string;
+  viewType: "editor" | "signer";
   isInitials?: boolean;
 }
 
 export const SignatureField = memo(function SignatureField({
   fieldId,
+  viewType,
   isInitials = false,
 }: SignatureFieldProps) {
   const [showEditor, setShowEditor] = useState(false);
+  const { isSelected, handleBlur: fieldHandleBlur } = useField(
+    fieldId,
+    viewType,
+  );
+
+  const activateEditor = useCallback(() => {
+    if (viewType === "signer" && !showEditor) {
+      setShowEditor(true);
+    }
+  }, [viewType, showEditor]);
 
   const renderSignatureField = ({
     field,
-    isSelected,
-    viewType,
     handleChange,
     handleFocus,
-    handleBlur,
     Placeholder,
   }: FieldRenderContentProps) => {
     const handleOpenChange = (open: boolean) => {
       setShowEditor(open);
-      if (!open) {
-        handleBlur();
-      }
     };
 
-    // When in signer mode and field is selected, show the signature editor
     if (viewType === "signer" && isSelected) {
       return (
-        <div
-          className="relative flex h-full w-full items-center justify-center"
-          // Prevent opening editor when clicking on the dialog overlay but not the dialog content
-          onClick={(e) => {
-            const target = e.target as HTMLElement;
-            if (
-              target.id === "dialog-overlay" ||
-              target.closest('[role="dialog"]')
-            ) {
-              return;
-            }
-            handleFocus();
-            setShowEditor(true);
-          }}
-        >
+        <div className="relative flex h-full w-full items-center justify-center">
           <SignatureFieldEditor
             field={field}
             open={showEditor}
             onOpenChange={handleOpenChange}
+            viewType={viewType}
+            handleBlur={fieldHandleBlur}
           />
 
           {field.value ? (
@@ -87,10 +80,9 @@ export const SignatureField = memo(function SignatureField({
     }
 
     if (!field.value) {
-      throw new Error("SignatureField value is undefined");
+      return <Placeholder />;
     }
 
-    // Render image signature
     if (field.value.startsWith("data:image")) {
       return (
         <div className="flex h-full w-full items-center justify-center rounded-sm border border-border/30 p-1">
@@ -104,7 +96,6 @@ export const SignatureField = memo(function SignatureField({
         </div>
       );
     }
-    // Render text signature
     return (
       <div className="flex h-full w-full items-center justify-center rounded-sm border border-border/30 p-1">
         <span
@@ -119,5 +110,12 @@ export const SignatureField = memo(function SignatureField({
     );
   };
 
-  return <BaseField id={fieldId} renderContent={renderSignatureField} />;
+  return (
+    <BaseField
+      id={fieldId}
+      viewType={viewType}
+      renderContent={renderSignatureField}
+      onActivate={activateEditor}
+    />
+  );
 });

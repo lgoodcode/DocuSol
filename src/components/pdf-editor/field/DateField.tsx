@@ -20,9 +20,15 @@ const DATE_FIELD_PROPS = {
   value: (value: string) => format(new Date(value), "PPP"),
 };
 
-export function DateField({ fieldId }: { fieldId: string }) {
+export function DateField({
+  fieldId,
+  viewType,
+}: {
+  fieldId: string;
+  viewType: "editor" | "signer";
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { isSelected } = useField(fieldId);
+  const { isSelected } = useField(fieldId, viewType);
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
@@ -57,7 +63,6 @@ export function DateField({ fieldId }: { fieldId: string }) {
     ({
       field,
       isSelected,
-      viewType,
       handleChange,
       handleFocus,
       handleBlur,
@@ -114,5 +119,11 @@ export function DateField({ fieldId }: { fieldId: string }) {
     [isOpen, containerRef],
   );
 
-  return <BaseField id={fieldId} renderContent={renderDateField} />;
+  return (
+    <BaseField
+      id={fieldId}
+      viewType={viewType}
+      renderContent={renderDateField}
+    />
+  );
 }

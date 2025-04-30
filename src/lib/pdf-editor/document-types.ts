@@ -153,6 +153,7 @@ export interface DocumentState {
   documentDataUrl: string | null;
   documentPreviewUrl: string | null;
   documentContentHash: DocumentContentHash | null;
+  numPages: number | null;
 
   // Document editor state
   currentStep: "upload" | "signers" | "fields" | "review" | "sending";
@@ -167,7 +168,7 @@ export interface DocumentState {
 
   // Fields information
   fields: DocumentField[];
-  selectedFieldId?: string;
+  selectedFieldId: string | null;
 
   // Security and expiration settings
   isEncrypted: boolean;
@@ -186,7 +187,7 @@ export interface DocumentState {
   setDocumentDataUrl: (url: string | null) => void;
   setDocumentPreviewUrl: (url: string) => void;
   setDocumentContentHash: (hash: DocumentContentHash) => void;
-
+  setNumPages: (num: number | null) => void;
   // Document editor actions
   setCurrentStep: (step: DocumentState["currentStep"]) => void;
   setViewType: (viewType: DocumentState["viewType"]) => void;
@@ -203,10 +204,10 @@ export interface DocumentState {
 
   // Field actions
   addField: (field: Omit<DocumentField, "id" | "assignedTo" | "scale">) => void;
-  updateField: (field: Partial<DocumentField>) => void;
+  updateField: (id: string, field: Partial<DocumentField>) => void;
   removeField: (id: string) => void;
   clearFields: () => void;
-  setSelectedFieldId: (id: string) => void;
+  setSelectedFieldId: (id: string | null) => void;
   clearSelectedFieldId: () => void;
 
   // Security and expiration actions

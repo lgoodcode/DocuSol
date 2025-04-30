@@ -2,6 +2,10 @@ import { createServerClient as _createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { type Database } from "./database";
 
+export type ServerSupabaseClient = Awaited<
+  ReturnType<typeof createServerClient>
+>;
+
 export async function createServerClient(
   {
     useServiceRole = false,

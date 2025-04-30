@@ -19,22 +19,25 @@ export type FieldRenderContentProps = {
 
 interface BaseFieldProps {
   id: string;
+  viewType: DocumentState["viewType"];
   renderContent: (props: FieldRenderContentProps) => React.ReactNode;
+  onActivate?: () => void;
 }
 
 export const BaseField = memo(function BaseField({
   id,
+  viewType,
   renderContent,
+  onActivate,
 }: BaseFieldProps) {
   const {
     field,
     recipient,
     isSelected,
-    viewType,
     handleChange,
     handleFocus,
     handleBlur,
-  } = useField(id);
+  } = useField(id, viewType);
 
   if (!field) {
     throw new Error("Field not found");
@@ -55,7 +58,6 @@ export const BaseField = memo(function BaseField({
   };
 
   const FieldContent = useMemo(() => {
-    // Simplified logic: show content if it has value, or if selected in signer mode
     if (field.value || (viewType === "signer" && isSelected)) {
       return renderContent({
         field,
@@ -67,7 +69,6 @@ export const BaseField = memo(function BaseField({
         handleBlur,
       });
     }
-    // Otherwise, always show the placeholder content inside the Rnd/div handled by DocumentPage
     return <Placeholder />;
   }, [
     field,
@@ -79,8 +80,19 @@ export const BaseField = memo(function BaseField({
     handleBlur,
   ]);
 
+  const handleActivationClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    handleFocus();
+    if (onActivate) {
+      onActivate();
+    }
+  };
+
   return (
-    <div className="flex h-full w-full items-center justify-center">
+    <div
+      className="flex h-full w-full items-center justify-center"
+      onClick={viewType === "signer" ? handleActivationClick : undefined}
+    >
       {FieldContent}
     </div>
   );

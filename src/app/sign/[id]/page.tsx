@@ -30,7 +30,8 @@ export default async function SignDocumentPage({
 }: SignDocumentPageProps) {
   const { id } = await params;
   const token = (await searchParams)?.token as string | undefined;
-  // const validationResult = await validateDocumentAccess(id, token);
+  const supabase = await createServerClient();
+  // const validationResult = await validateDocumentAccess(supabase, id, token);
   const validationResult = {
     status: "ready",
     password: "",
@@ -62,7 +63,7 @@ export default async function SignDocumentPage({
       return <ErrorPageContent />;
     case "ready":
       return (
-        <div className="container mx-auto max-w-4xl space-y-8 py-8">
+        <div className="container mx-auto max-w-7xl space-y-8 py-8">
           <SignDocContent
             token={token}
             password={validationResult?.password}

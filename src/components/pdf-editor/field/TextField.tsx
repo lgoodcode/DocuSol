@@ -33,8 +33,10 @@ const getTextStyle = (field: DocumentField) => {
 
 export const TextField = memo(function TextField({
   fieldId,
+  viewType,
 }: {
   fieldId: string;
+  viewType: "editor" | "signer";
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -42,7 +44,6 @@ export const TextField = memo(function TextField({
     ({
       field,
       isSelected,
-      viewType,
       handleChange,
       handleFocus,
       handleBlur,
@@ -85,7 +86,7 @@ export const TextField = memo(function TextField({
             <TextFormatToolbar field={field} />
             <AutoResizeTextarea
               ref={textareaRef}
-              initialValue={field.value}
+              initialValue={field.value ?? ""}
               onChange={handleChange}
               handleFocus={handleFocus}
               style={getTextStyle(field)}
@@ -123,5 +124,11 @@ export const TextField = memo(function TextField({
     [textareaRef],
   );
 
-  return <BaseField id={fieldId} renderContent={renderTextField} />;
+  return (
+    <BaseField
+      id={fieldId}
+      viewType={viewType}
+      renderContent={renderTextField}
+    />
+  );
 });

@@ -1,4 +1,4 @@
-import { useState, memo, useCallback, useMemo } from "react";
+import React, { useEffect, useRef } from "react";
 import { Document, pdfjs } from "react-pdf";
 import { toast } from "sonner";
 import { captureException } from "@sentry/nextjs";
@@ -6,9 +6,10 @@ import { PDFDocumentProxy } from "pdfjs-dist/types/src/display/api";
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 import "react-pdf/dist/esm/Page/TextLayer.css";
 
-import { useDocumentStore } from "@/lib/pdf-editor/stores/useDocumentStore";
-import { dataUrlToFile } from "@/lib/utils";
 import { Spinner } from "@/components/ui/spinner";
+import { DEFAULT_PDF_WIDTH } from "@/lib/pdf-editor/constants";
+import type { DocumentField } from "@/lib/pdf-editor/document-types";
+import type { DocumentSigner } from "@/lib/types/stamp";
 
 import { DocumentPage } from "./DocumentPage";
 
@@ -22,77 +23,156 @@ const DOCUMENT_OPTIONS = {
   standardFontDataUrl: "/standard_fonts/",
 };
 
-export const DocumentCanvas = memo(function DocumentCanvas() {
-  const [numPages, setNumPages] = useState<number>(0);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const pdfDataUrl = useDocumentStore((state) => state.documentDataUrl);
+// Interface for individual props required by Canvas and Page
+interface DocumentCanvasProps {
+  documentDataUrl: string | null;
+  numPages: number | null;
+  setNumPages: (num: number | null) => void;
+  scale: number;
+  fields: DocumentField[];
+  updateField: (
+    id: string,
+    updates: Partial<Pick<DocumentField, "position" | "size" | "value">>,
+  ) => void;
+  addField?: (field: Omit<DocumentField, "id" | "assignedTo">) => void; // Optional editor action
+  signers?: DocumentSigner[]; // Optional editor data
+  currentSigner?: DocumentSigner | null; // Optional signer data
+  selectedFieldId: string | null;
+  setSelectedFieldId: (id: string | null) => void;
+  viewType: "editor" | "signer";
+  // Props specifically for editor interactions passed down to DocumentPage
+  isDragging?: boolean;
+  isResizing?: boolean;
+  setDragging?: (dragging: boolean) => void;
+  setResizing?: (resizing: boolean) => void;
+}
 
-  const onDocumentLoadSuccess = useCallback(
-    ({ numPages: nextNumPages }: PDFDocumentProxy): void => {
-      setNumPages(nextNumPages);
-      setIsLoading(false);
-    },
-    [],
-  );
+export function DocumentCanvas({
+  documentDataUrl,
+  numPages,
+  setNumPages,
+  scale,
+  fields,
+  updateField,
+  addField,
+  signers,
+  currentSigner,
+  selectedFieldId,
+  setSelectedFieldId,
+  viewType,
+  isDragging,
+  isResizing,
+  setDragging,
+  setResizing,
+}: DocumentCanvasProps) {
+  const canvasRef = useRef<HTMLDivElement>(null);
 
-  const onDocumentLoadError = useCallback((error: Error): void => {
+  // --- DEBUG LOG ---
+  console.log("[DocumentCanvas] Props received:", {
+    documentDataUrl: !!documentDataUrl,
+    numPages,
+    scale,
+    fields, // Log the fields array received
+    viewType,
+    selectedFieldId,
+    currentSigner: !!currentSigner,
+  });
+
+  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }): void => {
+    setNumPages(numPages);
+  };
+
+  // Deselect field on outside click (remains the same)
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const targetElement = event.target as HTMLElement;
+      if (
+        canvasRef.current &&
+        canvasRef.current.contains(targetElement) &&
+        !targetElement.closest(
+          "[data-field-id], .react-rnd, .react-resizable-handle", // More robust check for Rnd elements
+        )
+      ) {
+        setSelectedFieldId(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [setSelectedFieldId, canvasRef]);
+
+  const onDocumentLoadError = (error: Error): void => {
     console.error("Error loading PDF:", error);
     captureException(error);
-    setIsLoading(false);
     toast.error("Error loading PDF", {
       description:
         "Please try again. If the problem persists, please contact support.",
     });
-  }, []);
+  };
 
-  const pdfFile = useMemo(() => {
-    return pdfDataUrl ? dataUrlToFile(pdfDataUrl, "document.pdf") : null;
-  }, [pdfDataUrl]);
-
-  // Memoize the pages array to prevent unnecessary re-renders
-  const pages = useMemo(() => {
-    return Array.from(new Array(numPages), (_el, index) => (
-      <DocumentPage key={`page_${index}`} pageIndex={index} />
-    ));
-  }, [numPages]);
-
-  if (!pdfDataUrl) {
-    throw new Error("No document available");
+  if (!documentDataUrl) {
+    return (
+      <div className="flex h-full items-center justify-center p-4">
+        <p className="text-muted-foreground">Preparing document viewer...</p>
+      </div>
+    );
   }
 
-  // Render the document canvas
   return (
-    <div className="flex h-full w-full flex-col">
-      {isLoading && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-2">
-            <Spinner size="xl" />
-            <p className="mt-2 text-sm text-muted-foreground">
-              Loading document...
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Document pages */}
-      <div className="h-full w-full overflow-auto scrollbar-thin scrollbar-track-transparent">
-        <div className="mx-auto flex flex-col items-center justify-start p-4">
-          <Document
-            file={pdfFile}
-            className="flex w-full flex-col items-center justify-center gap-4"
-            onLoadSuccess={onDocumentLoadSuccess}
-            onLoadError={onDocumentLoadError}
-            options={DOCUMENT_OPTIONS}
-            loading={
-              <div className="flex h-40 w-full items-center justify-center">
-                <Spinner size="lg" />
-              </div>
-            }
-          >
-            {pages}
-          </Document>
-        </div>
+    <div
+      ref={canvasRef}
+      className="pdf-canvas absolute inset-0 overflow-auto bg-gray-100 p-4 dark:bg-gray-200"
+    >
+      <div
+        className="pdf-document-container relative mx-auto"
+        style={{
+          width: `${DEFAULT_PDF_WIDTH * scale}px`,
+          transition: "width 0.2s ease-in-out",
+        }}
+      >
+        <Document
+          file={documentDataUrl}
+          onLoadSuccess={onDocumentLoadSuccess}
+          onLoadError={onDocumentLoadError}
+          loading={
+            <div className="flex h-[50vh] items-center justify-center">
+              <Spinner size="lg" />
+              <p className="ml-2 text-muted-foreground">Loading PDF...</p>
+            </div>
+          }
+          className="pdf-document"
+        >
+          {/* --- DEBUG LOG WRAPPER --- */}
+          {(() => {
+            console.log(
+              `[DocumentCanvas] Rendering pages. numPages: ${numPages}`,
+            );
+            return null; // Return null to satisfy ReactNode type
+          })()}
+          {numPages &&
+            Array.from(new Array(numPages), (el, index) => (
+              <DocumentPage
+                key={`page_${index}`}
+                pageIndex={index}
+                fields={fields}
+                updateField={updateField}
+                addField={addField}
+                signers={signers}
+                currentSigner={currentSigner}
+                selectedFieldId={selectedFieldId}
+                setSelectedFieldId={setSelectedFieldId}
+                viewType={viewType}
+                scale={scale}
+                isDragging={isDragging}
+                isResizing={isResizing}
+                setDragging={setDragging}
+                setResizing={setResizing}
+              />
+            ))}
+        </Document>
       </div>
     </div>
   );
-});
+}

@@ -2,9 +2,9 @@ import { validate as uuidValidate } from "uuid";
 import { captureException } from "@sentry/nextjs";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { createServerClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/supabase/utils";
 import { StorageService } from "@/lib/supabase/storage";
+import type { ServerSupabaseClient } from "@/lib/supabase/server";
 
 export type InvalidTokenReason =
   | "expired"
@@ -48,6 +48,7 @@ export type ValidateDocumentAccessResult =
  * @returns A promise resolving to a ValidateDocumentAccessResult object.
  */
 export const validateDocumentAccess = async (
+  supabase: ServerSupabaseClient,
   id: string,
   token: string | undefined | null,
 ): Promise<ValidateDocumentAccessResult> => {
@@ -62,8 +63,6 @@ export const validateDocumentAccess = async (
   if (!uuidValidate(token)) {
     return { status: "invalid_token", reason: "invalid_uuid" };
   }
-
-  const supabase = await createServerClient();
 
   try {
     // 1. Verify the token

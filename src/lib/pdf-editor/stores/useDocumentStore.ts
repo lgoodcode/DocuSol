@@ -2,6 +2,7 @@ import { create, StateCreator } from "zustand";
 import { persist } from "zustand/middleware";
 import { DocumentState } from "@/lib/pdf-editor/document-types";
 import { DocumentSigner } from "@/lib/types/stamp";
+import type { DocumentField } from "@/lib/pdf-editor/document-types";
 
 // Predefined set of distinct colors that work well for UI elements
 export const colorPalette = [
@@ -31,6 +32,7 @@ const keysToNotPersist: (keyof DocumentState)[] = [
   "isDragging",
   "isResizing",
   "selectedFieldId",
+  // "numPages", // Comment out or remove if numPages should be persisted
 ];
 
 export const useDocumentStore = create<DocumentState>()(
@@ -43,6 +45,7 @@ export const useDocumentStore = create<DocumentState>()(
       documentDataUrl: null,
       documentPreviewUrl: null,
       documentContentHash: null,
+      numPages: null,
 
       currentStep: "upload",
       viewType: "editor",
@@ -54,7 +57,7 @@ export const useDocumentStore = create<DocumentState>()(
       currentSignerId: null,
 
       fields: [],
-      selectedFieldId: undefined,
+      selectedFieldId: null,
 
       isEncrypted: false,
       encryptionPassword: "",
@@ -70,6 +73,7 @@ export const useDocumentStore = create<DocumentState>()(
       setDocumentName: (name) => set({ documentName: name }),
       setDocumentDataUrl: (url) => set({ documentDataUrl: url }),
       setDocumentPreviewUrl: (url) => set({ documentPreviewUrl: url }),
+      setNumPages: (num: number | null) => set({ numPages: num }),
       setDocumentContentHash: (hash) => set({ documentContentHash: hash }),
       // Document editor actions
       setCurrentStep: (step) => set({ currentStep: step }),
@@ -156,35 +160,37 @@ export const useDocumentStore = create<DocumentState>()(
             selectedFieldId: newFieldId,
           };
         }),
-      updateField: (updatedField) =>
+      updateField: (id: string, updates: Partial<DocumentField>) =>
         set((state) => ({
           fields: state.fields.map((field) =>
-            field.id === updatedField.id
+            field.id === id
               ? {
                   ...field,
-                  ...updatedField,
-                  textStyles: {
-                    ...field.textStyles,
-                    ...updatedField.textStyles,
-                  },
+                  ...updates,
+                  ...(updates.textStyles && {
+                    textStyles: {
+                      ...field.textStyles,
+                      ...updates.textStyles,
+                    },
+                  }),
                 }
               : field,
           ),
         })),
-      removeField: (id) =>
+      removeField: (id: string) =>
         set((state) => ({
           fields: state.fields.filter((field) => field.id !== id),
           selectedFieldId:
-            state.selectedFieldId === id ? undefined : state.selectedFieldId,
+            state.selectedFieldId === id ? null : state.selectedFieldId,
         })),
       clearFields: () => set({ fields: [] }),
-      setSelectedFieldId: (id) =>
+      setSelectedFieldId: (id: string | null) =>
         set((state) => {
           // Only update if the selection actually changes
           if (state.selectedFieldId === id) return {};
           return { selectedFieldId: id };
         }),
-      clearSelectedFieldId: () => set({ selectedFieldId: undefined }),
+      clearSelectedFieldId: () => set({ selectedFieldId: null }),
 
       // Security and expiration actions
       setIsEncrypted: (isEncrypted) => set({ isEncrypted }),
@@ -207,7 +213,7 @@ export const useDocumentStore = create<DocumentState>()(
           signers: [],
           currentSignerId: null,
           fields: [],
-          selectedFieldId: undefined,
+          selectedFieldId: null,
           // Don't reset the current step if the document is completed, let it stay in the
           // sending step so that the user can see success message and manually navigate to
           // the document.
@@ -217,6 +223,7 @@ export const useDocumentStore = create<DocumentState>()(
           isExpirationEnabled: false,
           expirationDate: undefined,
           senderMessage: "",
+          numPages: null,
         }),
 
       exportDocumentState: () => {

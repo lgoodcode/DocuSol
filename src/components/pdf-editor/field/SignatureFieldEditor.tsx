@@ -30,6 +30,8 @@ interface SignatureFieldEditorProps {
   field: DocumentField;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  viewType: "editor" | "signer";
+  handleBlur: () => void;
 }
 
 // Constants for font size limits
@@ -129,9 +131,11 @@ export const SignatureFieldEditor = memo(function SignatureFieldEditor({
   field,
   open,
   onOpenChange,
+  viewType,
+  handleBlur,
 }: SignatureFieldEditorProps) {
   const sigCanvasRef = useRef<SignatureCanvas>(null);
-  const { updateField } = useField(field.id);
+  const { updateField } = useField(field.id, viewType);
 
   // Determine initial state based on field properties
   const initialIsDraw = field.value?.startsWith("data:image") ?? false;
@@ -217,33 +221,31 @@ export const SignatureFieldEditor = memo(function SignatureFieldEditor({
     }
   }, []);
 
-  // Close the dialog and reset the state
+  // Close the dialog - call blur first
   const handleCancel = useCallback(() => {
-    onOpenChange(false);
+    handleBlur(); // Call blur first to deselect
+    onOpenChange(false); // Then close the dialog
+    // Reset local state
     setInputValue("");
     clearSignature();
     setSelectedFont(signatureFonts[0]?.fontFamily || "cursive");
     setFontSize(DEFAULT_FONT_SIZE);
     setSignatureScale(DEFAULT_IMAGE_SCALE);
     setActiveTab("type");
-  }, [onOpenChange, clearSignature]);
+  }, [handleBlur, onOpenChange, clearSignature]);
 
   const handleDelete = useCallback(() => {
+    // Update field explicitly sets value to undefined
     updateField({
       id: field.id,
       value: undefined,
       textStyles: undefined,
       signatureScale: undefined,
     });
-
-    setInputValue("");
-    clearSignature();
-    setSelectedFont(signatureFonts[0]?.fontFamily || "cursive");
-    setFontSize(DEFAULT_FONT_SIZE);
-    setSignatureScale(DEFAULT_IMAGE_SCALE);
-    setActiveTab("type");
-    onOpenChange(false);
-  }, [updateField, field.id, onOpenChange, clearSignature]);
+    handleBlur(); // Call blur first to deselect
+    onOpenChange(false); // Then close the dialog
+    // No need to reset local state here, it's handled by cancel/close flow
+  }, [updateField, field.id, onOpenChange, handleBlur]);
 
   const handleSave = useCallback(() => {
     let valueToSave: string | undefined = undefined;
@@ -258,30 +260,25 @@ export const SignatureFieldEditor = memo(function SignatureFieldEditor({
           fontFamily: selectedFont,
           fontSize: fontSize,
         };
-        // Ensure scale is undefined for typed signatures
         signatureScaleToSave = undefined;
       }
     } else {
-      signatureScaleToSave = signatureScale; // Use the state value from the slider
-
+      signatureScaleToSave = signatureScale;
       if (sigCanvasRef.current && !sigCanvasRef.current.isEmpty()) {
         valueToSave = sigCanvasRef.current.toDataURL("image/png");
-        // Ensure text styles are undefined for drawn signatures
         textStylesToSave = undefined;
       } else {
-        // Fall back to current field value if canvas is empty
         valueToSave = field.value;
         textStylesToSave = field.textStyles;
       }
     }
 
-    // If neither type nor draw resulted in a value, delete the field
     if (valueToSave === undefined) {
+      // If trying to save empty, treat it like delete
       handleDelete();
       return;
     }
 
-    // Update the field with the new values
     updateField({
       id: field.id,
       value: valueToSave,
@@ -289,17 +286,21 @@ export const SignatureFieldEditor = memo(function SignatureFieldEditor({
       signatureScale: signatureScaleToSave,
     });
 
-    onOpenChange(false);
+    handleBlur(); // Call blur first to deselect
+    onOpenChange(false); // Then close the dialog
   }, [
     activeTab,
     inputValue,
     selectedFont,
     fontSize,
-    signatureScale, // Include signatureScale from state
+    signatureScale,
     updateField,
     field.id,
+    field.value, // Add field dependencies if used in fallback
+    field.textStyles, // Add field dependencies if used in fallback
     onOpenChange,
-    handleDelete, // Include handleDelete dependency
+    handleDelete,
+    handleBlur, // Add handleBlur dependency
   ]);
 
   const handleOpenChange = useCallback(
@@ -317,7 +318,7 @@ export const SignatureFieldEditor = memo(function SignatureFieldEditor({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[550px]">
+      <DialogContent noClose className="sm:max-w-[550px]">
         <DialogHeader>
           <DialogTitle>
             {field.type === "initials" ? "Create Initials" : "Create Signature"}
