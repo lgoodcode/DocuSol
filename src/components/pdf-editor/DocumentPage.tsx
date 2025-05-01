@@ -1,4 +1,4 @@
-import React, { memo, useRef } from "react";
+import React, { memo, useRef, useState } from "react";
 import { Page } from "react-pdf";
 import { Rnd, DraggableData, ResizableDelta, Position } from "react-rnd";
 
@@ -54,9 +54,10 @@ export const DocumentPage = memo(function DocumentPage({
   children,
 }: DocumentPageProps) {
   const pageRef = useRef<HTMLDivElement>(null);
+  const [justDragged, setJustDragged] = useState(false);
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    if (viewType !== "editor" || !addField) return; // Check for editor view and addField existence
+    if (viewType !== "editor" || !addField) return;
 
     e.preventDefault();
     const fieldType = e.dataTransfer.getData("field-type") as FieldType;
@@ -106,23 +107,20 @@ export const DocumentPage = memo(function DocumentPage({
     setDragging(false);
     const fieldId = data.node.dataset.fieldId;
     if (fieldId) {
+      setJustDragged(true);
       updateField(fieldId, {
         position: {
           page: pageIndex,
-          x: Math.round(data.x / scale),
-          y: Math.round(data.y / scale),
+          x: Math.round(data.x),
+          y: Math.round(data.y),
         },
       });
+      setSelectedFieldId(fieldId);
+      setTimeout(() => setJustDragged(false), 0);
     } else {
       console.error("Field ID not found on drag stop");
     }
   };
-
-  console.log("Rendering page:", pageIndex);
-  console.log("Fields:", fields);
-  console.log("Current signer:", currentSigner);
-  console.log("Selected field ID:", selectedFieldId);
-  console.log("View type:", viewType);
 
   return (
     <div
@@ -137,7 +135,11 @@ export const DocumentPage = memo(function DocumentPage({
         width: DEFAULT_PDF_WIDTH * scale,
         height: "auto",
       }}
-      onClick={() => setSelectedFieldId(null)} // Deselect on background click
+      onClick={() => {
+        if (!justDragged) {
+          setSelectedFieldId(null);
+        }
+      }}
     >
       <Page
         width={DEFAULT_PDF_WIDTH}
@@ -261,26 +263,12 @@ export const DocumentPage = memo(function DocumentPage({
                     isDragging || isResizing ? "none" : "box-shadow 0.2s ease",
                 }}
               >
-                <div
-                  className={cn(
-                    "h-full w-full",
-                    isSelected ? "ring-2 ring-offset-2" : "hover:ring-1",
-                    `ring-${recipientColor?.replace("#", "")}`,
-                  )}
-                  style={{
-                    outline: "none",
-                    borderColor: recipientColor,
-                    borderWidth: 2,
-                    borderStyle: "dashed",
-                  }}
-                >
-                  <FieldComponent
-                    fieldId={field.id}
-                    viewType="editor"
-                    scale={scale}
-                    recipient={recipient}
-                  />
-                </div>
+                <FieldComponent
+                  fieldId={field.id}
+                  viewType="editor"
+                  scale={scale}
+                  recipient={recipient}
+                />
               </Rnd>
             );
           } else if (viewType === "signer") {
@@ -290,12 +278,10 @@ export const DocumentPage = memo(function DocumentPage({
               width: Math.round(field.size.width * scale),
               height: Math.round(field.size.height * scale),
               borderColor: recipientColor,
-              ringColor: recipientColor,
               ...(isSelected && { zIndex: 25 }),
               borderWidth: "1px",
               borderStyle: isSelected ? "solid" : "dashed",
             };
-            console.log(`--> Rendering field ${field.id} with style:`, style);
 
             return (
               <div
@@ -313,6 +299,19 @@ export const DocumentPage = memo(function DocumentPage({
                   console.log("Wrapper Clicked!", field.id);
                   e.stopPropagation();
                   setSelectedFieldId(field.id);
+                }}
+                style={{
+                  left: Math.round(field.position.x * scale),
+                  top: Math.round(field.position.y * scale),
+                  width: Math.round(field.size.width * scale),
+                  height: Math.round(field.size.height * scale),
+                  border: isSelected
+                    ? `1px solid ${recipientColor}`
+                    : `2px dashed ${recipientColor}`,
+                  boxShadow: isSelected
+                    ? `0 0 0 1px ${recipientColor}, 0 0 8px rgba(0, 0, 0, 0.1)`
+                    : "none",
+                  transition: "box-shadow 0.2s ease",
                 }}
               >
                 <FieldComponent

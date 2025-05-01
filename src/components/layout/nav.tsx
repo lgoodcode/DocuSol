@@ -55,14 +55,17 @@ export function Nav() {
           </Link>
 
           <nav className="grid gap-0">
-            {Object.values(PAGE_ROUTES).map((route) => (
-              <NavButton
-                key={route.name}
-                href={route.path}
-                icon={route.Icon}
-                label={route.name}
-              />
-            ))}
+            {Object.values(PAGE_ROUTES).map(
+              (route) =>
+                !route.noNav && (
+                  <NavButton
+                    key={route.name}
+                    href={route.path}
+                    icon={route.Icon}
+                    label={route.name}
+                  />
+                ),
+            )}
           </nav>
         </div>
 

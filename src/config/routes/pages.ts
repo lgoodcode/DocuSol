@@ -37,7 +37,6 @@ export const PAGE_ROUTES: Record<string, PageRoute> = {
   sign: {
     name: "Sign",
     path: "/sign",
-    Icon: Folder,
     description: "Sign documents.",
     protected: false,
     noNav: true,
