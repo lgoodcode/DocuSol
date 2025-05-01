@@ -159,7 +159,6 @@ export const DocumentPage = memo(function DocumentPage({
       {fields
         .filter((field: DocumentField) => field.position.page === pageIndex)
         .map((field: DocumentField) => {
-          console.log("Processing field:", field, "for page:", pageIndex);
           const FieldComponent = Fields[field.type];
           if (!FieldComponent) {
             console.warn(`Component not found for field type: ${field.type}`);
@@ -177,17 +176,10 @@ export const DocumentPage = memo(function DocumentPage({
                 ? currentSigner
                 : null;
 
-          // --- DEBUG LOG ---
-          console.log(
-            `Field ID: ${field.id}, AssignedTo: ${field.assignedTo}, CurrentSignerID: ${currentSigner?.id}, IsAssigned: ${isAssignedToCurrentSigner}`,
-          );
-
           const recipientColor = recipient?.color || "#cccccc";
 
           // Corrected condition: Skip if signer view AND NOT assigned to current signer
           if (viewType === "signer" && !isAssignedToCurrentSigner) {
-            // --- DEBUG LOG ---
-            console.log(`--> Skipping field ${field.id}`);
             return null;
           }
 
@@ -214,7 +206,6 @@ export const DocumentPage = memo(function DocumentPage({
                 data-field-id={field.id}
                 data-field-type={field.type}
                 onClick={(e: React.MouseEvent) => {
-                  console.log("Wrapper Clicked!", field.id);
                   e.stopPropagation();
                   setSelectedFieldId(field.id);
                 }}
@@ -296,7 +287,6 @@ export const DocumentPage = memo(function DocumentPage({
                 data-field-id={field.id}
                 data-field-type={field.type}
                 onClick={(e: React.MouseEvent) => {
-                  console.log("Wrapper Clicked!", field.id);
                   e.stopPropagation();
                   setSelectedFieldId(field.id);
                 }}

@@ -79,17 +79,6 @@ export function SignDocContent({
     })),
   );
 
-  console.log({
-    isPasswordVerified,
-    isLoading,
-    error,
-    documentDataUrl,
-    documentId,
-    documentName,
-    versionNumber,
-    signerEmail,
-  });
-
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -180,11 +169,6 @@ export function SignDocContent({
 
         setCurrentSigner(mappedSigner);
 
-        console.log({
-          mappedFields,
-          mappedSigner,
-        });
-
         const reader = new FileReader();
         reader.onloadend = () => {
           if (isMounted && typeof reader.result === "string") {
@@ -258,16 +242,6 @@ export function SignDocContent({
       </Alert>
     );
   }
-
-  // --- DEBUG LOG ---
-  console.log("[SignDocContent] State before render:", {
-    isLoading,
-    error,
-    documentDataUrl: !!documentDataUrl, // Check if URL exists
-    numPages, // Check numPages from store
-    fields, // Check fields array from store
-    currentSigner: !!currentSigner, // Check if signer exists
-  });
 
   return (
     <div className="flex h-[calc(100vh-160px)] overflow-hidden rounded-lg border bg-background shadow-md">

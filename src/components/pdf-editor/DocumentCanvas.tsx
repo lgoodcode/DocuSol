@@ -66,18 +66,6 @@ export function DocumentCanvas({
   setResizing,
 }: DocumentCanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
-
-  // --- DEBUG LOG ---
-  console.log("[DocumentCanvas] Props received:", {
-    documentDataUrl: !!documentDataUrl,
-    numPages,
-    scale,
-    fields, // Log the fields array received
-    viewType,
-    selectedFieldId,
-    currentSigner: !!currentSigner,
-  });
-
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }): void => {
     setNumPages(numPages);
   };
@@ -144,13 +132,6 @@ export function DocumentCanvas({
           }
           className="pdf-document"
         >
-          {/* --- DEBUG LOG WRAPPER --- */}
-          {(() => {
-            console.log(
-              `[DocumentCanvas] Rendering pages. numPages: ${numPages}`,
-            );
-            return null; // Return null to satisfy ReactNode type
-          })()}
           {numPages &&
             Array.from(new Array(numPages), (el, index) => (
               <DocumentPage
