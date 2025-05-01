@@ -2,17 +2,39 @@ import { useMemo } from "react";
 import { Pen, Check, ChevronRight } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 
+import { IS_PROD } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { useDocumentStore } from "@/lib/pdf-editor/stores/useDocumentStore";
+import { useDocumentSigningStore } from "@/app/sign/[id]/useDocumentSignStore";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { FieldIcon } from "@/components/pdf-editor/field/FieldIcon";
 import { Button } from "@/components/ui/button";
-import type { DocumentField } from "@/lib/pdf-editor/document-types";
+import type {
+  DocumentField,
+  DocumentState,
+} from "@/lib/pdf-editor/document-types";
+import type { DocumentSigningState } from "@/app/sign/[id]/useDocumentSignStore";
 import type { DocumentSigner } from "@/lib/types/stamp";
 
 const ICON_SIZE = 18;
+
+const editorSelector = (state: DocumentState) => ({
+  fields: state.fields,
+  signers: state.signers,
+  currentSigner: null, // Not used in editor view
+  selectedFieldId: state.selectedFieldId,
+  setSelectedFieldId: state.setSelectedFieldId,
+});
+
+const signerSelector = (state: DocumentSigningState) => ({
+  fields: state.fields, // Return the original array
+  signers: null, // Not used directly, derived from currentSigner
+  currentSigner: state.currentSigner,
+  selectedFieldId: state.selectedFieldId,
+  setSelectedFieldId: state.setSelectedFieldId,
+});
 
 type SignerFieldGroup = {
   signer: DocumentSigner;
@@ -26,20 +48,29 @@ type PageFieldGroup = {
   totalFields: number;
 };
 
-export const FieldsList: React.FC = () => {
-  const { fields, signers, selectedFieldId, setSelectedFieldId } =
-    useDocumentStore(
-      useShallow((state) => ({
-        fields: state.fields,
-        signers: state.signers,
-        selectedFieldId: state.selectedFieldId,
-        setSelectedFieldId: state.setSelectedFieldId,
-        viewType: state.viewType,
-        setScale: state.setScale,
-      })),
-    );
+export const FieldsList: React.FC<{
+  viewType: "editor" | "signer";
+}> = ({ viewType }) => {
+  const {
+    fields: allFields,
+    signers,
+    currentSigner,
+    selectedFieldId,
+    setSelectedFieldId,
+  } = viewType === "editor"
+    ? useDocumentStore(useShallow(editorSelector))
+    : useDocumentSigningStore(useShallow(signerSelector));
 
-  // Calculate completion statistics
+  // Filter fields specifically for the signer view *after* getting them from the store
+  const fields = useMemo(() => {
+    if (viewType == "signer" && currentSigner) {
+      // Filter the raw fields based on the current signer
+      return allFields.filter((f) => f.assignedTo === currentSigner.id);
+    }
+    return allFields; // Return all fields for editor view or if no signer
+  }, [viewType, currentSigner, allFields]);
+
+  // Calculate completion statistics (uses the memoized 'fields' array)
   const completionStats = useMemo(() => {
     const total = fields.length;
     const totalRequired = fields.filter((field) => field.required).length;
@@ -68,12 +99,24 @@ export const FieldsList: React.FC = () => {
     // Helper function to check if a field is completed
     const isFieldCompleted = (field: DocumentField): boolean => !!field.value;
 
-    // Get signer by ID
-    const getSignerById = (signerId: string): DocumentSigner | undefined =>
-      signers.find((s) => s.id === signerId);
+    // Get available signers based on viewType
+    const availableSigners =
+      viewType === "editor" ? signers : currentSigner ? [currentSigner] : [];
 
-    // First, group fields by page
-    const fieldsByPage = fields.reduce(
+    if (!availableSigners) {
+      console.error("Signers data is missing for field grouping.");
+      return [];
+    }
+
+    // Get signer by ID function adaptable for both views
+    const getSignerById = (signerId: string): DocumentSigner | undefined =>
+      availableSigners.find((s) => s.id === signerId);
+
+    // Use the memoized 'fields' array, already filtered for signer view
+    const relevantFields = fields;
+
+    // Group fields by page
+    const fieldsByPage = relevantFields.reduce(
       (acc, field) => {
         const pageIndex = field.position.page;
         if (!acc[pageIndex]) {
@@ -85,7 +128,7 @@ export const FieldsList: React.FC = () => {
       {} as Record<number, DocumentField[]>,
     );
 
-    // Then transform into our desired structure
+    // Transform into the desired structure
     return Object.entries(fieldsByPage)
       .map(([pageIndex, pageFields]) => {
         const pageNumber = parseInt(pageIndex, 10);
@@ -93,10 +136,13 @@ export const FieldsList: React.FC = () => {
         // Group fields by signer for this page
         const fieldsBySigner = pageFields.reduce(
           (acc, field) => {
-            if (!acc[field.assignedTo]) {
-              acc[field.assignedTo] = [];
+            // Only include fields assigned to a known signer
+            if (getSignerById(field.assignedTo)) {
+              if (!acc[field.assignedTo]) {
+                acc[field.assignedTo] = [];
+              }
+              acc[field.assignedTo].push(field);
             }
-            acc[field.assignedTo].push(field);
             return acc;
           },
           {} as Record<string, DocumentField[]>,
@@ -106,7 +152,7 @@ export const FieldsList: React.FC = () => {
         const signerGroups = Object.entries(fieldsBySigner)
           .map(([signerId, signerFields]) => {
             const signer = getSignerById(signerId);
-            if (!signer) return null;
+            if (!signer) return null; // Should not happen due to filter above
 
             return {
               signer,
@@ -114,16 +160,28 @@ export const FieldsList: React.FC = () => {
               completedCount: signerFields.filter(isFieldCompleted).length,
             };
           })
-          .filter(Boolean) as SignerFieldGroup[];
+          .filter((group): group is SignerFieldGroup => group !== null); // Type guard
+
+        // Filter signer groups to ensure they belong to available signers (relevant for editor view mostly)
+        const relevantSignerGroups = signerGroups.filter((group) =>
+          availableSigners.some((s) => s.id === group.signer.id),
+        );
+
+        // Recalculate total fields based on filtered signer groups
+        const totalRelevantFieldsOnPage = relevantSignerGroups.reduce(
+          (sum, group) => sum + group.fields.length,
+          0,
+        );
 
         return {
           pageNumber,
-          signerGroups,
-          totalFields: pageFields.length,
+          signerGroups: relevantSignerGroups, // Use the filtered groups
+          totalFields: totalRelevantFieldsOnPage, // Use the recalculated total
         };
       })
+      .filter((pageGroup) => pageGroup.totalFields > 0) // Remove pages with no relevant fields
       .sort((a, b) => a.pageNumber - b.pageNumber);
-  }, [fields, signers]);
+  }, [fields, signers, currentSigner, viewType]);
 
   // Handle field selection and scroll to it
   const handleFieldSelect = (field: DocumentField) => {
@@ -139,16 +197,20 @@ export const FieldsList: React.FC = () => {
     }
   };
 
-  // Render empty state when no fields exist
+  // Render empty state when no relevant fields exist for the current view/signer
   if (fields.length === 0) {
     return (
       <div className="flex h-full flex-col items-center justify-center p-8 text-center">
         <div className="mb-4 rounded-full bg-muted p-4">
           <Pen className="h-8 w-8 text-muted-foreground" />
         </div>
-        <h3 className="mb-2 text-lg font-medium">No fields to sign</h3>
+        <h3 className="mb-2 text-lg font-medium">
+          {viewType === "editor" ? "No Fields Added" : "No Fields Assigned"}
+        </h3>
         <p className="text-sm text-muted-foreground">
-          There are no fields in this document that require your attention.
+          {viewType === "editor"
+            ? "Add fields to the document using the tools above."
+            : "There are no fields in this document assigned to you."}
         </p>
       </div>
     );
@@ -156,7 +218,7 @@ export const FieldsList: React.FC = () => {
 
   return (
     <div className="flex h-full flex-col">
-      <CompletionHeader stats={completionStats} />
+      <CompletionHeader stats={completionStats} viewType={viewType} />
       <FieldsContent
         fieldGroups={fieldGroups}
         selectedFieldId={selectedFieldId || null}
@@ -169,6 +231,7 @@ export const FieldsList: React.FC = () => {
 // Component for the completion statistics header
 const CompletionHeader = ({
   stats,
+  viewType,
 }: {
   stats: {
     total: number;
@@ -178,6 +241,7 @@ const CompletionHeader = ({
     requiredCompleted: number;
     requiredPercentage: number;
   };
+  viewType: "editor" | "signer";
 }) => (
   <div className="border-b p-4">
     <h2 className="text-lg font-medium">Fields to Complete</h2>
@@ -202,8 +266,8 @@ const CompletionHeader = ({
 
       <p className="text-xs text-muted-foreground">
         {stats.totalRequired > 0
-          ? `Only required fields must be completed to continue.`
-          : `No required fields in this document.`}
+          ? `Required fields must be completed to finalize the document.`
+          : `No required fields ${viewType === "signer" ? "assigned to you " : ""}in this document.`}
       </p>
     </div>
 

@@ -93,7 +93,11 @@ export function EditingStep({
         </div>
 
         <div className="w-96 border-l">
-          {viewType === "editor" ? <FieldsPalette /> : <FieldsList />}
+          {viewType === "editor" ? (
+            <FieldsPalette />
+          ) : (
+            <FieldsList viewType={viewType} />
+          )}
         </div>
       </div>
 

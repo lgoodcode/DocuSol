@@ -288,12 +288,7 @@ export function SignDocContent({
 
       <div className="flex w-80 flex-col border-l">
         <div className="flex-1 overflow-y-auto">
-          {/* <FieldsList
-            fields={fields}
-            selectedFieldId={selectedFieldId}
-            setSelectedFieldId={setSelectedFieldId}
-            currentSignerId={currentSigner?.id}
-          /> */}
+          <FieldsList viewType="signer" />
         </div>
         <div className="border-t p-4">
           <p className="text-center text-sm text-muted-foreground">
