@@ -70,7 +70,7 @@ export function NewDocContent() {
   return (
     <div className="grid gap-6 py-8">
       {/* Only show in dev mode */}
-      {!IS_PROD && (
+      {!IS_PROD && TESTING && (
         <div className="fixed right-4 top-4 flex items-center gap-2">
           <span>{viewType}</span>
           <Button onClick={() => setViewType("signer")}>Signer</Button>

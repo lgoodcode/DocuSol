@@ -14,6 +14,8 @@ const badgeVariants = cva(
           "bg-secondary/90 dark:bg-secondary/90 text-secondary-foreground dark:text-secondary-foreground border-secondary/20 dark:border-secondary/30 hover:bg-secondary/20 dark:hover:bg-secondary/30",
         destructive:
           "bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 border-red-200/40 dark:border-red-700/40 hover:bg-red-200 dark:hover:bg-red-900/70 hover:text-red-800 dark:hover:text-red-200",
+        warning:
+          "bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300 border-yellow-200/40 dark:border-yellow-700/40 hover:bg-yellow-200 dark:hover:bg-yellow-900/70 hover:text-yellow-800 dark:hover:text-yellow-200",
         success:
           "bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 border-green-200/40 dark:border-green-700/40 hover:bg-green-200 dark:hover:bg-green-900/70 hover:text-green-800 dark:hover:text-green-200",
         outline: "text-foreground",

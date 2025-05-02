@@ -15,6 +15,7 @@ import {
   Pencil,
 } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
+import type { VariantProps } from "class-variance-authority";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +40,8 @@ import {
   downloadDocument,
 } from "./list-docs-actions";
 
+type BadgeVariant = VariantProps<typeof Badge>["variant"];
+
 type ActionType = "view" | "viewTransaction" | "copyTxSignature" | "download";
 // | "copyDocumentSignUrl"
 // | "copyViewUrl"
@@ -50,6 +53,22 @@ const statusMap: Record<SignatureStatus, string> = {
   completed: "Completed",
   rejected: "Rejected",
   expired: "Expired",
+};
+
+const getBadgeVariant = (status: SignatureStatus): BadgeVariant => {
+  switch (status) {
+    case "completed":
+      return "success";
+    case "awaiting_signatures":
+    case "partially_signed":
+      return "warning"; // Added warning for awaiting/partially signed
+    case "expired":
+    case "rejected":
+      return "destructive";
+    case "draft":
+    default:
+      return "secondary";
+  }
 };
 
 const actionMap: Record<
@@ -140,15 +159,7 @@ export function useColumns({
         cell: ({ row }) => {
           const status = row.getValue("status") as string;
           return (
-            <Badge
-              variant={
-                status === "completed"
-                  ? "success"
-                  : status === "expired"
-                    ? "destructive"
-                    : "secondary"
-              }
-            >
+            <Badge variant={getBadgeVariant(status as SignatureStatus)}>
               {statusMap[status as SignatureStatus]}
             </Badge>
           );
