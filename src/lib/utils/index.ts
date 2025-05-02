@@ -24,6 +24,9 @@ export function getRequiredEnvVar(key: string): string {
 export const previewBlob = (blob: Blob) => {
   const url = URL.createObjectURL(blob);
   window.open(url, "_blank");
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+  }, 1000);
 };
 
 /**
@@ -106,14 +109,21 @@ export async function withRetry<T>(
   }
 }
 
+export async function getStorageServiceForCurrentUser() {
+  const supabase = createClient();
+  const user = await getUser(supabase);
+  return {
+    userId: user.id,
+    storageService: new StorageService(supabase, user.id),
+  };
+}
+
 export async function uploadDocumentToStorage(
   documentName: string,
   file: File,
   version: number,
 ) {
-  const supabase = createClient();
-  const user = await getUser(supabase);
-  const storageService = new StorageService(supabase);
+  const storageService = await getStorageServiceForCurrentUser();
 
   await withRetry(async () => {
     await storageService.uploadFile(

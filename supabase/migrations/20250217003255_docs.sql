@@ -1244,7 +1244,8 @@ RETURNS TABLE(
     tx_signature TEXT,
     expires_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ,
-    updated_at TIMESTAMPTZ
+    updated_at TIMESTAMPTZ,
+    version_number INTEGER
 ) AS $$
 BEGIN
     RETURN QUERY
@@ -1256,10 +1257,12 @@ BEGIN
         dv.transaction_signature,
         d.expires_at,
         d.created_at,
-        d.updated_at
+        d.updated_at,
+        dv.version_number -- Select the version number from the joined version
     FROM documents d
+    -- Join directly using the current_version_id field
     LEFT JOIN document_versions dv ON d.current_version_id = dv.id
-    WHERE d.user_id = auth.uid()
+    WHERE d.user_id = auth.uid() -- Filter documents for the current user
     ORDER BY d.updated_at DESC;
 END;
 $$ LANGUAGE plpgsql STABLE SECURITY INVOKER;

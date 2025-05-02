@@ -1,6 +1,11 @@
 "use client";
 
+import { toast } from "sonner";
+import { captureException } from "@sentry/nextjs";
+
+import { getStorageServiceForCurrentUser } from "@/lib/utils";
 import { getTransactionUrl } from "@/lib/utils/solana";
+import { previewBlob } from "@/lib/utils";
 
 import { ViewDocument } from "./types";
 
@@ -12,15 +17,31 @@ import { ViewDocument } from "./types";
 //   return new Blob([documentDataArray], { type: documentData.mime_type });
 // };
 
-// export const viewDocument = async (doc: ViewDocument): Promise<void> => {
-//   const blob = await getDocumentBlob(doc);
-//   previewBlob(blob);
-// };
+// View the lastest version of the document from storage service
+export const viewDocument = async (doc: ViewDocument): Promise<void> => {
+  try {
+    const { userId, storageService } = await getStorageServiceForCurrentUser();
+    const blob = await storageService.getDocument(
+      userId,
+      doc.name,
+      doc.versionNumber,
+    );
+    previewBlob(blob);
+  } catch (error) {
+    captureException(error, { extra: doc });
+    toast.error("Error viewing document");
+  }
+};
 
 export const viewTransaction = async (doc: ViewDocument): Promise<void> => {
-  const url = getTransactionUrl(doc.txSignature);
-  if (window) {
-    window.open(url, "_blank");
+  try {
+    const url = getTransactionUrl(doc.txSignature);
+    if (window) {
+      window.open(url, "_blank");
+    }
+  } catch (error) {
+    captureException(error, { extra: doc });
+    toast.error("Error viewing transaction");
   }
 };
 
@@ -43,14 +64,19 @@ export const copyTxSignature = async (doc: ViewDocument): Promise<string> => {
 //   return `${url}/docs/view/${doc.id}`;
 // };
 
-// export const downloadDocument = async (doc: ViewDocument): Promise<void> => {
-//   const blob = await getDocumentBlob(doc);
-//   const url = URL.createObjectURL(blob);
-//   const a = document.createElement("a");
-//   a.href = url;
-//   a.download = doc.name || `document-${doc.id}`;
-//   document.body.appendChild(a);
-//   a.click();
-//   document.body.removeChild(a);
-//   URL.revokeObjectURL(url);
-// };
+export const downloadDocument = async (doc: ViewDocument): Promise<void> => {
+  const { userId, storageService } = await getStorageServiceForCurrentUser();
+  const blob = await storageService.getDocument(
+    userId,
+    doc.name,
+    doc.versionNumber,
+  );
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = doc.name || `document-${doc.id}`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};

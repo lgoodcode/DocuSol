@@ -11,12 +11,15 @@ export const getDocuments = async (): Promise<ViewDocument[]> => {
     throw error;
   }
   return data.map((doc) => ({
-    ...doc,
-    hasPassword: doc.has_password,
+    id: doc.id,
+    name: doc.name,
+    password: doc.has_password,
+    status: doc.status,
     txSignature: doc.tx_signature,
-    expiresAt: doc.expires_at,
-    createdAt: doc.created_at,
-    updatedAt: doc.updated_at,
+    expires: doc.expires_at,
+    created: doc.created_at,
+    updated: doc.updated_at,
+    versionNumber: doc.version_number,
   }));
 };
 

@@ -31,18 +31,17 @@ import type { SignatureStatus } from "@/lib/types/stamp";
 import type { ViewDocument } from "./types";
 
 import {
-  // viewDocument,
+  viewDocument,
   viewTransaction,
   copyTxSignature,
   // copyDocumentSignUrl,
   // copyViewUrl,
-  // downloadDocument,
+  downloadDocument,
 } from "./list-docs-actions";
 
-type ActionType = "viewTransaction" | "copyTxSignature";
+type ActionType = "view" | "viewTransaction" | "copyTxSignature" | "download";
 // | "copyDocumentSignUrl"
 // | "copyViewUrl"
-// | "download";
 
 const statusMap: Record<SignatureStatus, string> = {
   draft: "Draft",
@@ -57,12 +56,12 @@ const actionMap: Record<
   ActionType,
   (doc: ViewDocument, queryClient: QueryClient) => Promise<void | string>
 > = {
-  // view: viewDocument,
+  view: viewDocument,
   viewTransaction,
   copyTxSignature,
   // copyDocumentSignUrl,
   // copyViewUrl,
-  // download: downloadDocument,
+  download: downloadDocument,
 } as const;
 
 export function useColumns({
@@ -111,12 +110,12 @@ export function useColumns({
   }, []);
 
   const wrappedActions = {
-    // handleViewDocument: createActionHandler("view"),
+    handleViewDocument: createActionHandler("view"),
     handleViewTransaction: createActionHandler("viewTransaction"),
     handleCopyTxSignature: createActionHandler("copyTxSignature"),
     // handleCopyDocumentSignUrl: createActionHandler("copyDocumentSignUrl"),
     // handleCopyViewUrl: createActionHandler("copyViewUrl"),
-    // handleDownloadDocument: createActionHandler("download"),
+    handleDownloadDocument: createActionHandler("download"),
   };
 
   const columns = useMemo<ColumnDef<ViewDocument>[]>(
@@ -163,7 +162,7 @@ export function useColumns({
         },
       },
       {
-        accessorKey: "expiresAt",
+        accessorKey: "expires",
         header: "Expires",
         cell: ({ row }) => {
           const date = row.getValue("expiresAt") as string;
@@ -171,19 +170,19 @@ export function useColumns({
         },
       },
       {
-        accessorKey: "createdAt",
+        accessorKey: "created",
         header: "Created",
         size: 180,
         cell: ({ row }) => {
-          return new Date(row.getValue("createdAt")).toLocaleString();
+          return new Date(row.getValue("created")).toLocaleString();
         },
       },
       {
-        accessorKey: "updatedAt",
+        accessorKey: "updated",
         header: "Updated",
         size: 180,
         cell: ({ row }) => {
-          return new Date(row.getValue("updatedAt")).toLocaleString();
+          return new Date(row.getValue("updated")).toLocaleString();
         },
       },
       {
@@ -202,14 +201,14 @@ export function useColumns({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                {/* <DropdownMenuItem
+                <DropdownMenuItem
                   onClick={() =>
                     wrappedActions.handleViewDocument(row.original)
                   }
                 >
                   <Eye className="mr-1 h-4 w-4" />
-                  View
-                </DropdownMenuItem> */}
+                  View Document
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() =>
                     wrappedActions.handleViewTransaction(row.original)
@@ -249,14 +248,14 @@ export function useColumns({
                   <Pencil className="mr-1 h-4 w-4" />
                   Rename
                 </DropdownMenuItem>
-                {/* <DropdownMenuItem
+                <DropdownMenuItem
                   onClick={() =>
                     wrappedActions.handleDownloadDocument(row.original)
                   }
                 >
                   <Download className="mr-1 h-4 w-4" />
                   Download
-                </DropdownMenuItem> */}
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => deleteDoc.setDocToDelete(row.original)}
