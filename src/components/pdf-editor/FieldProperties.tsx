@@ -23,7 +23,6 @@ export function FieldProperties({
   signers: DocumentSigner[];
 }) {
   const { field, updateField, removeField } = useField(fieldId, "editor");
-  console.log("field", field);
   if (!field || !field.type) {
     return null;
   }

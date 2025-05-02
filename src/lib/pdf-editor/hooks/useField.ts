@@ -20,7 +20,7 @@ interface UseFieldFullResult {
   isDragging?: boolean; // Optional for signer view
   isResizing?: boolean; // Optional for signer view
   updateField: (updates: Partial<DocumentField>) => void; // Wrapped update
-  removeField?: () => void; // Optional for signer view
+  removeField?: () => void; // Made optional
   selectField: () => void; // Wrapped select
   handleChange: (value: string | { dataUrl: string; scale: number }) => void; // Wrapped update value/signature
   handleFocus: () => void; // Wrapped select
@@ -38,10 +38,13 @@ type UseFieldErrorResult = {
   viewType: "editor" | "signer";
   scale: 1;
   updateField: (updates: Partial<DocumentField>) => void;
+  removeField?: () => void; // Added optional property
   selectField: () => void;
   handleChange: (value: string | { dataUrl: string; scale: number }) => void;
   handleFocus: () => void;
   handleBlur: () => void;
+  setIsDragging?: (isDragging: boolean) => void; // Added optional property
+  setIsResizing?: (isResizing: boolean) => void; // Added optional property
 };
 
 /**
@@ -154,11 +157,13 @@ export const useField = (
       viewType,
       scale: 1, // Default scale
       updateField: dummyUpdate,
+      removeField: undefined,
       selectField: dummySelect,
       handleChange: dummyChange,
       handleFocus: dummyFocus,
       handleBlur: dummyBlur,
-      // Optional actions are undefined
+      setIsDragging: undefined,
+      setIsResizing: undefined,
     };
   }
 
@@ -220,7 +225,7 @@ export const useField = (
     isDragging,
     isResizing,
     updateField: handleUpdate,
-    removeField: viewType === "editor" ? handleDelete : undefined, // Only return removeField for editor
+    removeField: handleDelete,
     selectField: handleSelect,
     handleChange,
     handleFocus,

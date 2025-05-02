@@ -1,12 +1,12 @@
 import { validate as uuidValidate } from "uuid";
 import { captureException } from "@sentry/nextjs";
-import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { DocumentField } from "@/lib/pdf-editor/document-types";
 import type { DocumentSigner } from "@/lib/types/stamp";
 import { getUser } from "@/lib/supabase/utils";
 import { StorageService } from "@/lib/supabase/storage";
-import { PDFMetadata } from "@/lib/pdf-editor/pdf-metadata";
+import { PDFMetadata } from "@/lib/stamp/pdf-metadata";
+import type { BrowserSupabaseClient } from "@/lib/supabase/client";
 import type { ServerSupabaseClient } from "@/lib/supabase/server";
 
 export type InvalidTokenReason =
@@ -15,7 +15,8 @@ export type InvalidTokenReason =
   | "mismatch"
   | "invalidated"
   | "unknown"
-  | "invalid_uuid";
+  | "invalid_uuid"
+  | "no_token";
 
 /**
  * Represents the result of validating document access using ID and token.
@@ -40,6 +41,7 @@ export type ValidateDocumentAccessResult =
       versionId: string;
       versionNumber: number;
       isLastSigner: boolean;
+      creatorUserId: string;
     }
   | { status: "error"; error: Error };
 
@@ -205,7 +207,7 @@ export const validateDocumentAccess = async (
  * @returns The PDF document blob or null if not found/error.
  */
 export const getPdfDocument = async (
-  supabase: SupabaseClient,
+  supabase: BrowserSupabaseClient,
   documentName: string,
   version: number,
 ): Promise<Blob | null> => {
@@ -249,7 +251,7 @@ export type FetchSigningDataResult = {
  * @returns A promise resolving to a FetchSigningDataResult object.
  */
 export const fetchSigningData = async (
-  supabase: SupabaseClient,
+  supabase: BrowserSupabaseClient,
   documentName: string,
   versionNumber: number,
   documentId: string,
@@ -296,8 +298,9 @@ export const fetchSigningData = async (
       };
     }
 
+    const detailsFields = details.fields as any;
     // 3. Map fields (assuming 'fields' is JSONB in the expected format)
-    const mappedFields = details.fields.map(
+    const mappedFields = detailsFields.map(
       (field: any): DocumentField => ({
         id: field.id,
         type: field.type,
@@ -308,8 +311,6 @@ export const fetchSigningData = async (
         signatureScale: field.signature_scale,
         textStyles: field.text_styles || {},
         assignedTo: field.participant_id,
-        createdAt: field.created_at,
-        updatedAt: field.updated_at,
         position: {
           x: field.position_x,
           y: field.position_y,
@@ -322,17 +323,18 @@ export const fetchSigningData = async (
       }),
     ) satisfies DocumentField[];
 
+    const detailsSigner = details.signer as any;
     // 4. Map the current signer
     // The RPC should return only the relevant participant's details
     const mappedSigner: DocumentSigner = {
-      id: details.signer.id,
-      name: details.signer.name,
-      email: details.signer.email,
-      role: details.signer.role,
-      mode: details.signer.mode,
-      isOwner: details.signer.is_owner,
-      color: details.signer.color,
-      userId: details.signer.user_id,
+      id: detailsSigner.id,
+      name: detailsSigner.name,
+      email: detailsSigner.email,
+      role: detailsSigner.role,
+      mode: detailsSigner.mode,
+      isOwner: detailsSigner.is_owner,
+      color: detailsSigner.color,
+      userId: detailsSigner.user_id,
     };
 
     return {

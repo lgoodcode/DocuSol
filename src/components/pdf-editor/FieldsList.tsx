@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { Pen, Check, ChevronRight } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 
-import { IS_PROD } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { useDocumentStore } from "@/lib/pdf-editor/stores/useDocumentStore";
 import { useDocumentSigningStore } from "@/app/sign/[id]/useDocumentSignStore";

@@ -28,7 +28,7 @@ export const viewDocument = async (doc: ViewDocument): Promise<void> => {
     );
     previewBlob(blob);
   } catch (error) {
-    captureException(error, { extra: doc });
+    captureException(error, { extra: { doc } });
     toast.error("Error viewing document");
   }
 };
@@ -40,7 +40,7 @@ export const viewTransaction = async (doc: ViewDocument): Promise<void> => {
       window.open(url, "_blank");
     }
   } catch (error) {
-    captureException(error, { extra: doc });
+    captureException(error, { extra: { doc } });
     toast.error("Error viewing transaction");
   }
 };

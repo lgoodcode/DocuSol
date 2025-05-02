@@ -69,14 +69,16 @@ const getFieldElement = (fieldId: string) => {
 interface TextFormatToolbarProps {
   field: DocumentField;
   onClose?: () => void;
+  viewType: "editor" | "signer";
 }
 
 export const TextFormatToolbar = ({
   field,
   onClose,
+  viewType,
 }: TextFormatToolbarProps) => {
   const toolbarRef = useRef<HTMLDivElement>(null);
-  const { updateField, scale } = useField(field.id);
+  const { updateField, scale } = useField(field.id, viewType);
   const [mounted, setMounted] = useState(false);
   const [refElement, setRefElement] = useState<HTMLDivElement | null>(null);
   const [position, setPosition] = useState({

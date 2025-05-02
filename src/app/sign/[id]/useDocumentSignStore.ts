@@ -84,9 +84,7 @@ export const useDocumentSigningStore = create<DocumentSigningState>(
     exportAndDownloadSignedPdf: async (filename: string) => {
       const { documentDataUrl, fields } = get();
       if (!documentDataUrl) {
-        console.warn("Export called without document data URL.");
-        toast.warn("Cannot export document yet.");
-        return;
+        throw new Error("Document data URL is not set.");
       }
 
       try {

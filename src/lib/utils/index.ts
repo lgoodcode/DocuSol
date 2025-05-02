@@ -114,7 +114,7 @@ export async function getStorageServiceForCurrentUser() {
   const user = await getUser(supabase);
   return {
     userId: user.id,
-    storageService: new StorageService(supabase, user.id),
+    storageService: new StorageService(supabase),
   };
 }
 
@@ -123,11 +123,11 @@ export async function uploadDocumentToStorage(
   file: File,
   version: number,
 ) {
-  const storageService = await getStorageServiceForCurrentUser();
+  const { userId, storageService } = await getStorageServiceForCurrentUser();
 
   await withRetry(async () => {
     await storageService.uploadFile(
-      user.id,
+      userId,
       documentName,
       file,
       file.type,

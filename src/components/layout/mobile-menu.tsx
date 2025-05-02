@@ -200,33 +200,36 @@ export function MobileMenu() {
               </div> */}
               <ScrollArea className="flex-1">
                 <div className="space-y-2 p-4">
-                  {Object.values(PAGE_ROUTES).map((route, i) => (
-                    <motion.div
-                      key={route.path}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.2 + i * 0.05 }}
-                    >
-                      <Link
-                        href={route.path}
-                        onClick={() => setOpen(false)}
-                        className={cn(
-                          "flex items-center gap-4 rounded-none px-4 py-3 text-sm font-medium transition-colors hover:bg-accent",
-                          pathname === route.path
-                            ? "bg-accent text-accent-foreground"
-                            : "text-muted-foreground",
-                        )}
-                      >
-                        <route.Icon className="h-6 w-6" />
-                        <div className="flex flex-col gap-1">
-                          <span>{route.name}</span>
-                          <span className="text-xs font-normal">
-                            {route.description}
-                          </span>
-                        </div>
-                      </Link>
-                    </motion.div>
-                  ))}
+                  {Object.values(PAGE_ROUTES).map(
+                    (route, i) =>
+                      !route.noNav && (
+                        <motion.div
+                          key={route.path}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.2 + i * 0.05 }}
+                        >
+                          <Link
+                            href={route.path}
+                            onClick={() => setOpen(false)}
+                            className={cn(
+                              "flex items-center gap-4 rounded-none px-4 py-3 text-sm font-medium transition-colors hover:bg-accent",
+                              pathname === route.path
+                                ? "bg-accent text-accent-foreground"
+                                : "text-muted-foreground",
+                            )}
+                          >
+                            <route.Icon className="h-6 w-6" />
+                            <div className="flex flex-col gap-1">
+                              <span>{route.name}</span>
+                              <span className="text-xs font-normal">
+                                {route.description}
+                              </span>
+                            </div>
+                          </Link>
+                        </motion.div>
+                      ),
+                  )}
                 </div>
               </ScrollArea>
               <div className="mt-auto border-t border-border p-4">

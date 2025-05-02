@@ -268,10 +268,13 @@ export const DocumentPage = memo(function DocumentPage({
               top: Math.round(field.position.y * scale),
               width: Math.round(field.size.width * scale),
               height: Math.round(field.size.height * scale),
-              borderColor: recipientColor,
-              ...(isSelected && { zIndex: 25 }),
-              borderWidth: "1px",
-              borderStyle: isSelected ? "solid" : "dashed",
+              border: isSelected
+                ? `1px solid ${recipientColor}`
+                : `2px dashed ${recipientColor}`,
+              boxShadow: isSelected
+                ? `0 0 0 1px ${recipientColor}, 0 0 8px rgba(0, 0, 0, 0.1)`
+                : "none",
+              transition: "box-shadow 0.2s ease",
             };
 
             return (
@@ -289,19 +292,6 @@ export const DocumentPage = memo(function DocumentPage({
                 onClick={(e: React.MouseEvent) => {
                   e.stopPropagation();
                   setSelectedFieldId(field.id);
-                }}
-                style={{
-                  left: Math.round(field.position.x * scale),
-                  top: Math.round(field.position.y * scale),
-                  width: Math.round(field.size.width * scale),
-                  height: Math.round(field.size.height * scale),
-                  border: isSelected
-                    ? `1px solid ${recipientColor}`
-                    : `2px dashed ${recipientColor}`,
-                  boxShadow: isSelected
-                    ? `0 0 0 1px ${recipientColor}, 0 0 8px rgba(0, 0, 0, 0.1)`
-                    : "none",
-                  transition: "box-shadow 0.2s ease",
                 }}
               >
                 <FieldComponent

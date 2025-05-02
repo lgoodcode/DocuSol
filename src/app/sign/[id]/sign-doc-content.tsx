@@ -18,6 +18,7 @@ import { fileToDataUrl, uploadDocumentToStorage } from "@/lib/utils";
 import { PDFHash } from "@/lib/stamp/hash-service";
 import { PDFMetadata } from "@/lib/stamp/pdf-metadata";
 import type { DocumentContentHash } from "@/lib/types/stamp";
+import type { SignRequestForm } from "@/app/api/docs/sign/utils";
 
 import type { DocumentField } from "@/lib/pdf-editor/document-types";
 import type { DocumentSigner } from "@/lib/types/stamp";
@@ -39,6 +40,7 @@ interface SignDocContentProps {
   versionId: string;
   versionNumber: number;
   isLastSigner: boolean;
+  creatorUserId: string;
 }
 
 export function SignDocContent({
@@ -203,7 +205,7 @@ export function SignDocContent({
     signedBlob: Blob,
     signedContentHash: DocumentContentHash,
   ) => {
-    const payload: SignRequestFormSchema = {
+    const payload: SignRequestForm = {
       documentId,
       documentName,
       token,

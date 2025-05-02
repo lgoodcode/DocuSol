@@ -29,7 +29,12 @@ export default async function SignDocumentPage({
   searchParams,
 }: SignDocumentPageProps) {
   const { id } = await params;
-  const token = (await searchParams)?.token as string | undefined;
+  const token = (await searchParams)?.token as string;
+
+  if (!token) {
+    return <InvalidTokenPage reason="no_token" />;
+  }
+
   const supabase = await createServerClient();
   const validationResult = await validateDocumentAccess(supabase, id, token);
   // const validationResult = {

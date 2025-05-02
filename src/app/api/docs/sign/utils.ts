@@ -2,6 +2,8 @@ import { z } from "zod";
 
 import { DocumentContentHashSchema } from "@/lib/pdf-editor/document-types";
 
+export type SignRequestForm = z.infer<typeof SignRequestFormSchema>;
+
 export const SignRequestFormSchema = DocumentContentHashSchema.extend({
   documentId: z.string().uuid({ message: "Invalid Document ID format" }),
   documentName: z.string(),

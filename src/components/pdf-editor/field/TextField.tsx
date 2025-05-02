@@ -83,7 +83,7 @@ export const TextField = memo(function TextField({
             className="relative w-full"
             onBlur={handleBlurEvent}
           >
-            <TextFormatToolbar field={field} />
+            <TextFormatToolbar field={field} viewType={viewType} />
             <AutoResizeTextarea
               ref={textareaRef}
               initialValue={field.value ?? ""}

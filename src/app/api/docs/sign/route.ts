@@ -5,7 +5,6 @@ import { z } from "zod";
 
 import { STAMP_VERSION } from "@/lib/types/stamp";
 import { createServerClient } from "@/lib/supabase/server";
-import { getUserFromSession } from "@/lib/supabase/utils"; // Helper to get user from server session
 import { sendEmail } from "@/lib/utils/email";
 import { sendMemoTransaction } from "@/lib/utils/solana";
 import { ObfuscatedStampSerializer } from "@/lib/utils/serializer";
@@ -203,7 +202,6 @@ export async function POST(request: Request) {
         signerEmail: signerEmail,
         subject: "Document signed",
         documentName: "Document name",
-        senderMessage: "Sender message",
       });
     } else if (isLastSigner) {
       // If this is the last signer, send a completion email to the creator
