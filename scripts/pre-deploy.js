@@ -12,6 +12,12 @@ const requiredEnvList = [
 
   "UPSTASH_REDIS_REST_URL",
   "UPSTASH_REDIS_REST_TOKEN",
+
+  "RESEND_API_KEY",
+
+  "STAMP_OBFUSCATION_KEY",
+
+  "PRIVATE_KEY",
 ];
 
 // Skip checking environment variables if in local development or running on CI
