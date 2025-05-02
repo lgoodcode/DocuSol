@@ -296,7 +296,8 @@ export function SignDocContent({
       });
 
       setIsSigned(true);
-    } catch (error) {
+    } catch (err) {
+      const error = err as Error;
       console.error("Signing submission failed:", error);
       captureException(error);
       // If already signed, show a different message

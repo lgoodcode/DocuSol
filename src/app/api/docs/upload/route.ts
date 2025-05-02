@@ -93,16 +93,16 @@ export async function POST(request: Request) {
     const formattedMemo = `v${STAMP_VERSION}:${obfuscatedStamp}`;
 
     // Step 4: Store the stamp in the Solana memo blockchain
-    const txSignature = dryRun.memo
+    const txSignature = dryRun?.memo
       ? "dry_run_memo_transaction"
       : await sendMemoTransaction(formattedMemo);
 
-    if (dryRun.memo) {
+    if (dryRun?.memo) {
       console.log("Dry run: Skipped memo transaction");
     }
 
     // Step 5: Call the appropriate RPC function based on the dryRun flag
-    const rpcName = dryRun.database
+    const rpcName = dryRun?.database
       ? "dry_run_finalize_document_upload"
       : "finalize_document_upload";
     const { error: finalizeError } = await supabase.rpc(rpcName, {
@@ -120,7 +120,7 @@ export async function POST(request: Request) {
       p_participants: participants,
     });
 
-    if (dryRun.database) {
+    if (dryRun?.database) {
       console.log("Dry run: Skipped database operations");
     }
 
@@ -154,7 +154,7 @@ export async function POST(request: Request) {
     }
 
     // Step 7: Send emails to participants
-    if (!dryRun.email) {
+    if (!dryRun?.email) {
       const emailPayloads = participants.map((participant, index) => ({
         email: participant.email,
         name: participant.name,
