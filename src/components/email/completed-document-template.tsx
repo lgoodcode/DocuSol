@@ -85,31 +85,6 @@ const paragraph = {
   marginBottom: "15px",
 };
 
-const buttonContainer = {
-  textAlign: "center" as const,
-  margin: "32px 0",
-};
-
-const button = {
-  backgroundColor: "#007bff",
-  borderRadius: "5px",
-  color: "#fff",
-  fontSize: "16px",
-  fontWeight: "bold",
-  textDecoration: "none",
-  textAlign: "center" as const,
-  padding: "12px 24px",
-  display: "inline-block",
-};
-
-const linkText = {
-  ...paragraph,
-  color: "#007bff",
-  textDecoration: "underline",
-  wordBreak: "break-all" as const,
-  padding: "0 35px", // Match paragraph padding
-};
-
 const hr = {
   borderColor: "#e6ebf1",
   margin: "20px 0",

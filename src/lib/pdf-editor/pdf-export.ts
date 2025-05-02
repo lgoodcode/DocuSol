@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { PDFDocument, PDFFont, rgb, StandardFonts } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import { toast } from "sonner";
@@ -177,7 +179,7 @@ export async function exportPdfWithFields(
       let scaledDescent = descender * scale;
 
       // Calculate the baseline Y coordinate for drawing text in PDF space.
-      const fieldHeightPt = field.size.height * PX_TO_PT * scaleFactor;
+      // const fieldHeightPt = field.size.height * PX_TO_PT * scaleFactor;
       const fieldCenterYApp = field.position.y + field.size.height / 2;
       const fieldCenterYPdf = pageHeight - fieldCenterYApp * scaleFactor;
 
@@ -308,7 +310,7 @@ export async function exportPdfWithFields(
             // Attempt to format date, fallback to original value if invalid
             try {
               textToDraw = new Date(field.value).toLocaleDateString();
-            } catch (dateError) {
+            } catch {
               console.warn(
                 `Invalid date value for field ${field.id}: ${field.value}`,
               );

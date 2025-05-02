@@ -3,10 +3,9 @@
 import { validate as uuidValidate } from "uuid";
 import { captureException } from "@sentry/nextjs";
 
+import { StorageService } from "@/lib/supabase/storage";
 import type { DocumentField } from "@/lib/pdf-editor/document-types";
 import type { DocumentSigner } from "@/lib/types/stamp";
-import { getUser } from "@/lib/supabase/utils";
-import { StorageService } from "@/lib/supabase/storage";
 import type { BrowserSupabaseClient } from "@/lib/supabase/client";
 import type { ServerSupabaseClient } from "@/lib/supabase/server";
 

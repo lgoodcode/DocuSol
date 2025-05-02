@@ -117,7 +117,7 @@ export function decryptJson<T = any>(
 
     try {
       return JSON.parse(jsonString) as T;
-    } catch (parseError) {
+    } catch {
       throw new Error("Decryption succeeded but failed to parse JSON.");
     }
   } catch (error: any) {

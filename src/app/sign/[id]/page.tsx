@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
-import { useState } from "react";
 import { captureException } from "@sentry/nextjs";
 
 import { ErrorPageContent } from "@/components/error-page-content";
 import { DocumentNotFound } from "@/components/doc-not-found";
 import { createServerClient } from "@/lib/supabase/server";
-import { getUser } from "@/lib/supabase/utils";
 
 import { validateDocumentAccess } from "./utils";
 import { DocAlreadySigned } from "./already-signed";

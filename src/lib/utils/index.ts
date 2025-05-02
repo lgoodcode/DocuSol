@@ -4,7 +4,6 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 import { createClient } from "@/lib/supabase/client";
-import { getUser } from "@/lib/supabase/utils";
 import { StorageService } from "@/lib/supabase/storage";
 
 export function cn(...inputs: ClassValue[]) {

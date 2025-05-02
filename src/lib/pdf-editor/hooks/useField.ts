@@ -132,6 +132,56 @@ export const useField = (
     _setResizing,
   } = storeData;
 
+  // Re-implement handler wrappers using useCallback BEFORE the early return
+  const handleUpdate = useCallback(
+    (updates: Partial<DocumentField>) => _updateField(fieldId, updates),
+    [fieldId, _updateField],
+  );
+
+  const handleDelete = useCallback(() => {
+    // Ensure _removeField exists before calling (it's undefined for signer)
+    if (_removeField) {
+      _removeField(fieldId);
+    } else {
+      console.warn("Remove field action not available in this context");
+    }
+  }, [fieldId, _removeField]);
+
+  const handleSelect = useCallback(() => {
+    if (_setSelectedFieldId) {
+      _setSelectedFieldId(fieldId);
+    }
+  }, [fieldId, _setSelectedFieldId]);
+
+  const handleFocus = useCallback(() => {
+    // Focus likely implies selection in this context
+    if (_setSelectedFieldId) {
+      _setSelectedFieldId(fieldId);
+    }
+  }, [fieldId, _setSelectedFieldId]);
+
+  const handleBlur = useCallback(() => {
+    if (_clearSelectedFieldId) {
+      _clearSelectedFieldId();
+    }
+  }, [_clearSelectedFieldId]);
+
+  const handleChange = useCallback(
+    (value: string | { dataUrl: string; scale: number }) => {
+      if (typeof value === "string") {
+        // Handle simple value update (e.g., text field)
+        _updateField(fieldId, { value });
+      } else {
+        // Handle signature/initials update which includes dataUrl and scale
+        _updateField(fieldId, {
+          value: value.dataUrl,
+          signatureScale: value.scale,
+        });
+      }
+    },
+    [fieldId, _updateField],
+  );
+
   // Handle case where field is not found
   if (!field) {
     console.warn(
@@ -167,54 +217,6 @@ export const useField = (
       setIsResizing: undefined,
     };
   }
-
-  // Re-implement handler wrappers using useCallback
-  const handleUpdate = useCallback(
-    (updates: Partial<DocumentField>) => _updateField(fieldId, updates),
-    [fieldId, _updateField],
-  );
-
-  const handleDelete = useCallback(() => {
-    if (_removeField) {
-      _removeField(fieldId);
-    } else {
-      console.warn("Remove field action not available in this context");
-    }
-  }, [fieldId, _removeField]);
-
-  const handleSelect = useCallback(() => {
-    if (_setSelectedFieldId) {
-      _setSelectedFieldId(fieldId);
-    }
-  }, [fieldId, _setSelectedFieldId]);
-
-  const handleFocus = useCallback(() => {
-    if (_setSelectedFieldId) {
-      _setSelectedFieldId(fieldId);
-    }
-  }, [fieldId, _setSelectedFieldId]);
-
-  const handleBlur = useCallback(() => {
-    if (_clearSelectedFieldId) {
-      _clearSelectedFieldId();
-    }
-  }, [_clearSelectedFieldId]);
-
-  const handleChange = useCallback(
-    (value: string | { dataUrl: string; scale: number }) => {
-      if (typeof value === "string") {
-        // Handle simple value update (e.g., text field)
-        _updateField(fieldId, { value });
-      } else {
-        // Handle signature/initials update which includes dataUrl and scale
-        _updateField(fieldId, {
-          value: value.dataUrl,
-          signatureScale: value.scale,
-        });
-      }
-    },
-    [fieldId, _updateField],
-  );
 
   // Construct the full return object matching the original structure
   return {

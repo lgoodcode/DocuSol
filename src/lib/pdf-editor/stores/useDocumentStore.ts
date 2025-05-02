@@ -1,4 +1,4 @@
-import { create, StateCreator } from "zustand";
+import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { DocumentState } from "@/lib/pdf-editor/document-types";
 import { DocumentSigner } from "@/lib/types/stamp";

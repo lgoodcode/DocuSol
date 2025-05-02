@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { TextField } from "./TextField";
 import { DateField } from "./DateField";
 import { SignatureField } from "./SignatureField";
