@@ -31,20 +31,20 @@ export default async function SignDocumentPage({
   const { id } = await params;
   const token = (await searchParams)?.token as string | undefined;
   const supabase = await createServerClient();
-  // const validationResult = await validateDocumentAccess(supabase, id, token);
-  const validationResult = {
-    status: "ready",
-    password: "",
-    signerEmail: "lawrence@docusol.app",
-    documentId: "4a3e0d88-372c-4848-b7f0-b0e22668cbc3",
-    documentName: "test",
-    versionId: "ac8dafd8-2ba7-4147-a655-4edcb0192288",
-    versionNumber: 1,
-    reason: undefined,
-    signed_at: undefined,
-    rejected_at: undefined,
-    error: undefined,
-  };
+  const validationResult = await validateDocumentAccess(supabase, id, token);
+  // const validationResult = {
+  //   status: "ready",
+  //   password: "",
+  //   signerEmail: "lawrence@docusol.app",
+  //   participantId: "ec721edd-fa57-4f8c-8927-cd7192b6492b",
+  //   documentId: "4a3e0d88-372c-4848-b7f0-b0e22668cbc3",
+  //   documentName: "test",
+  //   versionId: "ac8dafd8-2ba7-4147-a655-4edcb0192288",
+  //   versionNumber: 1,
+  //   isLastSigner: true,
+  //   creatorUserId: "5d270ad5-789b-4f94-9260-bd073b7f6e65",
+  // };
+  console.log("validationResult", validationResult);
 
   // Handle validating the document access
   switch (validationResult.status) {
@@ -67,11 +67,14 @@ export default async function SignDocumentPage({
           <SignDocContent
             token={token}
             password={validationResult?.password}
-            documentId={validationResult?.documentId}
-            documentName={validationResult?.documentName}
-            signerEmail={validationResult?.signerEmail}
-            versionId={validationResult?.versionId}
-            versionNumber={validationResult?.versionNumber}
+            documentId={validationResult.documentId}
+            documentName={validationResult.documentName}
+            signerEmail={validationResult.signerEmail}
+            participantId={validationResult.participantId}
+            versionId={validationResult.versionId}
+            versionNumber={validationResult.versionNumber}
+            isLastSigner={validationResult.isLastSigner}
+            creatorUserId={validationResult.creatorUserId}
           />
         </div>
       );

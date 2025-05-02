@@ -234,15 +234,15 @@ export interface DocumentStamp {
   /** Content of the document */
   contentHash: DocumentContentHash;
   /** History of the document - hash updates and signatures */
-  hashHistory: DocumentHashHistory;
+  // hashHistory: DocumentHashHistory;
   /** List of authorized signers */
-  signers: DocumentSigner[];
+  // signers: DocumentSigner[];
   /** Collected signatures and proofs */
-  signatures: DocumentSignature[];
+  // signatures: DocumentSignature[];
   /** Current document stamp status */
   status: DocumentStatus;
   /** Verification requirements */
-  rules: DocumentRules;
+  // rules: DocumentRules;
   /** Stamp metadata */
   metadata: DocumentMetadata;
 }

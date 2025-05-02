@@ -1,6 +1,10 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+import { createClient } from "@/lib/supabase/client";
+import { getUser } from "@/lib/supabase/utils";
+import { StorageService } from "@/lib/supabase/storage";
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -100,6 +104,26 @@ export async function withRetry<T>(
       delay = Math.min(delay * backoffFactor, maxDelay);
     }
   }
+}
+
+export async function uploadDocumentToStorage(
+  documentName: string,
+  file: File,
+  version: number,
+) {
+  const supabase = createClient();
+  const user = await getUser(supabase);
+  const storageService = new StorageService(supabase);
+
+  await withRetry(async () => {
+    await storageService.uploadFile(
+      user.id,
+      documentName,
+      file,
+      file.type,
+      version,
+    );
+  });
 }
 
 /**

@@ -123,7 +123,7 @@ export async function exportPdfWithFields(
   pdfDataUrl: string,
   filename: string,
   fields: DocumentField[],
-): Promise<void> {
+): Promise<Blob> {
   try {
     const pdfDoc = await PDFDocument.load(pdfDataUrl);
     pdfDoc.registerFontkit(fontkit);
@@ -422,20 +422,7 @@ export async function exportPdfWithFields(
     });
 
     // Create a blob from the PDF data
-    const blob = new Blob([modifiedPdfBytes], { type: "application/pdf" });
-
-    // Create a download link
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = filename.endsWith(".pdf") ? filename : `${filename}.pdf`;
-
-    // Append to body and click to trigger download
-    document.body.appendChild(link);
-    link.click();
-
-    // Clean up: remove link and revoke URL
-    document.body.removeChild(link);
-    URL.revokeObjectURL(link.href);
+    return new Blob([modifiedPdfBytes], { type: "application/pdf" });
   } catch (error) {
     console.error("Error exporting PDF:", error);
     toast.error("Error exporting PDF", {

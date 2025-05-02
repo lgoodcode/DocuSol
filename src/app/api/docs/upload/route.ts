@@ -53,13 +53,8 @@ export async function POST(request: Request) {
     const documentStamp: DocumentStamp = {
       version: STAMP_VERSION,
       contentHash: documentContentHash,
-      hashHistory: {
-        initialHash: documentContentHash.fileHash,
-        currentHash: documentContentHash.fileHash,
-        updates: [],
-      },
-      signers: participants,
-      signatures: [],
+      // signers: participants,
+      // signatures: [],
       status: {
         state: SignatureState.AWAITING_SIGNATURES,
         revoked: false,
@@ -68,12 +63,12 @@ export async function POST(request: Request) {
           ? new Date(expirationDate).getTime()
           : undefined,
       },
-      rules: {
-        requireAll: true,
-        requireOrder: false,
-        minSignatures: participants.length,
-        allowRevocation: false,
-      },
+      // rules: {
+      //   requireAll: true,
+      //   requireOrder: false,
+      //   minSignatures: participants.length,
+      //   allowRevocation: false,
+      // },
       metadata: {
         transaction: "", // Will be filled after Solana tx
         createdAt: new Date().getTime(),

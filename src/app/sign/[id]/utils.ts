@@ -2,8 +2,11 @@ import { validate as uuidValidate } from "uuid";
 import { captureException } from "@sentry/nextjs";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import type { DocumentField } from "@/lib/pdf-editor/document-types";
+import type { DocumentSigner } from "@/lib/types/stamp";
 import { getUser } from "@/lib/supabase/utils";
 import { StorageService } from "@/lib/supabase/storage";
+import { PDFMetadata } from "@/lib/pdf-editor/pdf-metadata";
 import type { ServerSupabaseClient } from "@/lib/supabase/server";
 
 export type InvalidTokenReason =
@@ -31,10 +34,12 @@ export type ValidateDocumentAccessResult =
       status: "ready";
       password?: string;
       signerEmail: string;
+      participantId: string;
       documentId: string;
       documentName: string;
       versionId: string;
       versionNumber: number;
+      isLastSigner: boolean;
     }
   | { status: "error"; error: Error };
 
@@ -95,7 +100,10 @@ export const validateDocumentAccess = async (
 
     // 2. Token is valid, check document metadata
     const { data: docData, error: docError } = await supabase
-      .rpc("get_document_details_for_signing", { p_document_id: id })
+      .rpc("get_document_details_for_signing", {
+        p_document_id: id,
+        p_signer_email: tokenData.email,
+      })
       .single();
 
     if (docError) {
@@ -107,6 +115,15 @@ export const validateDocumentAccess = async (
       console.error("Document Metadata Fetch Error:", docError);
       captureException(docError, { extra: { id, token } });
       return { status: "error", error: docError };
+    }
+
+    // Check if participant was found (RPC might return nulls if email didn't match)
+    if (!docData.participant_id) {
+      console.warn(
+        `Participant not found for email ${tokenData.email} on document ${id}`,
+      );
+      // Treat as if the document wasn't found for this specific link
+      return { status: "not_found" };
     }
 
     // 3. Check document status
@@ -165,8 +182,11 @@ export const validateDocumentAccess = async (
       documentId: docData.id,
       documentName: docData.name,
       signerEmail: tokenData.email,
+      participantId: docData.participant_id,
       versionId: docData.current_version_id,
       versionNumber: docData.current_version_number,
+      isLastSigner: docData.is_last,
+      creatorUserId: docData.creator_user_id,
     };
   } catch (error) {
     console.error("Unexpected Validation Error:", error);
@@ -176,20 +196,162 @@ export const validateDocumentAccess = async (
 };
 
 /**
- * Get the PDF document from the storage service
- * @param documentName - The name of the document
- * @param version - The version number of the document
- * @returns The PDF document
+ * Get the PDF document Blob from the storage service.
+ * Assumes the user has permission to access the document.
+ *
+ * @param supabase - Supabase client instance.
+ * @param documentName - The name of the document.
+ * @param version - The version number of the document to fetch.
+ * @returns The PDF document blob or null if not found/error.
  */
 export const getPdfDocument = async (
   supabase: SupabaseClient,
   documentName: string,
   version: number,
-) => {
-  const user = await getUser(supabase);
-  const storage = new StorageService(supabase);
-  // Subtract 1 from version number because the document is always
-  // uploaded with version 0 so it will be 1 behind the version number
-  // in the database
-  return await storage.getDocument(user.id, documentName, version - 1);
+): Promise<Blob | null> => {
+  try {
+    const user = await getUser(supabase);
+    const storage = new StorageService(supabase);
+    // Version 0 in storage corresponds to version 1 from DB perspective, etc.
+    // The calling function should provide the correct *database* version number.
+    // Version 0 from DB (draft) is not stored this way typically.
+    // If version 1 is requested, fetch storage version 0.
+    const storageVersion = version > 0 ? version - 1 : 0; // Adjust for 0-based storage version
+    return await storage.getDocument(user.id, documentName, storageVersion);
+  } catch (error) {
+    console.error("Error getting PDF document from storage:", error);
+    captureException(error, { extra: { documentName, version } });
+    return null;
+  }
+};
+
+/**
+ * Result type for fetchSigningData.
+ */
+export type FetchSigningDataResult = {
+  data: {
+    blob: Blob;
+    mappedFields: DocumentField[];
+    mappedSigner: DocumentSigner;
+  } | null;
+  error: Error | null;
+};
+
+/**
+ * Fetches all necessary data for the signing page: document blob, fields, and signer info.
+ *
+ * @param supabase - Supabase client instance.
+ * @param documentName - Name of the document.
+ * @param versionNumber - Version number of the document.
+ * @param documentId - ID of the document.
+ * @param signerEmail - Email of the signer.
+ * @param participantId - ID of the participant.
+ * @returns A promise resolving to a FetchSigningDataResult object.
+ */
+export const fetchSigningData = async (
+  supabase: SupabaseClient,
+  documentName: string,
+  versionNumber: number,
+  documentId: string,
+  signerEmail: string,
+  participantId: string,
+): Promise<FetchSigningDataResult> => {
+  try {
+    // 1. Fetch the PDF document blob
+    const blob = await getPdfDocument(supabase, documentName, versionNumber);
+    if (!blob) {
+      throw new Error("Document file not found or access denied.");
+    }
+
+    // 2. Fetch document fields and signer details for this specific participant
+    const { data: details, error: detailsError } = await supabase
+      .rpc("get_document_signing_data", {
+        p_document_id: documentId,
+        p_signer_email: signerEmail,
+      })
+      .single();
+
+    if (detailsError) {
+      console.error(
+        `Participant ${participantId} not found for document ${documentId}.`,
+        detailsError,
+      );
+      return {
+        data: null,
+        error: new Error(
+          "Could not retrieve signing details for this participant.",
+        ),
+      };
+    }
+
+    // Ensure necessary details were returned
+    if (!details.fields || !details.signer) {
+      console.error(
+        "RPC get_document_signing_data did not return expected data.",
+        { details },
+      );
+      return {
+        data: null,
+        error: new Error("Incomplete signing details received."),
+      };
+    }
+
+    // 3. Map fields (assuming 'fields' is JSONB in the expected format)
+    const mappedFields = details.fields.map(
+      (field: any): DocumentField => ({
+        id: field.id,
+        type: field.type,
+        label: field.label,
+        value: field.value || "", // Default to empty string if null
+        options: field.options,
+        required: field.required,
+        signatureScale: field.signature_scale,
+        textStyles: field.text_styles || {},
+        assignedTo: field.participant_id,
+        createdAt: field.created_at,
+        updatedAt: field.updated_at,
+        position: {
+          x: field.position_x,
+          y: field.position_y,
+          page: field.position_page,
+        },
+        size: {
+          width: field.size_width,
+          height: field.size_height,
+        },
+      }),
+    ) satisfies DocumentField[];
+
+    // 4. Map the current signer
+    // The RPC should return only the relevant participant's details
+    const mappedSigner: DocumentSigner = {
+      id: details.signer.id,
+      name: details.signer.name,
+      email: details.signer.email,
+      role: details.signer.role,
+      mode: details.signer.mode,
+      isOwner: details.signer.is_owner,
+      color: details.signer.color,
+      userId: details.signer.user_id,
+    };
+
+    return {
+      data: {
+        blob,
+        mappedFields,
+        mappedSigner,
+      },
+      error: null,
+    };
+  } catch (err: any) {
+    console.error("Error in fetchSigningData:", err);
+    // Capture exception without tagging it to a specific operation like RPC or storage
+    captureException(err, {
+      extra: { documentName, versionNumber, documentId, participantId },
+    });
+    return {
+      data: null,
+      error: err instanceof Error ? err : new Error(String(err)),
+    };
+  }
 };

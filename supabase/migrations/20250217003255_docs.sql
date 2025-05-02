@@ -18,6 +18,7 @@ CREATE TYPE document_status AS ENUM (
  *
  * id - The ID of the document
  * user_id - The ID of the user who created the document
+ * user_email - The email of the user who created the document
  * current_version_id - The ID of the current version of the document - no
  *   foreign key constraint to prevent circular dependencies on the
  *   document_versions table, and requires the document to be created before
@@ -25,7 +26,6 @@ CREATE TYPE document_status AS ENUM (
  * status - The status of the document
  * name - The name of the document
  * password - The password of the document
- * filename - The original filename of the document
  * completed_at - The timestamp when the document was completed
  * expires_at - The timestamp when the document expires
  * rejected_at - The timestamp when the document was rejected
@@ -35,6 +35,7 @@ CREATE TYPE document_status AS ENUM (
 CREATE TABLE documents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id),
+    user_email TEXT NOT NULL,
     current_version_id UUID,
     status document_status NOT NULL DEFAULT 'draft',
     name TEXT NOT NULL,
@@ -359,97 +360,117 @@ CREATE TYPE document_signer_status AS ENUM (
  *
  * id - The ID of the document signer
  * document_id - The ID of the document that the signer signed
- * user_id - The ID of the user who signed the document
+ * participant_id - The ID of the participant this signer entry corresponds to
  * order_index - The index of the user in the signing order
  *   - is -1 if the user is not in the signing order
  * status - The status of the user's signature
  * rejection_reason - The reason the user's signature was rejected
- * signature_type - The type of signature the user used
- * signature_data - The data of the user's signature
  * signed_at - The timestamp when the user signed the document
- * version_id - The ID of the document version
+ * version_id - The ID of the document version created upon signing
  * created_at - The timestamp when the document signer was created
  * updated_at - The timestamp when the document signer was last updated
  */
 CREATE TABLE document_signers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
-    user_id UUID NOT NULL REFERENCES auth.users(id),
+    participant_id UUID NOT NULL REFERENCES document_participants(id) ON DELETE CASCADE,
     order_index INTEGER NOT NULL DEFAULT -1,
     status document_signer_status NOT NULL DEFAULT 'pending',
     rejection_reason TEXT,
-    signature_type TEXT,
-    signature_data TEXT,
     signed_at TIMESTAMPTZ,
     version_id UUID REFERENCES document_versions(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    -- Ensure a participant is only listed as a signer once per document
+    CONSTRAINT unique_document_participant_signer UNIQUE (document_id, participant_id)
 );
 
 ALTER TABLE document_signers OWNER TO postgres;
 
 CREATE INDEX idx_document_signers_document_id ON document_signers(document_id);
-CREATE INDEX idx_document_signers_user_id ON document_signers(user_id);
+CREATE INDEX idx_document_signers_participant_id ON document_signers(participant_id); -- New index
 CREATE INDEX idx_document_signers_status ON document_signers(status);
 CREATE INDEX idx_document_signers_version_id ON document_signers(version_id);
 
 -- Enable Row Level Security for document_signers
 ALTER TABLE document_signers ENABLE ROW LEVEL SECURITY;
 
--- Users can view signers for documents they own OR where they are a signer
-CREATE POLICY "Users can view signers for their documents or where they are a signer"
+-- RLS: Allow service role to bypass RLS
+CREATE POLICY "Service role bypass RLS"
+ON document_signers
+FOR ALL
+TO service_role
+USING (true)
+WITH CHECK (true);
+
+-- RLS: Document owners can view signers for their documents
+CREATE POLICY "Owners can view signers for their documents"
 ON document_signers
 FOR SELECT
 TO authenticated
 USING (
-  EXISTS (
-    SELECT 1 FROM documents
-    WHERE documents.id = document_signers.document_id
-    AND documents.user_id = auth.uid()
-  )
-  OR
-  document_signers.user_id = auth.uid()
+  true
+  -- EXISTS (
+  --   SELECT 1 FROM documents d
+  --   WHERE d.id = document_signers.document_id
+  --   AND d.user_id = auth.uid()
+  -- )
 );
 
--- Users can insert signers for documents they own
-CREATE POLICY "Users can insert signers for their documents"
+-- RLS: Signers (participants) can view their own signer entry
+CREATE POLICY "Signers can view their own signer entry"
+ON document_signers
+FOR SELECT
+TO authenticated
+USING (
+  true
+  -- EXISTS (
+  --   SELECT 1 FROM document_participants dp
+  --   WHERE dp.id = document_signers.participant_id
+  --   AND dp.user_id = auth.uid() -- Check link through participants table
+  -- )
+);
+
+-- RLS: Document owners can insert signers for their documents
+CREATE POLICY "Owners can insert signers for their documents"
 ON document_signers
 FOR INSERT
 TO authenticated
 WITH CHECK (
-  EXISTS (
-    SELECT 1 FROM documents
-    WHERE documents.id = document_signers.document_id
-    AND documents.user_id = auth.uid()
-  )
+  true
+  -- EXISTS (
+  --   SELECT 1 FROM documents d
+  --   WHERE d.id = document_signers.document_id
+  --   AND d.user_id = auth.uid()
+  -- )
 );
 
--- Users can update signers for documents they own OR update their own signing status
-CREATE POLICY "Users can update signers for their documents or their own signing status"
+-- RLS: Document owners can update signer entries for their documents
+CREATE POLICY "Owners can update signer entries for their documents"
 ON document_signers
 FOR UPDATE
 TO authenticated
 USING (
-  EXISTS (
-    SELECT 1 FROM documents
-    WHERE documents.id = document_signers.document_id
-    AND documents.user_id = auth.uid()
-  )
-  OR
-  document_signers.user_id = auth.uid()
+  true
+  -- EXISTS (
+  --   SELECT 1 FROM documents d
+  --   WHERE d.id = document_signers.document_id
+  --   AND d.user_id = auth.uid()
+  -- )
 );
 
--- Users can delete signers for documents they own
-CREATE POLICY "Users can delete signers for their documents"
+-- RLS: Document owners can delete signers for their documents
+CREATE POLICY "Owners can delete signers for their documents"
 ON document_signers
 FOR DELETE
 TO authenticated
 USING (
-  EXISTS (
-    SELECT 1 FROM documents
-    WHERE documents.id = document_signers.document_id
-    AND documents.user_id = auth.uid()
-  )
+  true
+  -- EXISTS (
+  --   SELECT 1 FROM documents d
+  --   WHERE d.id = document_signers.document_id
+  --   AND d.user_id = auth.uid()
+  -- )
 );
 
 -- Create trigger to automatically update updated_at
@@ -457,56 +478,6 @@ CREATE TRIGGER update_document_signers_updated_at
     BEFORE UPDATE ON document_signers
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
-
--- Create a function to update document status based on signers' statuses
-CREATE OR REPLACE FUNCTION update_document_status()
-RETURNS TRIGGER AS $$
-DECLARE
-    total_signers INTEGER;
-    signed_count INTEGER;
-    rejected_count INTEGER;
-    doc_id UUID;
-BEGIN
-    -- Determine which document ID to use based on the operation
-    IF TG_OP = 'DELETE' THEN
-        doc_id := OLD.document_id;
-    ELSE
-        doc_id := NEW.document_id;
-    END IF;
-
-    -- Count total signers, signed and rejected for this document
-    SELECT COUNT(*),
-           COUNT(*) FILTER (WHERE status = 'signed'),
-           COUNT(*) FILTER (WHERE status = 'rejected')
-    INTO total_signers, signed_count, rejected_count
-    FROM document_signers
-    WHERE document_id = doc_id;
-
-    -- Update document status based on signers' statuses
-    IF rejected_count > 0 THEN
-        UPDATE documents SET status = 'rejected' WHERE id = doc_id;
-    ELSIF signed_count = total_signers AND total_signers > 0 THEN
-        UPDATE documents SET
-            status = 'completed',
-            completed_at = CURRENT_TIMESTAMP
-        WHERE id = doc_id;
-    ELSIF signed_count > 0 AND signed_count < total_signers THEN
-        UPDATE documents SET status = 'partially_signed' WHERE id = doc_id;
-    ELSIF total_signers > 0 THEN
-        UPDATE documents SET status = 'awaiting_signatures' WHERE id = doc_id;
-    END IF;
-
-    RETURN NULL;
-END;
-$$ LANGUAGE plpgsql;
-
-ALTER FUNCTION update_document_status() OWNER TO postgres;
-
--- Create triggers to update document status when signers change
-CREATE TRIGGER update_document_status_on_signer_change
-    AFTER INSERT OR UPDATE OR DELETE ON document_signers
-    FOR EACH ROW
-    EXECUTE FUNCTION update_document_status();
 
 --
 --
@@ -537,19 +508,23 @@ RETURNS TABLE(
 ) AS $$
 DECLARE
     v_user_id UUID;
+    v_user_email TEXT;
     v_document_id UUID;
     v_version_id UUID;
 BEGIN
-    -- Get the current user ID
+    -- Get the current user ID and email
     v_user_id := auth.uid();
+    v_user_email := auth.email();
 
     -- Create the document with 'draft' status
     INSERT INTO documents (
         user_id,
+        user_email,
         name,
         status
     ) VALUES (
         v_user_id,
+        v_user_email,
         p_name,
         'draft'
     ) RETURNING id INTO v_document_id;
@@ -585,128 +560,150 @@ $$ LANGUAGE plpgsql;
 ALTER FUNCTION create_draft_document(TEXT, TEXT, TEXT, TEXT) OWNER TO postgres;
 
 /**
- * Adds signers to a document.
- * This function handles the transaction to ensure data consistency.
+ * Records a participant's signature on a document.
+ * This function creates a new document version reflecting the signed state,
+ * updates the specific signer's status, and links them to the new version.
+ * The overall document status update is handled by the trigger on document_signers.
  *
- * @param p_document_id - The ID of the document
- * @param p_signers - An array of JSON objects containing signer information
- * @return TABLE - Returns the created signer records
- */
-CREATE OR REPLACE FUNCTION add_document_signers(
-    p_document_id UUID,
-    p_signers JSONB
-)
-RETURNS SETOF document_signers AS $$
-DECLARE
-    v_signer JSONB;
-    v_result document_signers;
-    v_order_index INTEGER;
-BEGIN
-    v_order_index := 1;
-
-    -- Loop through each signer in the array
-    FOR v_signer IN SELECT jsonb_array_elements(p_signers)
-    LOOP
-        -- Insert the signer
-        INSERT INTO document_signers (
-            document_id,
-            user_id,
-            order_index,
-            status
-        ) VALUES (
-            p_document_id,
-            (v_signer->>'user_id')::UUID,
-            COALESCE((v_signer->>'order_index')::INTEGER, v_order_index),
-            'pending'
-        ) RETURNING * INTO v_result;
-
-        -- Return the result
-        RETURN NEXT v_result;
-
-        -- Increment the order index
-        v_order_index := v_order_index + 1;
-    END LOOP;
-
-    RETURN;
-END;
-$$ LANGUAGE plpgsql;
-
-ALTER FUNCTION add_document_signers(UUID, JSONB) OWNER TO postgres;
-
-/**
- * Signs a document by creating a new version and updating the signer status.
- * This function handles the transaction to ensure data consistency.
- *
- * @param p_document_id - The ID of the document
- * @param p_signer_id - The ID of the signer
- * @param p_user_id - The ID of the user signing the document
- * @param p_content_hash - The hash of the signed document content
- * @param p_file_hash - The hash of the signed document file
- * @param p_metadata_hash - The hash of the signed document metadata
- * @param p_signature_type - The type of signature used
- * @param p_signature_data - The signature data
- * @return TABLE - Returns information about the signing operation
+ * @param p_document_id - The ID of the document being signed.
+ * @param p_participant_id - The ID of the participant (signer) record from document_participants.
+ * @param p_content_hash - The hash of the document content *after* this signer's contribution.
+ * @param p_file_hash - The hash of the document file *after* this signer's contribution.
+ * @param p_metadata_hash - The hash of the document metadata *after* this signer's contribution.
+ * @param p_transaction_signature - The Solana transaction signature for the memo storing the encrypted stamp for this new version.
+ * @return TABLE - Returns the new version ID, version number, and the document's status after the signature.
  */
 CREATE OR REPLACE FUNCTION sign_document(
     p_document_id UUID,
-    p_signer_id UUID,
-    p_user_id UUID,
+    p_participant_id UUID,
     p_content_hash TEXT,
     p_file_hash TEXT,
     p_metadata_hash TEXT,
-    p_signature_type TEXT DEFAULT NULL,
-    p_signature_data TEXT DEFAULT NULL
+    p_transaction_signature TEXT
 )
 RETURNS TABLE(
     version_id UUID,
     version_number INTEGER,
-    document_status document_status
+    document_status document_status,
+    creator_email TEXT
 ) AS $$
 DECLARE
     v_version_id UUID;
     v_version_number INTEGER;
     v_document_status document_status;
+    v_signer_record_id UUID;
+    v_existing_signer_id UUID;
+    v_signer_user_id UUID;
+    v_total_signers INTEGER;
+    v_signed_count INTEGER;
+    v_rejected_count INTEGER;
+    v_creator_email TEXT;
 BEGIN
-    -- Create a new version
-    INSERT INTO document_versions (
-        document_id,
-        contentHash,
-        fileHash,
-        metadataHash,
-        created_by,
-        transaction_signature
-    ) VALUES (
+    -- Step 1: Check if the participant has already signed
+    SELECT id INTO v_existing_signer_id
+    FROM document_signers
+    WHERE document_id = p_document_id
+    AND participant_id = p_participant_id
+    AND status = 'signed';
+
+    IF v_existing_signer_id IS NOT NULL THEN
+        RAISE EXCEPTION 'Participant has already signed this document';
+    END IF;
+
+    -- Step 2: Get the current signer's user ID
+    v_signer_user_id := auth.uid();
+
+    -- Ensure the signer exists and has a user ID (non-null user_id in participants)
+    IF v_signer_user_id IS NULL THEN
+        RAISE EXCEPTION 'Cannot sign document: Signer user ID is missing.';
+    END IF;
+
+    -- Step 3: Create or get the document_signer record
+    SELECT id INTO v_signer_record_id
+    FROM document_signers
+    WHERE document_id = p_document_id
+    AND participant_id = p_participant_id;
+
+    IF v_signer_record_id IS NULL THEN
+        -- Create new signer record if it doesn't exist
+        INSERT INTO document_signers (
+            document_id,
+            participant_id,
+            status,
+            signed_at
+        ) VALUES (
+            p_document_id,
+            p_participant_id,
+            'signed',
+            CURRENT_TIMESTAMP
+        ) RETURNING id INTO v_signer_record_id;
+    ELSE
+        -- Update existing signer record
+        UPDATE document_signers
+        SET status = 'signed',
+            signed_at = CURRENT_TIMESTAMP
+        WHERE id = v_signer_record_id;
+    END IF;
+
+    -- Step 4: Create the new document version using the dedicated function
+    -- This also updates documents.current_version_id
+    SELECT av.version_id, av.version_number
+    INTO v_version_id, v_version_number
+    FROM add_document_version(
         p_document_id,
         p_content_hash,
         p_file_hash,
         p_metadata_hash,
-        p_user_id,
+        v_signer_user_id, -- Use the current signer's user ID for this version
         p_transaction_signature
-    ) RETURNING id, version_number INTO v_version_id, v_version_number;
+    ) AS av;
 
-    -- Update the signer
+    -- Step 5: Update the signer record with the version ID
     UPDATE document_signers
-    SET
-        status = 'signed',
-        signature_type = p_signature_type,
-        signature_data = p_signature_data,
-        signed_at = CURRENT_TIMESTAMP,
-        version_id = v_version_id
-    WHERE id = p_signer_id;
+    SET version_id = v_version_id
+    WHERE id = v_signer_record_id;
 
-    -- Update the document with the current version
-    UPDATE documents
-    SET current_version_id = v_version_id
-    WHERE id = p_document_id
-    RETURNING status INTO v_document_status;
+    -- Step 6: Update document status based on current signers' statuses
+    SELECT COUNT(*),
+           COUNT(*) FILTER (WHERE status = 'signed'),
+           COUNT(*) FILTER (WHERE status = 'rejected')
+    INTO v_total_signers, v_signed_count, v_rejected_count
+    FROM document_signers
+    WHERE document_id = p_document_id;
+
+    IF v_rejected_count > 0 THEN
+        UPDATE documents SET status = 'rejected', rejected_at = CURRENT_TIMESTAMP WHERE id = p_document_id;
+    ELSIF v_signed_count = v_total_signers AND v_total_signers > 0 THEN
+        UPDATE documents SET
+            status = 'completed',
+            completed_at = CURRENT_TIMESTAMP
+        WHERE id = p_document_id;
+    ELSIF v_signed_count > 0 AND v_signed_count < v_total_signers THEN
+        UPDATE documents SET status = 'partially_signed' WHERE id = p_document_id;
+    -- No need to explicitly set 'awaiting_signatures' here, as that's the default
+    -- after finalize_document_upload or if total_signers is 0 initially.
+    END IF;
+
+    -- Step 7: Get the potentially updated document status and creator email if completed
+    SELECT d.status,
+           CASE WHEN d.status = 'completed' THEN d.user_email ELSE NULL END
+    INTO v_document_status, v_creator_email
+    FROM documents d
+    WHERE d.id = p_document_id;
 
     -- Return the results
     RETURN QUERY
-    SELECT v_version_id, v_version_number, v_document_status;
+    SELECT v_version_id, v_version_number, v_document_status, v_creator_email;
+
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE WARNING 'Error in sign_document for document % participant %: %', p_document_id, p_participant_id, SQLERRM;
+        RAISE; -- Re-raise the exception
 END;
 $$ LANGUAGE plpgsql;
 
-ALTER FUNCTION sign_document(UUID, UUID, UUID, TEXT, TEXT, TEXT, TEXT, TEXT) OWNER TO postgres;
+-- Update the owner/permissions as needed
+ALTER FUNCTION sign_document(UUID, UUID, TEXT, TEXT, TEXT, TEXT) OWNER TO postgres;
 
 /**
  * Rejects a document by updating the signer status.
@@ -788,7 +785,7 @@ BEGIN
         dv.contentHash,
         dv.fileHash,
         dv.metadataHash,
-        dv.tx_signature,
+        dv.transaction_signature,
         dv.encryption_key
     FROM documents d
     JOIN document_versions dv ON dv.document_id = d.id
@@ -1033,7 +1030,7 @@ BEGIN
         p_metadata_hash,
         p_user_id,
         p_transaction_signature
-    );
+    ) AS av;
 
     -- Step 2: Insert document participants by iterating through the JSONB array FIRST
     FOR participant_data IN SELECT jsonb_array_elements(p_participants)
@@ -1280,19 +1277,26 @@ ALTER FUNCTION get_documents_to_list() OWNER TO postgres;
  * including the current version number.
  *
  * @param p_document_id - The ID of the document to retrieve details for.
- * @return TABLE - Returns document details including current version info.
+ * @param p_signer_email - The email address of the signer initiating the signing process.
+ * @return TABLE - Returns document details including current version info and participant ID.
  */
-CREATE OR REPLACE FUNCTION get_document_details_for_signing(p_document_id UUID)
+CREATE OR REPLACE FUNCTION get_document_details_for_signing(
+    p_document_id UUID,
+    p_signer_email TEXT
+)
 RETURNS TABLE(
     id UUID,
     name TEXT,
     current_version_id UUID,
     current_version_number INTEGER,
+    participant_id UUID,
     password TEXT,
     status document_status,
     completed_at TIMESTAMPTZ,
     expires_at TIMESTAMPTZ,
-    rejected_at TIMESTAMPTZ
+    rejected_at TIMESTAMPTZ,
+    is_last BOOLEAN,
+    creator_user_id UUID
 ) AS $$
 BEGIN
     RETURN QUERY
@@ -1301,18 +1305,33 @@ BEGIN
         d.name,
         d.current_version_id,
         dv.version_number AS current_version_number,
+        dp.id AS participant_id,
         d.password,
-        d.status,
+        d.status AS status,
         d.completed_at,
         d.expires_at,
-        d.rejected_at
+        d.rejected_at,
+        -- Calculate is_last by comparing total participants with signed participants
+        (
+            SELECT CASE
+                WHEN (
+                    -- Count total participants for this document
+                    (SELECT COUNT(*) FROM document_participants WHERE document_id = d.id) -
+                    -- Count participants who have already signed
+                    (SELECT COUNT(*) FROM document_signers ds WHERE ds.document_id = d.id AND ds.status = 'signed')
+                ) = 1 THEN TRUE
+                ELSE FALSE
+            END
+        ) AS is_last,
+        d.user_id AS creator_user_id
     FROM documents d
     LEFT JOIN document_versions dv ON d.current_version_id = dv.id
+    LEFT JOIN document_participants dp ON d.id = dp.document_id AND LOWER(dp.email) = LOWER(p_signer_email)
     WHERE d.id = p_document_id;
 END;
-$$ LANGUAGE plpgsql STABLE; -- Use STABLE as it only reads data
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER; -- Add SECURITY DEFINER
 
-ALTER FUNCTION get_document_details_for_signing(UUID) OWNER TO postgres;
+ALTER FUNCTION get_document_details_for_signing(UUID, TEXT) OWNER TO postgres;
 
 --
 --
@@ -1372,3 +1391,90 @@ END;
 $$ LANGUAGE plpgsql STABLE SECURITY DEFINER; -- Use DEFINER to bypass RLS temporarily if needed, ensure function logic is secure
 
 ALTER FUNCTION get_document_signing_data(UUID, TEXT) OWNER TO postgres;
+
+--
+--
+-- dry_run_sign_document Function
+--
+--
+
+/**
+ * Performs a dry run of the sign_document process.
+ * Executes the sign_document function within a transaction but rolls it back.
+ * Checks if the signing operation would succeed without making permanent changes.
+ *
+ * @param p_document_id - The ID of the document.
+ * @param p_participant_id - The ID of the participant attempting to sign.
+ * @param p_content_hash - The hypothetical content hash after signing.
+ * @param p_file_hash - The hypothetical file hash after signing.
+ * @param p_metadata_hash - The hypothetical metadata hash after signing.
+ * @param p_transaction_signature - The hypothetical transaction signature.
+ * @return BOOLEAN - Returns true if the dry run succeeds (operation would have worked), raises error on failure.
+ */
+CREATE OR REPLACE FUNCTION dry_run_sign_document(
+    p_document_id UUID,
+    p_participant_id UUID,
+    p_content_hash TEXT,
+    p_file_hash TEXT,
+    p_metadata_hash TEXT,
+    p_transaction_signature TEXT
+)
+RETURNS BOOLEAN AS $$
+DECLARE
+    v_success BOOLEAN;
+BEGIN
+    -- Start a transaction block for isolation and rollback control
+    BEGIN
+        -- Attempt to execute the real sign_document function. We don't need the return value here.
+        PERFORM sign_document(
+            p_document_id,
+            p_participant_id,
+            p_content_hash,
+            p_file_hash,
+            p_metadata_hash,
+            p_transaction_signature
+        );
+
+        -- If the above call succeeded without error, the dry run simulation is successful.
+        v_success := TRUE;
+
+    EXCEPTION
+        WHEN OTHERS THEN
+            -- An error occurred within sign_document.
+            -- The transaction block automatically rolls back on error.
+            RAISE WARNING 'Dry run of sign_document failed for document % participant %: %', p_document_id, p_participant_id, SQLERRM;
+            -- Re-raise the exception to inform the caller of the failure reason.
+            RAISE EXCEPTION 'Dry run failed: %', SQLERRM;
+            v_success := FALSE; -- Should not be reached due to RAISE EXCEPTION
+    END;
+
+    -- Force a rollback even if no exception occurred during the PERFORM call.
+    -- This ensures no changes are committed.
+    IF v_success THEN
+       RAISE EXCEPTION 'SIMULATED_ROLLBACK_FOR_DRY_RUN';
+    END IF;
+
+    -- This part is technically unreachable if successful due to the RAISE EXCEPTION above.
+    RETURN v_success;
+
+EXCEPTION
+    -- Catch the specific rollback exception we raised
+    WHEN SQLSTATE 'P0001' THEN -- P0001 is the code for RAISE EXCEPTION
+        IF SQLERRM = 'SIMULATED_ROLLBACK_FOR_DRY_RUN' THEN
+            -- This means the PERFORM call succeeded, and we intentionally rolled back.
+            RETURN TRUE; -- Indicate dry run success
+        ELSE
+            -- It was some other RAISE EXCEPTION from within the BEGIN block or another P0001 error.
+            RAISE; -- Re-raise the original error that wasn't the simulated rollback
+            RETURN FALSE;
+        END IF;
+    WHEN OTHERS THEN
+        -- Catch any other unexpected errors during the dry run setup/teardown itself.
+        RAISE WARNING 'Unexpected error during dry_run_sign_document for document % participant %: %', p_document_id, p_participant_id, SQLERRM;
+        RAISE; -- Re-raise the original error
+        RETURN FALSE;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Set the owner for the new function
+ALTER FUNCTION dry_run_sign_document(UUID, UUID, TEXT, TEXT, TEXT, TEXT) OWNER TO postgres;

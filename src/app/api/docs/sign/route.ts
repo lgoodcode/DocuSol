@@ -1,212 +1,266 @@
 import { NextResponse } from "next/server";
 import { captureException } from "@sentry/nextjs";
+import { validate as uuidValidate } from "uuid";
 import { z } from "zod";
 
+import { STAMP_VERSION } from "@/lib/types/stamp";
 import { createServerClient } from "@/lib/supabase/server";
-import {
-  confirmTransaction,
-  getLatestBlockSlot,
-  sendMemoTransaction,
-} from "@/lib/utils/solana";
-import { bufferToHex } from "@/lib/utils";
-import { createFileHash } from "@/lib/utils/hashing";
+import { getUserFromSession } from "@/lib/supabase/utils"; // Helper to get user from server session
+import { sendEmail } from "@/lib/utils/email";
+import { sendMemoTransaction } from "@/lib/utils/solana";
+import { ObfuscatedStampSerializer } from "@/lib/utils/serializer";
+import type { DocumentStamp } from "@/lib/types/stamp";
+import { SignatureState } from "@/lib/types/stamp";
 
-interface SignDocumentData {
-  id: string;
-  password: string | null;
-  isSigned: boolean;
-  signedAt: string | null;
-}
+import { SignRequestFormSchema } from "./utils";
 
-type SigningResponse = {
-  txSignature: string;
-  signedHash: string;
+const createErrorResponse = (message: string, status: number) => {
+  console.error(`Sign API Error: ${message}`);
+  captureException(new Error(message));
+  return NextResponse.json({ error: message }, { status });
 };
 
-const ERRORS = {
-  INVALID_CONTENT_TYPE: "Invalid content type. Expected multipart/form-data",
-  NO_ID: "No id provided",
-  NO_SIGNED_DOCUMENT: "No signed document provided",
-  DOCUMENT_NOT_FOUND: "Document not found",
-  DOCUMENT_ALREADY_SIGNED: "Document is already signed",
-  PASSWORD_REQUIRED: "Password required for this document",
-  INVALID_PASSWORD: "Invalid password",
-  TRANSACTION_FAILED: (error: Error) => `Transaction failed: ${error.message}`,
-  TRANSACTION_CONFIRMATION_FAILED: (error: Error) =>
-    `Transaction confirmation failed: ${error.message}`,
-  DATABASE_ERROR: (message: string) => `Database error: ${message}`,
-} as const;
-
-const ERROR_STATUS_CODES: Record<string, number> = {
-  [ERRORS.NO_ID]: 400,
-  [ERRORS.NO_SIGNED_DOCUMENT]: 400,
-  [ERRORS.INVALID_CONTENT_TYPE]: 400,
-  [ERRORS.DOCUMENT_NOT_FOUND]: 404,
-  [ERRORS.PASSWORD_REQUIRED]: 401,
-  [ERRORS.INVALID_PASSWORD]: 401,
-  [ERRORS.DOCUMENT_ALREADY_SIGNED]: 409,
-};
-
-const FormDataSchema = z.object({
-  id: z.string().min(1, ERRORS.NO_ID),
-  signed_document: z.instanceof(File, { message: ERRORS.NO_SIGNED_DOCUMENT }),
-  password: z.string().nullable(),
+const schema = SignRequestFormSchema.extend({
+  dryRun: z.object({
+    memo: z.boolean().optional().default(false),
+    email: z.boolean().optional().default(false),
+    database: z.boolean().optional().default(false),
+  }),
 });
 
-const getErrorStatusCode = (message: string): number => {
-  return ERROR_STATUS_CODES[message] || 500;
-};
-
-const createErrorResponse = (error: unknown) => {
-  console.error("Error processing sign request:", error);
-  captureException(error);
-
-  if (error instanceof z.ZodError) {
-    return NextResponse.json(
-      { error: error.errors[0].message },
-      { status: 400 },
-    );
-  }
-
-  const errorMessage =
-    error instanceof Error ? error.message : "Internal server error";
-  const statusCode = getErrorStatusCode(errorMessage);
-
-  return NextResponse.json({ error: errorMessage }, { status: statusCode });
-};
-
-/**
- * Validate document access and status
- */
-async function validateDocumentAccess(
-  id: string,
-  password: string | null,
-): Promise<SignDocumentData> {
-  const supabase = await createServerClient();
-  const { error: fetchError, data: document } = await supabase
-    .from("documents")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  if (fetchError || !document) {
-    throw new Error(ERRORS.DOCUMENT_NOT_FOUND);
-  }
-
-  if (document.is_signed) {
-    throw new Error(ERRORS.DOCUMENT_ALREADY_SIGNED);
-  }
-
-  if (document.password) {
-    if (!password) {
-      throw new Error(ERRORS.PASSWORD_REQUIRED);
-    }
-    if (password !== document.password) {
-      throw new Error(ERRORS.INVALID_PASSWORD);
-    }
-  }
-
-  return document;
-}
-
-/**
- * Process document signing
- */
-async function processDocumentSigning(
-  signedDocument: File,
-  password: string | null,
-  blockSlot: number,
-): Promise<{ hash: string; signature: string }> {
-  const signedDocumentBuffer = Buffer.from(await signedDocument.arrayBuffer());
-  const signedHash = createFileHash(signedDocumentBuffer, blockSlot, password);
-  const memoMessage = `SIGNED_FILE_HASH=${signedHash}`;
-
-  try {
-    const transactionSignature = await sendMemoTransaction(memoMessage);
-    await confirmTransaction(transactionSignature);
-
-    return {
-      hash: signedHash,
-      signature: transactionSignature,
-    };
-  } catch (error) {
-    if (error instanceof Error && error.message.includes("confirmation")) {
-      throw new Error(ERRORS.TRANSACTION_CONFIRMATION_FAILED(error));
-    }
-    throw new Error(ERRORS.TRANSACTION_FAILED(error as Error));
-  }
-}
-
-/**
- * Update document with signing information
- */
-async function updateDocumentWithSignature(
-  id: string,
-  signedDocument: Buffer,
-  signedHash: string,
-  transactionSignature: string,
-): Promise<void> {
-  const supabase = await createServerClient();
-  const { error: updateError } = await supabase
-    .from("documents")
-    .update({
-      is_signed: true,
-      signed_hash: signedHash,
-      signed_transaction_signature: transactionSignature,
-      signed_document: bufferToHex(signedDocument),
-      signed_at: new Date().toISOString(),
-    })
-    .eq("id", id);
-
-  if (updateError) {
-    throw new Error(ERRORS.DATABASE_ERROR(updateError.message));
-  }
-}
-
+// --- Main POST Handler ---
 export async function POST(request: Request) {
+  const supabase = await createServerClient({ useServiceRole: true });
+
   try {
-    // Validate content type
-    const contentType = request.headers.get("content-type") || "";
-    if (!contentType.includes("multipart/form-data")) {
-      throw new Error(ERRORS.INVALID_CONTENT_TYPE);
+    const body = await request.json();
+    const {
+      documentId,
+      documentName,
+      participantId,
+      isLastSigner,
+      versionNumber,
+      password,
+      creatorUserId,
+      contentHash,
+      fileHash,
+      metadataHash,
+      dryRun,
+      signerEmail,
+      token,
+    } = schema.parse(body);
+    const newVersionNumber = versionNumber + 1;
+
+    console.log({
+      documentId,
+      documentName,
+      participantId,
+      isLastSigner,
+      versionNumber,
+      password,
+      creatorUserId,
+      contentHash,
+      fileHash,
+      metadataHash,
+      dryRun,
+      signerEmail,
+      token,
+    });
+
+    // Step 1: Construct the DocumentStamp object
+    const documentStamp: DocumentStamp = {
+      version: STAMP_VERSION,
+      contentHash: {
+        contentHash,
+        fileHash,
+        metadataHash,
+      },
+      // hashHistory: {
+      //   initialHash: documentContentHash.fileHash,
+      //   currentHash: documentContentHash.fileHash,
+      //   updates: [],
+      // },
+      // signers: participants,
+      // signatures: [],
+      status: {
+        state: isLastSigner
+          ? SignatureState.COMPLETED
+          : SignatureState.AWAITING_SIGNATURES,
+        revoked: false,
+        expired: false,
+        expiresAt: undefined,
+      },
+      // rules: {
+      //   requireAll: true,
+      //   requireOrder: false,
+      //   minSignatures: participants.length,
+      //   allowRevocation: false,
+      // },
+      metadata: {
+        transaction: "", // Will be filled after Solana tx
+        createdAt: new Date().getTime(),
+        creator: creatorUserId,
+        documentId: documentId,
+        version: newVersionNumber,
+        password: password,
+      },
+    };
+
+    console.log("documentStamp", documentStamp);
+
+    // Step 2: Serialize, Pack, Obfuscate the DocumentStamp
+    const serializer = new ObfuscatedStampSerializer();
+    const obfuscatedStamp = serializer.serialize(documentStamp);
+
+    // Step 3: Format the memo for the Solana blockchain - prefix the obfuscated stamp with
+    // the version to identify the stamp format for method of deserialization
+    const formattedMemo = `v${STAMP_VERSION}:${obfuscatedStamp}`;
+
+    // Step 4: Store the stamp in the Solana memo blockchain
+    const txSignature = dryRun.memo
+      ? "dry_run_memo_transaction"
+      : await sendMemoTransaction(formattedMemo);
+
+    // Step 5: Update the document metadata with the new transaction signature
+    documentStamp.metadata.transaction = txSignature;
+
+    console.log("txSignature", txSignature);
+    if (dryRun.memo) {
+      console.log("Dry run: Skipped memo transaction");
     }
 
-    // Parse and validate form data
-    const formData = await request.formData();
-    const validatedData = FormDataSchema.parse({
-      id: formData.get("id"),
-      signed_document: formData.get("signed_document"),
-      password: formData.get("password"),
-    });
+    // Step 6: Call the appropriate RPC function based on the dryRun flag
+    const rpcName = dryRun.database ? "dry_run_sign_document" : "sign_document";
+    const { error: rpcError, data: rpcData } = await supabase
+      .rpc(rpcName, {
+        p_document_id: documentId,
+        p_participant_id: participantId,
+        p_content_hash: contentHash,
+        p_file_hash: fileHash,
+        p_metadata_hash: metadataHash,
+        p_transaction_signature: txSignature,
+      })
+      .single();
 
-    // Validate document access
-    await validateDocumentAccess(validatedData.id, validatedData.password);
-
-    // Get block slot and process signing
-    const blockSlot = await getLatestBlockSlot();
-    const signedDocumentBuffer = Buffer.from(
-      await validatedData.signed_document.arrayBuffer(),
-    );
-    const { hash: signedHash, signature: txSignature } =
-      await processDocumentSigning(
-        validatedData.signed_document,
-        validatedData.password,
-        blockSlot,
+    let creatorEmail: string | null = null;
+    if (dryRun.database) {
+      creatorEmail = "lawrence@docusol.app";
+      console.log("Dry run: Skipped database operation for signing.");
+    } else if (rpcError) {
+      // Handle actual RPC errors only if not in dry run mode
+      console.error(`RPC ${rpcName} error:`, rpcError);
+      if (rpcError.message.includes("Signer record not found")) {
+        return createErrorResponse(
+          "Signer record mismatch or already processed.",
+          404,
+        );
+      }
+      if (rpcError.message.includes("Token already used or invalidated")) {
+        return createErrorResponse(
+          "Verification token already used or invalidated.",
+          401,
+        );
+      }
+      // Handle other potential RPC errors
+      return createErrorResponse(
+        `Failed to record signature: ${rpcError.message}`,
+        500,
       );
+    } else {
+      console.log("rpcData", rpcData);
+      creatorEmail = rpcData.creator_email;
+    }
 
-    // Update document
-    await updateDocumentWithSignature(
-      validatedData.id,
-      signedDocumentBuffer,
-      signedHash,
-      txSignature,
-    );
+    console.log("creatorEmail", creatorEmail);
 
-    return NextResponse.json<SigningResponse>({
-      txSignature,
-      signedHash,
+    if (!dryRun.database && token) {
+      const { error: updateError } = await supabase
+        .from("email_verification_tokens")
+        .update({ used_at: new Date().toISOString() })
+        .eq("token", token);
+
+      if (updateError) {
+        // Log the error but proceed, as the main signing action succeeded.
+        console.error("Failed to invalidate token:", updateError);
+        captureException(updateError, {
+          extra: { token },
+        });
+      } else {
+        console.log(
+          `Token invalidated successfully: ${token.substring(0, 8)}...`,
+        );
+      }
+    } else if (dryRun.database) {
+      console.log("Dry run: Skipped token invalidation.");
+    }
+
+    // Step 8: Send email notifications
+    if (dryRun.email) {
+      console.log("Dry run: Using test email address.");
+      await sendEmail({
+        type: "notify",
+        creatorEmail: creatorEmail,
+        signerEmail: signerEmail,
+        subject: "Document signed",
+        documentName: "Document name",
+        senderMessage: "Sender message",
+      });
+    } else if (isLastSigner) {
+      // If this is the last signer, send a completion email to the creator
+      try {
+        await sendEmail({
+          type: "complete",
+          creatorEmail: creatorEmail,
+          subject: `Document Completed: "${documentName}"`,
+          documentName: documentName,
+        });
+      } catch (emailError) {
+        console.error("Failed to send completion email:", emailError);
+        captureException(emailError, {
+          extra: { documentId, creatorUserId },
+        });
+      }
+    }
+
+    // Step 9: Return Success Response (renumbered from 8)
+    return NextResponse.json({
+      success: true,
+      message: `Document successfully ${dryRun.database ? "(dry run) " : ""}signed.`,
+      transactionSignature: txSignature, // Return the new signature
+      versionNumber: newVersionNumber,
+      documentStatus: rpcData?.document_status ?? "unknown", // Return updated status from RPC or dry run status
+      dryRun: dryRun, // Include dry run status in response
     });
-  } catch (error) {
-    return createErrorResponse(error);
+  } catch (error: unknown) {
+    if (error instanceof z.ZodError) {
+      return createErrorResponse(
+        `Invalid request data: ${error.errors.map((e) => `${e.path.join(".")} - ${e.message}`).join(", ")}`,
+        400,
+      );
+    }
+
+    captureException(error);
+
+    const message =
+      error instanceof Error
+        ? error.message
+        : "An unknown error occurred during signing.";
+    // Determine status code based on error message if possible
+    let statusCode = 500;
+    if (
+      message === "Signer is not a participant of this document" ||
+      message === "Could not determine the user performing the signing action."
+    )
+      statusCode = 403;
+    else if (
+      message === "Invalid or expired verification token" ||
+      message === "Verification token already used" ||
+      message === "Verification token invalidated"
+    )
+      statusCode = 401;
+    else if (message === "Signer record mismatch or already processed.")
+      statusCode = 404;
+
+    return createErrorResponse(message, statusCode);
   }
 }

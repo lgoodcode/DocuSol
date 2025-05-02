@@ -1,44 +1,64 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, CheckCircle } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
+import { toast } from "sonner";
+import { captureException } from "@sentry/nextjs";
 
+import { API_PATHS } from "@/config/routes/api";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 import { DocumentCanvas } from "@/components/pdf-editor/DocumentCanvas";
 import { FieldsList } from "@/components/pdf-editor/FieldsList";
 import { createClient } from "@/lib/supabase/client";
+import { fileToDataUrl, uploadDocumentToStorage } from "@/lib/utils";
+import { PDFHash } from "@/lib/stamp/hash-service";
+import { PDFMetadata } from "@/lib/stamp/pdf-metadata";
+import type { DocumentContentHash } from "@/lib/types/stamp";
 
 import type { DocumentField } from "@/lib/pdf-editor/document-types";
 import type { DocumentSigner } from "@/lib/types/stamp";
 
 import { PasswordRequiredContent } from "./password-required-content";
-import { useDocumentSigningStore } from "./useDocumentSignStore";
-import { getPdfDocument } from "./utils";
+import {
+  useDocumentSigningStore,
+  selectCanCompleteSigning,
+} from "./useDocumentSignStore";
+import { fetchSigningData } from "./utils";
 
 interface SignDocContentProps {
   token: string;
   password?: string;
   signerEmail: string;
+  participantId: string;
   documentId: string;
   documentName: string;
   versionId: string;
   versionNumber: number;
+  isLastSigner: boolean;
 }
 
 export function SignDocContent({
   token,
   password,
   signerEmail,
+  participantId,
   documentId,
   documentName,
   versionId,
   versionNumber,
+  isLastSigner,
+  creatorUserId,
 }: SignDocContentProps) {
   const supabase = createClient();
   const [isPasswordVerified, setIsPasswordVerified] = useState(!password);
   const [isMounted, setIsMounted] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSigned, setIsSigned] = useState(false);
+  const canComplete = useDocumentSigningStore(selectCanCompleteSigning);
   const {
     documentDataUrl,
     numPages,
@@ -57,6 +77,7 @@ export function SignDocContent({
     resetStore,
     isLoading,
     error,
+    exportAndDownloadSignedPdf,
   } = useDocumentSigningStore(
     useShallow((state) => ({
       documentDataUrl: state.documentDataUrl,
@@ -76,6 +97,7 @@ export function SignDocContent({
       resetStore: state.resetStore,
       isLoading: state.isLoading,
       error: state.error,
+      exportAndDownloadSignedPdf: state.exportAndDownloadSignedPdf,
     })),
   );
 
@@ -94,110 +116,61 @@ export function SignDocContent({
     setLoading(true);
     setError(null);
 
-    let isMounted = true;
+    let isMountedCheck = true;
 
-    const fetchData = async () => {
-      try {
-        const blob = await getPdfDocument(
-          supabase,
-          documentName,
-          versionNumber,
+    const loadData = async () => {
+      const result = await fetchSigningData(
+        supabase,
+        documentName,
+        versionNumber,
+        documentId,
+        signerEmail,
+        participantId,
+      );
+
+      if (!isMountedCheck) return;
+
+      if (result.error || !result.data) {
+        console.error("Error fetching signing data:", result.error);
+        setError(
+          result.error?.message || "An unexpected error occurred loading data.",
         );
-        if (!blob) {
-          throw new Error("Document file not found or access denied.");
-        }
+        setLoading(false);
+        return;
+      }
 
-        if (!isMounted) return;
+      const { blob, mappedFields, mappedSigner } = result.data;
 
-        const { data: signingRpcData, error: signingError } = await supabase
-          .rpc("get_document_signing_data", {
-            p_document_id: documentId,
-            p_signer_email: signerEmail,
-          })
-          .single();
+      setFields(mappedFields);
+      setCurrentSigner(mappedSigner);
 
-        if (!isMounted) return;
-
-        if (signingError) {
-          console.error("Error fetching document signing data", signingError);
-          throw new Error("Error fetching required signing information.");
-        }
-        if (
-          !signingRpcData ||
-          !signingRpcData.fields ||
-          !signingRpcData.signer
-        ) {
-          throw new Error("Document signing data not found for this user.");
-        }
-
-        // Map the signer and fields from the SQL RPC response to the document store types
-        const mappedFields = (signingRpcData.fields as any[]).map((field) => ({
-          id: field.id,
-          type: field.type,
-          label: field.label,
-          value: field.value,
-          options: field.options,
-          required: field.required,
-          signature_scale: field.signature_scale,
-          text_styles: field.text_styles || {},
-          assignedTo: field.participant_id,
-          createdAt: field.created_at,
-          updatedAt: field.updated_at,
-          position: {
-            x: field.position_x,
-            y: field.position_y,
-            page: field.position_page,
-          },
-          size: {
-            width: field.size_width,
-            height: field.size_height,
-          },
-        })) satisfies DocumentField[];
-
-        setFields(mappedFields);
-
-        const signerData = signingRpcData.signer as any;
-        const mappedSigner = {
-          id: signerData.id,
-          name: signerData.name,
-          email: signerData.email,
-          color: signerData.color,
-          role: signerData.role,
-          mode: signerData.mode,
-          isOwner: signerData.is_owner,
-        } satisfies DocumentSigner;
-
-        setCurrentSigner(mappedSigner);
-
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          if (isMounted && typeof reader.result === "string") {
-            setDocumentDataUrl(reader.result);
-          } else if (isMounted) {
-            setError("Failed to read document file.");
-            setLoading(false);
-          }
-        };
-        reader.onerror = () => {
-          if (isMounted) {
-            console.error("Failed to read document file.");
-            setError("Failed to read document file.");
-            setLoading(false);
-          }
-        };
-        reader.readAsDataURL(blob);
-      } catch (err: any) {
-        console.error("Error fetching data for signing:", err);
-        if (isMounted) {
-          setError(err.message || "An unexpected error occurred");
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (isMountedCheck && typeof reader.result === "string") {
+          setDocumentDataUrl(reader.result);
+          setLoading(false);
+        } else if (isMountedCheck) {
+          setError("Failed to read document file.");
           setLoading(false);
         }
-      }
+      };
+      reader.onerror = () => {
+        if (isMountedCheck) {
+          console.error("FileReader error reading blob.");
+          setError("Failed to read document file.");
+          setLoading(false);
+        }
+      };
+      reader.readAsDataURL(blob);
     };
 
     if (isMounted) {
-      fetchData();
+      loadData();
     }
+
+    return () => {
+      isMountedCheck = false;
+    };
   }, [
     isMounted,
     isPasswordVerified,
@@ -205,7 +178,7 @@ export function SignDocContent({
     documentName,
     versionNumber,
     documentId,
-    signerEmail,
+    participantId,
     setDocumentDataUrl,
     setFields,
     setCurrentSigner,
@@ -213,6 +186,125 @@ export function SignDocContent({
     setError,
     resetStore,
   ]);
+
+  console.log({
+    documentId,
+    documentName,
+    versionNumber,
+    versionId,
+    isLastSigner,
+    creatorUserId,
+    signerEmail,
+    token,
+    password,
+  });
+
+  const sendSignedDocument = async (
+    signedBlob: Blob,
+    signedContentHash: DocumentContentHash,
+  ) => {
+    const payload: SignRequestFormSchema = {
+      documentId,
+      documentName,
+      token,
+      participantId,
+      contentHash: signedContentHash.contentHash,
+      fileHash: signedContentHash.fileHash,
+      metadataHash: signedContentHash.metadataHash,
+      signerEmail: signerEmail,
+      versionNumber,
+      password,
+      isLastSigner,
+      creatorUserId,
+    };
+
+    const response = await fetch(API_PATHS.DOCS.SIGN, {
+      method: "POST",
+      body: JSON.stringify({
+        ...payload,
+        dryRun: {
+          email: false,
+          memo: false,
+          database: false,
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch (e) {
+        // Ignore JSON parsing error
+      }
+      const errorMessage =
+        errorData?.message ||
+        `Failed to submit signed document. Status: ${response.status}`;
+      throw new Error(errorMessage);
+    }
+
+    return await response.json(); // Or handle success response as needed
+  };
+
+  const handleExport = async () => {
+    if (isSaving || !documentDataUrl) return;
+    setIsSaving(true);
+    const toastId = toast.loading("Processing and submitting document...");
+
+    try {
+      const signedBlob = await exportAndDownloadSignedPdf(
+        `signed_${documentName}_placeholder.pdf`,
+      );
+
+      if (!signedBlob) {
+        throw new Error("Failed to generate signed PDF blob.");
+      }
+
+      const signedContentHash = await PDFHash.generateContentHash(
+        Buffer.from(await signedBlob.arrayBuffer()),
+      );
+
+      const result = await sendSignedDocument(signedBlob, signedContentHash);
+      if (!result?.success) {
+        throw new Error("Failed to submit signed document.");
+      }
+
+      const { transactionSignature, versionNumber } = result;
+      const embededPDFBuffer = await PDFMetadata.embedMetadata(signedBlob, {
+        transaction: transactionSignature,
+        version: versionNumber,
+        documentId,
+        password,
+      });
+
+      const embededPDF = new File([embededPDFBuffer], `${documentName}.pdf`, {
+        type: "application/pdf",
+      });
+
+      // Store the PDF in the storage service
+      const storageResult = await uploadDocumentToStorage(
+        documentName,
+        embededPDF,
+        versionNumber,
+      );
+
+      toast.success("Document submitted successfully!", {
+        id: toastId,
+        description: "Your signed document has been processed.",
+      });
+
+      setIsSigned(true);
+    } catch (error) {
+      console.error("Signing submission failed:", error);
+      captureException(error);
+      toast.error("Submission Failed", {
+        id: toastId,
+        description: "Please try again",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   if (!isPasswordVerified) {
     return (
@@ -243,8 +335,23 @@ export function SignDocContent({
     );
   }
 
+  if (isSigned) {
+    return (
+      <div className="flex h-[calc(100vh-160px)] flex-col items-center justify-center space-y-6">
+        <CheckCircle className="h-16 w-16 text-green-500" />
+        <p className="text-xl font-semibold">Document Signed Successfully!</p>
+        <p className="text-center text-muted-foreground">
+          Your document has been successfully signed and processed. You can now
+          close this window.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex h-[calc(100vh-160px)] overflow-hidden rounded-lg border bg-background shadow-md">
+    <div className="relative flex h-[calc(100vh-160px)] overflow-hidden rounded-lg border bg-background shadow-md">
+      <LoadingOverlay isLoading={isSaving} message="Processing Document..." />
+
       <div className="relative flex-1 overflow-hidden rounded-l-lg bg-gray-100 dark:bg-gray-800">
         <DocumentCanvas
           documentDataUrl={documentDataUrl}
@@ -265,9 +372,19 @@ export function SignDocContent({
           <FieldsList viewType="signer" />
         </div>
         <div className="border-t p-4">
-          <p className="text-center text-sm text-muted-foreground">
-            Signing actions go here
-          </p>
+          <Button
+            onClick={handleExport}
+            disabled={!canComplete || isSaving}
+            className="w-full"
+          >
+            <CheckCircle className="mr-2 h-4 w-4" />
+            Complete Signing
+          </Button>
+          {!canComplete && (
+            <p className="mt-2 text-center text-xs text-muted-foreground">
+              Please fill all required fields assigned to you.
+            </p>
+          )}
         </div>
       </div>
     </div>

@@ -140,13 +140,11 @@ export type Database = {
           document_id: string
           id: string
           order_index: number
+          participant_id: string
           rejection_reason: string | null
-          signature_data: string | null
-          signature_type: string | null
           signed_at: string | null
           status: Database["public"]["Enums"]["document_signer_status"]
           updated_at: string
-          user_id: string
           version_id: string | null
         }
         Insert: {
@@ -154,13 +152,11 @@ export type Database = {
           document_id: string
           id?: string
           order_index?: number
+          participant_id: string
           rejection_reason?: string | null
-          signature_data?: string | null
-          signature_type?: string | null
           signed_at?: string | null
           status?: Database["public"]["Enums"]["document_signer_status"]
           updated_at?: string
-          user_id: string
           version_id?: string | null
         }
         Update: {
@@ -168,13 +164,11 @@ export type Database = {
           document_id?: string
           id?: string
           order_index?: number
+          participant_id?: string
           rejection_reason?: string | null
-          signature_data?: string | null
-          signature_type?: string | null
           signed_at?: string | null
           status?: Database["public"]["Enums"]["document_signer_status"]
           updated_at?: string
-          user_id?: string
           version_id?: string | null
         }
         Relationships: [
@@ -190,6 +184,13 @@ export type Database = {
             columns: ["version_id"]
             isOneToOne: false
             referencedRelation: "document_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_document_signers_participant"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "document_participants"
             referencedColumns: ["id"]
           },
         ]
@@ -250,6 +251,7 @@ export type Database = {
           rejected_at: string | null
           status: Database["public"]["Enums"]["document_status"]
           updated_at: string
+          user_email: string
           user_id: string
         }
         Insert: {
@@ -263,6 +265,7 @@ export type Database = {
           rejected_at?: string | null
           status?: Database["public"]["Enums"]["document_status"]
           updated_at?: string
+          user_email?: string
           user_id: string
         }
         Update: {
@@ -276,6 +279,7 @@ export type Database = {
           rejected_at?: string | null
           status?: Database["public"]["Enums"]["document_status"]
           updated_at?: string
+          user_email?: string
           user_id?: string
         }
         Relationships: [
@@ -344,13 +348,11 @@ export type Database = {
           document_id: string
           id: string
           order_index: number
+          participant_id: string
           rejection_reason: string | null
-          signature_data: string | null
-          signature_type: string | null
           signed_at: string | null
           status: Database["public"]["Enums"]["document_signer_status"]
           updated_at: string
-          user_id: string
           version_id: string | null
         }[]
       }
@@ -396,6 +398,18 @@ export type Database = {
         }
         Returns: boolean
       }
+      dry_run_sign_document: {
+        Args: {
+          p_document_id: string
+          p_participant_id: string
+          p_user_id: string
+          p_content_hash: string
+          p_file_hash: string
+          p_metadata_hash: string
+          p_transaction_signature: string
+        }
+        Returns: boolean
+      }
       finalize_document_upload: {
         Args: {
           p_document_id: string
@@ -414,17 +428,21 @@ export type Database = {
       get_document_details_for_signing: {
         Args: {
           p_document_id: string
+          p_signer_email: string
         }
         Returns: {
           id: string
           name: string
           current_version_id: string
           current_version_number: number
+          participant_id: string
           password: string
           status: Database["public"]["Enums"]["document_status"]
           completed_at: string
           expires_at: string
           rejected_at: string
+          is_last: boolean
+          creator_user_id: string
         }[]
       }
       get_document_signing_data: {
@@ -487,18 +505,17 @@ export type Database = {
       sign_document: {
         Args: {
           p_document_id: string
-          p_signer_id: string
-          p_user_id: string
+          p_participant_id: string
           p_content_hash: string
           p_file_hash: string
           p_metadata_hash: string
-          p_signature_type?: string
-          p_signature_data?: string
+          p_transaction_signature: string
         }
         Returns: {
           version_id: string
           version_number: number
           document_status: Database["public"]["Enums"]["document_status"]
+          creator_email: string
         }[]
       }
     }

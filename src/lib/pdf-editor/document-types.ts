@@ -93,7 +93,7 @@ export interface DocumentStateExport {
   senderMessage: string;
 }
 
-const DocumentContentHashSchema = z.object({
+export const DocumentContentHashSchema = z.object({
   contentHash: z.string(),
   fileHash: z.string(),
   metadataHash: z.string(),

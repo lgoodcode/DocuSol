@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import { getUser } from "@/lib/supabase/utils";
 import { sign } from "@/lib/utils/sign";
 import { StorageService } from "@/lib/supabase/storage";
-import { isValidEmail, withRetry } from "@/lib/utils";
+import { isValidEmail, withRetry, uploadDocumentToStorage } from "@/lib/utils";
 // import { hasSufficientBalance } from "@/lib/utils/solana";
 import { useDocumentStore } from "@/lib/pdf-editor/stores/useDocumentStore";
 import { useToast } from "@/hooks/use-toast";
@@ -168,26 +168,6 @@ export function useSignDoc() {
 //     }
 //   };
 // }
-
-export async function uploadDocumentToStorage(
-  documentName: string,
-  file: File,
-  version: number,
-) {
-  const supabase = createClient();
-  const user = await getUser(supabase);
-  const storageService = new StorageService(supabase);
-
-  await withRetry(async () => {
-    await storageService.uploadFile(
-      user.id,
-      documentName,
-      file,
-      file.type,
-      version,
-    );
-  });
-}
 
 /**
  * Function to reset a document and its version atomically
