@@ -20,9 +20,9 @@ const TESTING = false;
 const DRY_RUN = !TESTING
   ? undefined
   : {
-      memo: true,
-      email: true,
-      database: true,
+      memo: false,
+      email: false,
+      database: false,
     };
 
 /**

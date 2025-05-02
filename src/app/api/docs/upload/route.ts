@@ -166,6 +166,7 @@ export async function POST(request: Request) {
           "Document Ready for Signature",
           documentName,
         );
+        console.log("Emails sent successfully: ", emailPayloads);
       } catch (emailError) {
         console.error("Error during email sending:", emailError);
         captureException(emailError);

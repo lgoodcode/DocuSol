@@ -79,8 +79,8 @@ export const DocumentPage = memo(function DocumentPage({
         ),
       ),
       y: Math.round(
-        Math.min(
-          Math.max(y, 0),
+        Math.max(
+          Math.min(y, 0),
           pageRect.height / scale - fieldTemplate.defaultSize.height,
         ),
       ),
@@ -125,7 +125,7 @@ export const DocumentPage = memo(function DocumentPage({
   return (
     <div
       ref={pageRef}
-      className="document-page relative z-0 bg-white shadow-2xl dark:shadow-white/30"
+      className="document-page relative z-0 mb-6 bg-white shadow-2xl dark:shadow-white/30"
       onDragOver={(e: React.DragEvent<HTMLDivElement>) => {
         if (viewType === "editor") e.preventDefault();
       }}

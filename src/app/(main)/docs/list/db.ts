@@ -10,7 +10,8 @@ export const getDocuments = async (): Promise<ViewDocument[]> => {
   if (error) {
     throw error;
   }
-  return data.map((doc) => ({
+  const nonDraftDocs = data.filter((doc) => doc.status !== "draft");
+  return nonDraftDocs.map((doc) => ({
     id: doc.id,
     name: doc.name,
     password: doc.has_password,
