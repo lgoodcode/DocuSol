@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import crypto from "crypto";
 
 const ALGORITHM = "aes-256-gcm";

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { pack, unpack } from "msgpackr";
 import { Buffer } from "buffer"; // Ensure Buffer is available
 
