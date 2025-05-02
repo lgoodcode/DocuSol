@@ -127,6 +127,7 @@ export async function sendEmails(
   sender: Sender,
   subject: string,
   documentName: string,
+  senderMessage?: string,
 ) {
   const payloads = recipients.map((recipient) =>
     createPayload({
@@ -135,7 +136,7 @@ export async function sendEmails(
       sender: sender,
       subject: subject,
       documentName: documentName,
-      // senderMessage can be added here if needed for batch sends
+      senderMessage: senderMessage,
     }),
   );
 

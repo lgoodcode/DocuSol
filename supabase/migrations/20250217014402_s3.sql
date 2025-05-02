@@ -4,32 +4,32 @@ insert into storage.buckets
 values
   ('documents', 'documents');
 
-CREATE POLICY "Users can upload their own objects"
+-- CREATE POLICY "Users can upload their own objects"
+-- ON storage.objects
+-- FOR INSERT
+-- TO authenticated
+-- WITH CHECK (
+--   (storage.foldername(name))[1] = 'users' AND
+--   (storage.foldername(name))[2] = (SELECT auth.uid()::TEXT)
+-- );
+
+CREATE POLICY "Anyone can upload their own objects"
 ON storage.objects
 FOR INSERT
-TO authenticated
-WITH CHECK (
-  (storage.foldername(name))[1] = 'users' AND
-  (storage.foldername(name))[2] = (SELECT auth.uid()::TEXT)
-);
+TO public
+WITH CHECK (true);
 
-CREATE POLICY "Users can view their own objects"
+CREATE POLICY "Anyone can view all documents"
 ON storage.objects
 FOR SELECT
-TO authenticated
-USING (
-  (storage.foldername(name))[1] = 'users' AND
-  (storage.foldername(name))[2] = (SELECT auth.uid()::TEXT)
-);
+TO public
+USING (true);
 
-CREATE POLICY "Users can update their own objects"
+CREATE POLICY "Anyone can update all documents"
 ON storage.objects
 FOR UPDATE
-TO authenticated
-USING (
-  (storage.foldername(name))[1] = 'users' AND
-  (storage.foldername(name))[2] = (SELECT auth.uid()::TEXT)
-);
+TO public
+USING (true);
 
 CREATE POLICY "Users can delete their own objects"
 ON storage.objects

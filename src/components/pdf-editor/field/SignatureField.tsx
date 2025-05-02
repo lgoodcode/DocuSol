@@ -32,8 +32,6 @@ export const SignatureField = memo(function SignatureField({
 
   const renderSignatureField = ({
     field,
-    handleChange,
-    handleFocus,
     Placeholder,
   }: FieldRenderContentProps) => {
     const handleOpenChange = (open: boolean) => {

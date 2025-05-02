@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useRef, useState, useEffect, memo, useCallback } from "react";
 import { toast } from "sonner";
 import SignatureCanvas from "react-signature-canvas";
@@ -312,9 +314,6 @@ export const SignatureFieldEditor = memo(function SignatureFieldEditor({
     },
     [handleCancel, onOpenChange],
   );
-
-  const fieldTypeName =
-    field.type.charAt(0).toUpperCase() + field.type.slice(1);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>

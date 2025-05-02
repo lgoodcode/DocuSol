@@ -14,14 +14,11 @@ import { LoadingOverlay } from "@/components/ui/loading-overlay";
 import { DocumentCanvas } from "@/components/pdf-editor/DocumentCanvas";
 import { FieldsList } from "@/components/pdf-editor/FieldsList";
 import { createClient } from "@/lib/supabase/client";
-import { fileToDataUrl, uploadDocumentToStorage } from "@/lib/utils";
+import { uploadDocumentToStorage } from "@/lib/utils";
 import { PDFHash } from "@/lib/stamp/hash-service";
 import { PDFMetadata } from "@/lib/stamp/pdf-metadata";
 import type { DocumentContentHash } from "@/lib/types/stamp";
 import type { SignRequestForm } from "@/app/api/docs/sign/utils";
-
-import type { DocumentField } from "@/lib/pdf-editor/document-types";
-import type { DocumentSigner } from "@/lib/types/stamp";
 
 import { PasswordRequiredContent } from "./password-required-content";
 import {
@@ -123,6 +120,7 @@ export function SignDocContent({
     const loadData = async () => {
       const result = await fetchSigningData(
         supabase,
+        creatorUserId,
         documentName,
         versionNumber,
         documentId,
@@ -237,7 +235,7 @@ export function SignDocContent({
       try {
         errorData = await response.json();
       } catch (e) {
-        // Ignore JSON parsing error
+        console.error("Error parsing response:", e);
       }
       const errorMessage =
         errorData?.message ||
@@ -268,6 +266,7 @@ export function SignDocContent({
 
       const result = await sendSignedDocument(signedBlob, signedContentHash);
       if (!result?.success) {
+        debugger;
         throw new Error("Failed to submit signed document.");
       }
 
@@ -284,7 +283,8 @@ export function SignDocContent({
       });
 
       // Store the PDF in the storage service
-      const storageResult = await uploadDocumentToStorage(
+      await uploadDocumentToStorage(
+        creatorUserId,
         documentName,
         embededPDF,
         versionNumber,
@@ -299,10 +299,19 @@ export function SignDocContent({
     } catch (error) {
       console.error("Signing submission failed:", error);
       captureException(error);
-      toast.error("Submission Failed", {
-        id: toastId,
-        description: "Please try again",
-      });
+      // If already signed, show a different message
+      if (error.message.includes("409")) {
+        toast.error("Document already signed", {
+          id: toastId,
+          description:
+            "Document has already been signed and can no longer be modified.",
+        });
+      } else {
+        toast.error("Submission Failed", {
+          id: toastId,
+          description: "Please try again",
+        });
+      }
     } finally {
       setIsSaving(false);
     }

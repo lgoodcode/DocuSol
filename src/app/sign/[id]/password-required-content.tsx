@@ -34,13 +34,10 @@ export function PasswordRequiredContent({
 }) {
   const [passwordDialogOpen, setPasswordDialogOpen] =
     useState<boolean>(!!password);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isPasswordVerified, setIsPasswordVerified] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLockedOut, setIsLockedOut] = useState(false);
 
   const handleCorrectPassword = () => {
-    setIsPasswordVerified(true);
     onSuccess();
   };
 

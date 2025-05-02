@@ -7,7 +7,6 @@ import {
   metadata as siteMetadata,
   viewport as siteViewport,
 } from "@/config/site";
-import { Scan } from "@/components/dev/scan";
 import { ProgressBarProvider } from "@/components/providers/progress-bar-provider";
 import { WalletProvider } from "@/components/providers/wallet-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -39,7 +38,6 @@ export default function RootLayout({
       >
         <SpeedInsights />
         <Analytics />
-        {/* <Scan /> */}
         <ProgressBarProvider />
         <NextThemesProvider
           attribute="class"

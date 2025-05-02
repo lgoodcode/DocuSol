@@ -78,7 +78,7 @@ export const TextFormatToolbar = ({
   viewType,
 }: TextFormatToolbarProps) => {
   const toolbarRef = useRef<HTMLDivElement>(null);
-  const { updateField, scale } = useField(field.id, viewType);
+  const { updateField } = useField(field.id, viewType);
   const [mounted, setMounted] = useState(false);
   const [refElement, setRefElement] = useState<HTMLDivElement | null>(null);
   const [position, setPosition] = useState({

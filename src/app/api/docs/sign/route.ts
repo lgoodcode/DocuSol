@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { captureException } from "@sentry/nextjs";
-import { validate as uuidValidate } from "uuid";
 import { z } from "zod";
 
 import { STAMP_VERSION } from "@/lib/types/stamp";
@@ -66,7 +65,29 @@ export async function POST(request: Request) {
       token,
     });
 
-    // Step 1: Construct the DocumentStamp object
+    // Step 1: Check if the participant has already signed
+    if (!dryRun.database) {
+      const { data: participantData, error: participantError } = await supabase
+        .from("document_signers")
+        .select("status")
+        .eq("participant_id", participantId)
+        .eq("document_id", documentId)
+        .single();
+
+      if (participantError) {
+        console.error("Error fetching participant status:", participantError);
+        captureException(participantError, {
+          extra: { participantId, documentId },
+        });
+      } else if (participantData?.status === "signed") {
+        return createErrorResponse(
+          "You have already signed this document.",
+          409,
+        );
+      }
+    }
+
+    // Step 2: Construct the DocumentStamp object
     const documentStamp: DocumentStamp = {
       version: STAMP_VERSION,
       contentHash: {
@@ -107,20 +128,20 @@ export async function POST(request: Request) {
 
     console.log("documentStamp", documentStamp);
 
-    // Step 2: Serialize, Pack, Obfuscate the DocumentStamp
+    // Step 3: Serialize, Pack, Obfuscate the DocumentStamp
     const serializer = new ObfuscatedStampSerializer();
     const obfuscatedStamp = serializer.serialize(documentStamp);
 
-    // Step 3: Format the memo for the Solana blockchain - prefix the obfuscated stamp with
+    // Step 4: Format the memo for the Solana blockchain - prefix the obfuscated stamp with
     // the version to identify the stamp format for method of deserialization
     const formattedMemo = `v${STAMP_VERSION}:${obfuscatedStamp}`;
 
-    // Step 4: Store the stamp in the Solana memo blockchain
+    // Step 5: Store the stamp in the Solana memo blockchain
     const txSignature = dryRun.memo
       ? "dry_run_memo_transaction"
       : await sendMemoTransaction(formattedMemo);
 
-    // Step 5: Update the document metadata with the new transaction signature
+    // Step 6: Update the document metadata with the new transaction signature
     documentStamp.metadata.transaction = txSignature;
 
     console.log("txSignature", txSignature);
@@ -128,7 +149,7 @@ export async function POST(request: Request) {
       console.log("Dry run: Skipped memo transaction");
     }
 
-    // Step 6: Call the appropriate RPC function based on the dryRun flag
+    // Step 7: Call the appropriate RPC function based on the dryRun flag
     const rpcName = dryRun.database ? "dry_run_sign_document" : "sign_document";
     const { error: rpcError, data: rpcData } = await supabase
       .rpc(rpcName, {
@@ -149,8 +170,9 @@ export async function POST(request: Request) {
       // Handle actual RPC errors only if not in dry run mode
       console.error(`RPC ${rpcName} error:`, rpcError);
       if (rpcError.message.includes("Signer record not found")) {
+        // This might still occur if the participant ID is wrong, even if not already signed.
         return createErrorResponse(
-          "Signer record mismatch or already processed.",
+          "Signer record mismatch or not found.", // Adjusted message slightly
           404,
         );
       }
@@ -216,6 +238,23 @@ export async function POST(request: Request) {
         console.error("Failed to send completion email:", emailError);
         captureException(emailError, {
           extra: { documentId, creatorUserId },
+        });
+      }
+    } else {
+      // If not the last signer, send a notification email to the creator
+      try {
+        await sendEmail({
+          type: "notify",
+          creatorEmail: creatorEmail,
+          signerEmail: signerEmail, // Include who signed
+          subject: `Document Signed: "${documentName}" by ${signerEmail}`,
+          documentName: documentName,
+        });
+      } catch (emailError) {
+        console.error("Failed to send notification email:", emailError);
+        // Optionally capture this error too, depending on severity
+        captureException(emailError, {
+          extra: { documentId, participantId, creatorUserId },
         });
       }
     }

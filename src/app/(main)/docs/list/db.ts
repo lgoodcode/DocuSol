@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
-import { getStorageServiceForCurrentUser } from "@/lib/utils";
+import { getUser } from "@/lib/supabase/utils";
+import { StorageService } from "@/lib/supabase/storage";
 
 import type { ViewDocument } from "./types";
 
@@ -106,19 +107,20 @@ export const renameDocument = async (doc: ViewDocument) => {
 export const deleteDocument = async (doc: ViewDocument) => {
   debugger;
   const supabase = createClient();
-  const { userId, storageService } = await getStorageServiceForCurrentUser();
+  const user = await getUser(supabase);
+  const storageService = new StorageService(supabase);
 
   // 1. Delete from S3 storage
   try {
     const filePath = storageService.getFilePath(
-      userId,
+      user.id,
       doc.name,
       doc.versionNumber,
     );
     await storageService.deleteFiles([filePath]);
   } catch (storageError) {
     console.error(
-      `Error deleting document ${filePath} from storage:`,
+      `Error deleting document ${doc.id} from storage:`,
       storageError,
     );
     // Decide if you want to stop the whole process if S3 delete fails

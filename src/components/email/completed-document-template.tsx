@@ -1,14 +1,11 @@
 import {
   Body,
-  Button,
   Container,
   Head,
   Heading,
   Hr,
   Html,
-  Link,
   Preview,
-  Section,
   Text,
 } from "@react-email/components";
 import * as React from "react";
@@ -21,25 +18,39 @@ interface CompletedDocumentTemplateProps {
 
 export const CompletedDocumentTemplate: React.FC<
   Readonly<CompletedDocumentTemplateProps>
-> = ({ documentName, type, signerEmail }) => (
-  <Html>
-    <Head />
-    <Preview>{`Document "${documentName}" has been completed`}</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Heading style={heading}>
-          {`🎉 Document Completed: "${documentName}"`}
-        </Heading>
-        <Text style={paragraph}>
-          Good news! The document titled "{documentName}" has been successfully
-          signed by all participants.
-        </Text>
-        <Hr style={hr} />
-        <Text style={footer}>Sent via DocuSol</Text>
-      </Container>
-    </Body>
-  </Html>
-);
+> = ({ documentName, type, signerEmail }) => {
+  const previewText =
+    type === "complete"
+      ? `Document "${documentName}" has been completed`
+      : `${signerEmail || "A participant"} has signed "${documentName}"`;
+
+  const headingText =
+    type === "complete"
+      ? `🎉 Document Completed: "${documentName}"`
+      : `✍️ Document Signed: "${documentName}"`;
+
+  const paragraphText =
+    type === "complete"
+      ? `Good news! The document titled "${documentName}" has been successfully signed by all participants.`
+      : `${
+          signerEmail ? `${signerEmail} has` : "A participant has"
+        } signed the document titled "${documentName}".`;
+
+  return (
+    <Html>
+      <Head />
+      <Preview>{previewText}</Preview>
+      <Body style={main}>
+        <Container style={container}>
+          <Heading style={heading}>{headingText}</Heading>
+          <Text style={paragraph}>{paragraphText}</Text>
+          <Hr style={hr} />
+          <Text style={footer}>Sent via DocuSol</Text>
+        </Container>
+      </Body>
+    </Html>
+  );
+};
 
 // --- Styles (similar to SignDocumentTemplate for consistency) ---
 

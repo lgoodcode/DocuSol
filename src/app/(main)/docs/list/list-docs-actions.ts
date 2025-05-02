@@ -3,9 +3,11 @@
 import { toast } from "sonner";
 import { captureException } from "@sentry/nextjs";
 
-import { getStorageServiceForCurrentUser } from "@/lib/utils";
-import { getTransactionUrl } from "@/lib/utils/solana";
+import { createClient } from "@/lib/supabase/client";
+import { getUser } from "@/lib/supabase/utils";
+import { StorageService } from "@/lib/supabase/storage";
 import { previewBlob } from "@/lib/utils";
+import { getTransactionUrl } from "@/lib/utils/solana";
 
 import { ViewDocument } from "./types";
 
@@ -20,14 +22,15 @@ import { ViewDocument } from "./types";
 // View the lastest version of the document from storage service
 export const viewDocument = async (doc: ViewDocument): Promise<void> => {
   try {
-    const { userId, storageService } = await getStorageServiceForCurrentUser();
-    const blob = await storageService.getDocument(
-      userId,
-      doc.name,
-      doc.versionNumber,
-    );
+    debugger;
+    const supabase = createClient();
+    const user = await getUser(supabase);
+    const storageService = new StorageService(supabase);
+    const version = doc.versionNumber < 2 ? 0 : doc.versionNumber;
+    const blob = await storageService.getDocument(user.id, doc.name, version);
     previewBlob(blob);
   } catch (error) {
+    console.error("Error viewing document:", error);
     captureException(error, { extra: { doc } });
     toast.error("Error viewing document");
   }
@@ -65,12 +68,11 @@ export const copyTxSignature = async (doc: ViewDocument): Promise<string> => {
 // };
 
 export const downloadDocument = async (doc: ViewDocument): Promise<void> => {
-  const { userId, storageService } = await getStorageServiceForCurrentUser();
-  const blob = await storageService.getDocument(
-    userId,
-    doc.name,
-    doc.versionNumber,
-  );
+  const supabase = createClient();
+  const user = await getUser(supabase);
+  const storageService = new StorageService(supabase);
+  const version = doc.versionNumber > 2 ? doc.versionNumber - 1 : 0;
+  const blob = await storageService.getDocument(user.id, doc.name, version);
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;

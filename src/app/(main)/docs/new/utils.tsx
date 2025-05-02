@@ -1,9 +1,9 @@
 "use client";
 
-import { useWallet } from "@solana/wallet-adapter-react";
+// import { useWallet } from "@solana/wallet-adapter-react";
 import { captureException } from "@sentry/nextjs";
 
-import { PLATFORM_FEE } from "@/constants";
+// import { PLATFORM_FEE } from "@/constants";
 import { API_PATHS } from "@/config/routes/api";
 import { createClient } from "@/lib/supabase/client";
 import { getUser } from "@/lib/supabase/utils";
@@ -245,7 +245,7 @@ export async function uploadInitialDocument(
   let documentUploaded = false;
 
   try {
-    await uploadDocumentToStorage(documentName, file, version);
+    await uploadDocumentToStorage(user.id, documentName, file, version);
     documentUploaded = true;
 
     // Step 2: Create the document and version in the database

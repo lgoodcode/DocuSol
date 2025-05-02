@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { validate as uuidValidate } from "uuid";
 import { captureException } from "@sentry/nextjs";
 
@@ -5,7 +7,6 @@ import type { DocumentField } from "@/lib/pdf-editor/document-types";
 import type { DocumentSigner } from "@/lib/types/stamp";
 import { getUser } from "@/lib/supabase/utils";
 import { StorageService } from "@/lib/supabase/storage";
-import { PDFMetadata } from "@/lib/stamp/pdf-metadata";
 import type { BrowserSupabaseClient } from "@/lib/supabase/client";
 import type { ServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -208,18 +209,19 @@ export const validateDocumentAccess = async (
  */
 export const getPdfDocument = async (
   supabase: BrowserSupabaseClient,
+  creatorId: string,
   documentName: string,
   version: number,
 ): Promise<Blob | null> => {
   try {
-    const user = await getUser(supabase);
     const storage = new StorageService(supabase);
     // Version 0 in storage corresponds to version 1 from DB perspective, etc.
     // The calling function should provide the correct *database* version number.
     // Version 0 from DB (draft) is not stored this way typically.
     // If version 1 is requested, fetch storage version 0.
-    const storageVersion = version > 0 ? version - 1 : 0; // Adjust for 0-based storage version
-    return await storage.getDocument(user.id, documentName, storageVersion);
+    // the version is 2 then the version to get is 0 because we skip 1
+    const storageVersion = version < 2 ? 0 : version;
+    return await storage.getDocument(creatorId, documentName, storageVersion);
   } catch (error) {
     console.error("Error getting PDF document from storage:", error);
     captureException(error, { extra: { documentName, version } });
@@ -252,6 +254,7 @@ export type FetchSigningDataResult = {
  */
 export const fetchSigningData = async (
   supabase: BrowserSupabaseClient,
+  creatorId: string,
   documentName: string,
   versionNumber: number,
   documentId: string,
@@ -260,7 +263,12 @@ export const fetchSigningData = async (
 ): Promise<FetchSigningDataResult> => {
   try {
     // 1. Fetch the PDF document blob
-    const blob = await getPdfDocument(supabase, documentName, versionNumber);
+    const blob = await getPdfDocument(
+      supabase,
+      creatorId,
+      documentName,
+      versionNumber,
+    );
     if (!blob) {
       throw new Error("Document file not found or access denied.");
     }

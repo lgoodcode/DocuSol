@@ -24,11 +24,13 @@ const createErrorResponse = (message: string, status: number) => {
 
 // Extend the schema to include an optional dryRun flag
 const uploadRequestSchema = documentStateExportSchema.extend({
-  dryRun: z.object({
-    memo: z.boolean().optional().default(false),
-    email: z.boolean().optional().default(false),
-    database: z.boolean().optional().default(false),
-  }),
+  dryRun: z
+    .object({
+      memo: z.boolean().optional().default(false),
+      email: z.boolean().optional().default(false),
+      database: z.boolean().optional().default(false),
+    })
+    .optional(),
 });
 
 export async function POST(request: Request) {
@@ -36,6 +38,8 @@ export async function POST(request: Request) {
     const supabase = await createServerClient();
     const user = await getUser(supabase);
     const body = await request.json();
+
+    console.log("body", body);
 
     // Validate the extended schema including the optional dryRun flag
     const {
@@ -46,6 +50,7 @@ export async function POST(request: Request) {
       fields,
       encryptionPassword,
       expirationDate,
+      senderMessage,
       dryRun,
     } = uploadRequestSchema.parse(body);
 
@@ -165,6 +170,7 @@ export async function POST(request: Request) {
           },
           "Document Ready for Signature",
           documentName,
+          senderMessage,
         );
         console.log("Emails sent successfully: ", emailPayloads);
       } catch (emailError) {

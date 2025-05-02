@@ -55,7 +55,7 @@ export const SignDocumentTemplate: React.FC<
           </Link>
         </Section>
         <Text style={paragraph}>
-          If you're having trouble clicking the button, copy and paste the URL
+          If you are having trouble clicking the button, copy and paste the URL
           below into your web browser:
         </Text>
         <Text style={linkText}>{signLink}</Text>

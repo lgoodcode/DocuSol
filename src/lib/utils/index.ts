@@ -109,22 +109,14 @@ export async function withRetry<T>(
   }
 }
 
-export async function getStorageServiceForCurrentUser() {
-  const supabase = createClient();
-  const user = await getUser(supabase);
-  return {
-    userId: user.id,
-    storageService: new StorageService(supabase),
-  };
-}
-
 export async function uploadDocumentToStorage(
+  userId: string,
   documentName: string,
   file: File,
   version: number,
 ) {
-  const { userId, storageService } = await getStorageServiceForCurrentUser();
-
+  const supabase = createClient();
+  const storageService = new StorageService(supabase);
   await withRetry(async () => {
     await storageService.uploadFile(
       userId,

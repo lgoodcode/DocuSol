@@ -135,7 +135,7 @@ CREATE TABLE document_versions (
     fileHash TEXT NOT NULL,
     metadataHash TEXT NOT NULL,
     transaction_signature TEXT,
-    created_by UUID NOT NULL REFERENCES auth.users(id),
+    created_by UUID NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -610,14 +610,6 @@ BEGIN
         RAISE EXCEPTION 'Participant has already signed this document';
     END IF;
 
-    -- Step 2: Get the current signer's user ID
-    v_signer_user_id := auth.uid();
-
-    -- Ensure the signer exists and has a user ID (non-null user_id in participants)
-    IF v_signer_user_id IS NULL THEN
-        RAISE EXCEPTION 'Cannot sign document: Signer user ID is missing.';
-    END IF;
-
     -- Step 3: Create or get the document_signer record
     SELECT id INTO v_signer_record_id
     FROM document_signers
@@ -654,7 +646,7 @@ BEGIN
         p_content_hash,
         p_file_hash,
         p_metadata_hash,
-        v_signer_user_id, -- Use the current signer's user ID for this version
+        p_participant_id, -- Use the current signer's user ID for this version
         p_transaction_signature
     ) AS av;
 
@@ -664,20 +656,28 @@ BEGIN
     WHERE id = v_signer_record_id;
 
     -- Step 6: Update document status based on current signers' statuses
-    SELECT COUNT(*),
-           COUNT(*) FILTER (WHERE status = 'signed'),
+    -- Count total expected participants from the document_participants table
+    SELECT COUNT(*)
+    INTO v_total_signers -- Use v_total_signers to store total expected participants
+    FROM document_participants
+    WHERE document_id = p_document_id;
+
+    -- Count signed and rejected signers from the document_signers table
+    SELECT COUNT(*) FILTER (WHERE status = 'signed'),
            COUNT(*) FILTER (WHERE status = 'rejected')
-    INTO v_total_signers, v_signed_count, v_rejected_count
+    INTO v_signed_count, v_rejected_count
     FROM document_signers
     WHERE document_id = p_document_id;
 
     IF v_rejected_count > 0 THEN
         UPDATE documents SET status = 'rejected', rejected_at = CURRENT_TIMESTAMP WHERE id = p_document_id;
+    -- Check if the number of signed participants equals the total number of expected participants
     ELSIF v_signed_count = v_total_signers AND v_total_signers > 0 THEN
         UPDATE documents SET
             status = 'completed',
             completed_at = CURRENT_TIMESTAMP
         WHERE id = p_document_id;
+    -- Check if at least one person has signed but not everyone yet
     ELSIF v_signed_count > 0 AND v_signed_count < v_total_signers THEN
         UPDATE documents SET status = 'partially_signed' WHERE id = p_document_id;
     -- No need to explicitly set 'awaiting_signatures' here, as that's the default
@@ -686,7 +686,7 @@ BEGIN
 
     -- Step 7: Get the potentially updated document status and creator email if completed
     SELECT d.status,
-           CASE WHEN d.status = 'completed' THEN d.user_email ELSE NULL END
+           d.user_email -- Always fetch the user_email
     INTO v_document_status, v_creator_email
     FROM documents d
     WHERE d.id = p_document_id;

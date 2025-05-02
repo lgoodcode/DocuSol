@@ -50,6 +50,11 @@ type PageFieldGroup = {
 export const FieldsList: React.FC<{
   viewType: "editor" | "signer";
 }> = ({ viewType }) => {
+  // Call both hooks unconditionally
+  const editorState = useDocumentStore(useShallow(editorSelector));
+  const signerState = useDocumentSigningStore(useShallow(signerSelector));
+
+  // Select the appropriate state based on viewType
   const {
     fields: allFields,
     signers,
@@ -57,17 +62,43 @@ export const FieldsList: React.FC<{
     selectedFieldId,
     setSelectedFieldId,
   } = viewType === "editor"
-    ? useDocumentStore(useShallow(editorSelector))
-    : useDocumentSigningStore(useShallow(signerSelector));
+    ? { ...editorState }
+    : { ...signerState, signers: [], currentSigner: undefined }; // Provide default values for editor-specific state when in signer view
+
+  const {
+    fields: signerFields,
+    currentSigner: signingSigner,
+    selectedFieldId: signerSelectedFieldId,
+    setSelectedFieldId: signerSetSelectedFieldId,
+  } = viewType === "signer"
+    ? { ...signerState }
+    : {
+        // Provide default values for signer-specific state when in editor view
+        fields: [],
+        currentSigner: undefined,
+        selectedFieldId: null,
+        setSelectedFieldId: () => {},
+      };
+
+  // Use the correct state variables based on viewType
+  const fieldsToDisplay = viewType === "editor" ? allFields : signerFields;
+  const currentSignerInfo =
+    viewType === "editor" ? currentSigner : signingSigner;
+  const activeSelectedFieldId =
+    viewType === "editor" ? selectedFieldId : signerSelectedFieldId;
+  const setActiveSelectedFieldId =
+    viewType === "editor" ? setSelectedFieldId : signerSetSelectedFieldId;
 
   // Filter fields specifically for the signer view *after* getting them from the store
   const fields = useMemo(() => {
-    if (viewType == "signer" && currentSigner) {
+    if (viewType == "signer" && currentSignerInfo) {
       // Filter the raw fields based on the current signer
-      return allFields.filter((f) => f.assignedTo === currentSigner.id);
+      return fieldsToDisplay.filter(
+        (f) => f.assignedTo === currentSignerInfo.id,
+      );
     }
-    return allFields; // Return all fields for editor view or if no signer
-  }, [viewType, currentSigner, allFields]);
+    return fieldsToDisplay; // Return all fields for editor view or if no signer
+  }, [viewType, currentSignerInfo, fieldsToDisplay]);
 
   // Calculate completion statistics (uses the memoized 'fields' array)
   const completionStats = useMemo(() => {
@@ -100,7 +131,11 @@ export const FieldsList: React.FC<{
 
     // Get available signers based on viewType
     const availableSigners =
-      viewType === "editor" ? signers : currentSigner ? [currentSigner] : [];
+      viewType === "editor"
+        ? signers
+        : currentSignerInfo
+          ? [currentSignerInfo]
+          : [];
 
     if (!availableSigners) {
       console.error("Signers data is missing for field grouping.");
@@ -180,11 +215,11 @@ export const FieldsList: React.FC<{
       })
       .filter((pageGroup) => pageGroup.totalFields > 0) // Remove pages with no relevant fields
       .sort((a, b) => a.pageNumber - b.pageNumber);
-  }, [fields, signers, currentSigner, viewType]);
+  }, [fields, signers, currentSignerInfo, viewType]);
 
   // Handle field selection and scroll to it
   const handleFieldSelect = (field: DocumentField) => {
-    setSelectedFieldId(field.id);
+    setActiveSelectedFieldId(field.id);
 
     const pageElement = document.querySelector(`[data-field-id="${field.id}"]`);
     if (pageElement) {
@@ -220,7 +255,7 @@ export const FieldsList: React.FC<{
       <CompletionHeader stats={completionStats} viewType={viewType} />
       <FieldsContent
         fieldGroups={fieldGroups}
-        selectedFieldId={selectedFieldId || null}
+        selectedFieldId={activeSelectedFieldId || null}
         onFieldSelect={handleFieldSelect}
       />
     </div>

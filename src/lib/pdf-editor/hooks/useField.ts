@@ -84,7 +84,7 @@ export const useField = (
       _setDragging: state.setDragging,
       _setResizing: state.setResizing,
     }),
-    [fieldId], // Dependency array
+    [fieldId],
   );
 
   const signerSelector = useCallback(
@@ -102,18 +102,19 @@ export const useField = (
       _updateField: state.updateField,
       _removeField: undefined,
       _setSelectedFieldId: state.setSelectedFieldId,
-      _clearSelectedFieldId: state.clearSelectedFieldId, // Use the new stable action
+      _clearSelectedFieldId: state.clearSelectedFieldId,
       _setDragging: undefined,
       _setResizing: undefined,
     }),
-    [fieldId], // Dependency array
+    [fieldId],
   );
 
-  // Select ALL necessary state and actions from the correct store using the memoized selector
-  const storeData =
-    viewType === "editor"
-      ? useDocumentStore(useShallow(editorSelector))
-      : useDocumentSigningStore(useShallow(signerSelector));
+  // Call both hooks unconditionally
+  const editorStoreData = useDocumentStore(useShallow(editorSelector));
+  const signerStoreData = useDocumentSigningStore(useShallow(signerSelector));
+
+  // Select the appropriate data based on viewType
+  const storeData = viewType === "editor" ? editorStoreData : signerStoreData;
 
   // Destructure after selecting from store
   const {

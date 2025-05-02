@@ -44,7 +44,7 @@ export const API_ROUTES: Record<string, ApiRoute> = {
     name: "Docs - Sign",
     path: "/api/docs/sign",
     description: "Sign a document",
-    protected: true,
+    protected: false,
   },
   "docs.verify": {
     name: "Docs - Verify",

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import React, { memo, useRef, useState } from "react";
 import { Page } from "react-pdf";
 import { Rnd, DraggableData, ResizableDelta, Position } from "react-rnd";
@@ -9,7 +11,6 @@ import type {
   FieldPosition,
   FieldType,
   DocumentField,
-  FieldSize,
 } from "@/lib/pdf-editor/document-types";
 import { getFieldTemplate } from "@/lib/pdf-editor/fields";
 import type { DocumentSigner } from "@/lib/types/stamp";
@@ -79,8 +80,8 @@ export const DocumentPage = memo(function DocumentPage({
         ),
       ),
       y: Math.round(
-        Math.max(
-          Math.min(y, 0),
+        Math.min(
+          Math.max(y, 0),
           pageRect.height / scale - fieldTemplate.defaultSize.height,
         ),
       ),

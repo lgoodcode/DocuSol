@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from "react";
 import { Document, pdfjs } from "react-pdf";
 import { toast } from "sonner";
 import { captureException } from "@sentry/nextjs";
-import { PDFDocumentProxy } from "pdfjs-dist/types/src/display/api";
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 import "react-pdf/dist/esm/Page/TextLayer.css";
 
@@ -18,12 +17,6 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   import.meta.url,
 ).toString();
 
-const DOCUMENT_OPTIONS = {
-  cMapUrl: "/cmaps/",
-  standardFontDataUrl: "/standard_fonts/",
-};
-
-// Interface for individual props required by Canvas and Page
 interface DocumentCanvasProps {
   documentDataUrl: string | null;
   numPages: number | null;

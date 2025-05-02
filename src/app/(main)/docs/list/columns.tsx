@@ -10,8 +10,6 @@ import {
   Trash,
   Compass,
   Copy,
-  Link,
-  Share,
   Pencil,
 } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -176,7 +174,7 @@ export function useColumns({
         accessorKey: "expires",
         header: "Expires",
         cell: ({ row }) => {
-          const date = row.getValue("expiresAt") as string;
+          const date = row.getValue("expires") as string;
           return date ? new Date(date).toLocaleDateString() : "Never";
         },
       },
@@ -202,7 +200,6 @@ export function useColumns({
         size: 50,
         cell: ({ row }) => {
           const document = row.original;
-          console.log(document);
           return (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

@@ -1,13 +1,13 @@
 import {
-  LayoutDashboard,
+  // LayoutDashboard,
   Folder,
-  PenTool,
-  CopyPlus,
-  Send,
-  TrendingUp,
-  ShieldCheck,
+  // PenTool,
+  // CopyPlus,
+  // Send,
+  // TrendingUp,
+  // ShieldCheck,
   Plus,
-  Compass,
+  // Compass,
 } from "lucide-react";
 
 import type { PageRoute } from "./index";
