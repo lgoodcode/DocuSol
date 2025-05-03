@@ -1,3 +1,7 @@
+export default function ViewDocPage() {
+  return <div>ViewDocPage</div>;
+}
+
 // import type { Metadata } from "next";
 // import { captureException } from "@sentry/nextjs";
 
