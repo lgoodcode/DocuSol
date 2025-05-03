@@ -1,3 +1,7 @@
+export async function POST(request: Request) {
+  return NextResponse.json({ message: "Hello, world!" });
+}
+
 // import { NextResponse } from "next/server";
 // import { captureException } from "@sentry/nextjs";
 // import { PublicKey } from "@solana/web3.js";
