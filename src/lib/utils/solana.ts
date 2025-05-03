@@ -6,12 +6,14 @@ import {
   PublicKey,
   TransactionInstruction,
   LAMPORTS_PER_SOL,
+  ComputeBudgetProgram,
 } from "@solana/web3.js";
 
 import { PLATFORM_FEE } from "@/constants";
+import { getEnvVar } from "@/lib/utils";
 
-const RPC_URL = process.env.NEXT_PUBLIC_HELIUS_API_URL!;
-const PRIVATE_KEY = process.env.PRIVATE_KEY!;
+const RPC_URL = getEnvVar("NEXT_PUBLIC_HELIUS_API_URL") as string;
+const PRIVATE_KEY = getEnvVar("PRIVATE_KEY") as string;
 const MEMO_PROGRAM_ID = new PublicKey(
   "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
 );
@@ -68,22 +70,28 @@ export const getHashFromTransactionSignature = async (tx: string) => {
 /**
  * Sends a transaction with a memo instruction containing the provided message to the Solana blockchain.
  * This function creates a new transaction with a single memo instruction and broadcasts it to the network.
+ * It also includes instructions to request a higher compute unit limit and set a priority fee.
  *
  * @param {string} message - The message to be included in the memo
- * @param {string} privateKey - Base58-encoded private key (secret key)
- * @param {string} rpcUrl - Solana RPC endpoint URL
+ * @param {number} [priorityFeeMicroLamports=1] - Optional priority fee in microLamports per Compute Unit.
  * @throws {Error} If the message is empty or too long
  * @throws {Error} If the private key is invalid
  * @throws {Error} If there's insufficient balance
  * @returns {Promise<string>} The transaction signature
  */
-export async function sendMemoTransaction(message: string): Promise<string> {
+export async function sendMemoTransaction(
+  message: string,
+  priorityFeeMicroLamports: number = 1,
+): Promise<string> {
   if (!message || message.length === 0) {
     throw new Error("Message cannot be empty");
   }
 
+  if (message.length > 900) {
+    console.warn("Message is longer than 900 characters");
+  }
   if (message.length > 1000) {
-    throw new Error("Message is too long (max 1000 characters)");
+    throw new Error("Message is too long (max 1000 bytes): " + message.length);
   }
 
   let secretKeyBytes: Uint8Array;
@@ -98,8 +106,11 @@ export async function sendMemoTransaction(message: string): Promise<string> {
   const connection = new Connection(RPC_URL, "confirmed");
 
   const balance = await connection.getBalance(sender.publicKey);
-  if (balance === 0) {
-    throw new Error("Insufficient balance in sender account");
+  const requiredBalance = 0.00001 * LAMPORTS_PER_SOL;
+  if (balance < requiredBalance) {
+    throw new Error(
+      `Insufficient balance: ${balance / LAMPORTS_PER_SOL} SOL. Need ~${requiredBalance / LAMPORTS_PER_SOL} SOL for fees.`,
+    );
   }
 
   const memoData = Buffer.from(message, "utf-8");
@@ -109,7 +120,19 @@ export async function sendMemoTransaction(message: string): Promise<string> {
     data: memoData,
   });
 
-  const transaction = new Transaction().add(memoInstruction);
+  const addPriorityFee = ComputeBudgetProgram.setComputeUnitPrice({
+    microLamports: priorityFeeMicroLamports,
+  });
+
+  const setComputeLimit = ComputeBudgetProgram.setComputeUnitLimit({
+    units: 500_000,
+  });
+
+  const transaction = new Transaction()
+    .add(addPriorityFee)
+    .add(setComputeLimit)
+    .add(memoInstruction);
+
   transaction.feePayer = sender.publicKey;
 
   const { blockhash } = await connection.getLatestBlockhash();

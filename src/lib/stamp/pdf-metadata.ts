@@ -18,9 +18,9 @@ export class PDFMetadata {
   ): DocumentMetadata {
     return {
       transaction: raw.transaction,
-      createdAt: parseInt(raw.createdAt),
-      creator: raw.creator,
       documentId: raw.documentId,
+      version: parseInt(raw.version),
+      password: raw.password,
     } satisfies DocumentMetadata;
   }
 
@@ -35,9 +35,9 @@ export class PDFMetadata {
   ): Record<string, PDFString> {
     return {
       transaction: PDFString.of(String(metadata.transaction)),
-      createdAt: PDFString.of(String(metadata.createdAt)),
-      creator: PDFString.of(String(metadata.creator)),
       documentId: PDFString.of(String(metadata.documentId)),
+      version: PDFString.of(String(metadata.version)),
+      password: PDFString.of(String(metadata.password)),
     };
   }
 

@@ -9,113 +9,529 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      documents: {
+      document_fields: {
         Row: {
           created_at: string
+          document_id: string
           id: string
-          is_signed: boolean
-          mime_type: string
-          name: string
-          original_document: string
-          original_filename: string
-          password: string | null
-          signed_at: string | null
-          signed_document: string | null
-          signed_hash: string | null
-          signed_transaction_signature: string | null
-          unsigned_document: string
-          unsigned_hash: string
-          unsigned_transaction_signature: string
+          label: string | null
+          options: Json | null
+          participant_id: string | null
+          position_page: number
+          position_x: number
+          position_y: number
+          required: boolean
+          signature_scale: number | null
+          size_height: number
+          size_width: number
+          text_styles: Json | null
+          type: Database["public"]["Enums"]["document_field_type"]
           updated_at: string
-          user_id: string
+          value: string | null
         }
         Insert: {
-          created_at: string
+          created_at?: string
+          document_id: string
           id?: string
-          is_signed?: boolean
-          mime_type: string
-          name: string
-          original_document: string
-          original_filename: string
-          password?: string | null
-          signed_at?: string | null
-          signed_document?: string | null
-          signed_hash?: string | null
-          signed_transaction_signature?: string | null
-          unsigned_document: string
-          unsigned_hash: string
-          unsigned_transaction_signature: string
+          label?: string | null
+          options?: Json | null
+          participant_id?: string | null
+          position_page: number
+          position_x: number
+          position_y: number
+          required?: boolean
+          signature_scale?: number | null
+          size_height: number
+          size_width: number
+          text_styles?: Json | null
+          type: Database["public"]["Enums"]["document_field_type"]
           updated_at?: string
-          user_id: string
+          value?: string | null
         }
         Update: {
           created_at?: string
+          document_id?: string
           id?: string
-          is_signed?: boolean
-          mime_type?: string
-          name?: string
-          original_document?: string
-          original_filename?: string
-          password?: string | null
-          signed_at?: string | null
-          signed_document?: string | null
-          signed_hash?: string | null
-          signed_transaction_signature?: string | null
-          unsigned_document?: string
-          unsigned_hash?: string
-          unsigned_transaction_signature?: string
+          label?: string | null
+          options?: Json | null
+          participant_id?: string | null
+          position_page?: number
+          position_x?: number
+          position_y?: number
+          required?: boolean
+          signature_scale?: number | null
+          size_height?: number
+          size_width?: number
+          text_styles?: Json | null
+          type?: Database["public"]["Enums"]["document_field_type"]
           updated_at?: string
-          user_id?: string
+          value?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "documents_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "document_fields_document_id_fkey"
+            columns: ["document_id"]
             isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_fields_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "document_participants"
             referencedColumns: ["id"]
           },
         ]
       }
-      users: {
+      document_participants: {
         Row: {
-          chain: string
+          color: string | null
           created_at: string
+          document_id: string
+          email: string | null
           id: string
+          is_owner: boolean
+          mode: Database["public"]["Enums"]["participant_mode"]
+          name: string | null
+          role: Database["public"]["Enums"]["participant_role"]
           updated_at: string
-          wallet_address: string
+          user_id: string | null
         }
         Insert: {
-          chain: string
+          color?: string | null
           created_at?: string
-          id?: string
+          document_id: string
+          email?: string | null
+          id: string
+          is_owner?: boolean
+          mode?: Database["public"]["Enums"]["participant_mode"]
+          name?: string | null
+          role?: Database["public"]["Enums"]["participant_role"]
           updated_at?: string
-          wallet_address: string
+          user_id?: string | null
         }
         Update: {
-          chain?: string
+          color?: string | null
           created_at?: string
+          document_id?: string
+          email?: string | null
           id?: string
+          is_owner?: boolean
+          mode?: Database["public"]["Enums"]["participant_mode"]
+          name?: string | null
+          role?: Database["public"]["Enums"]["participant_role"]
           updated_at?: string
-          wallet_address?: string
+          user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "document_participants_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_signers: {
+        Row: {
+          created_at: string
+          document_id: string
+          id: string
+          order_index: number
+          participant_id: string
+          rejection_reason: string | null
+          signed_at: string | null
+          status: Database["public"]["Enums"]["document_signer_status"]
+          updated_at: string
+          version_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          document_id: string
+          id?: string
+          order_index?: number
+          participant_id: string
+          rejection_reason?: string | null
+          signed_at?: string | null
+          status?: Database["public"]["Enums"]["document_signer_status"]
+          updated_at?: string
+          version_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          document_id?: string
+          id?: string
+          order_index?: number
+          participant_id?: string
+          rejection_reason?: string | null
+          signed_at?: string | null
+          status?: Database["public"]["Enums"]["document_signer_status"]
+          updated_at?: string
+          version_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_signers_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_signers_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "document_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_document_signers_participant"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "document_participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_versions: {
+        Row: {
+          contenthash: string
+          created_at: string
+          created_by: string
+          document_id: string | null
+          filehash: string
+          id: string
+          metadatahash: string
+          transaction_signature: string | null
+          version_number: number
+        }
+        Insert: {
+          contenthash: string
+          created_at?: string
+          created_by: string
+          document_id?: string | null
+          filehash: string
+          id?: string
+          metadatahash: string
+          transaction_signature?: string | null
+          version_number?: number
+        }
+        Update: {
+          contenthash?: string
+          created_at?: string
+          created_by?: string
+          document_id?: string | null
+          filehash?: string
+          id?: string
+          metadatahash?: string
+          transaction_signature?: string | null
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_document_versions_document"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documents: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          current_version_id: string | null
+          expires_at: string | null
+          id: string
+          name: string
+          password: string | null
+          rejected_at: string | null
+          status: Database["public"]["Enums"]["document_status"]
+          updated_at: string
+          user_email: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          current_version_id?: string | null
+          expires_at?: string | null
+          id?: string
+          name: string
+          password?: string | null
+          rejected_at?: string | null
+          status?: Database["public"]["Enums"]["document_status"]
+          updated_at?: string
+          user_email?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          current_version_id?: string | null
+          expires_at?: string | null
+          id?: string
+          name?: string
+          password?: string | null
+          rejected_at?: string | null
+          status?: Database["public"]["Enums"]["document_status"]
+          updated_at?: string
+          user_email?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_documents_current_version"
+            columns: ["current_version_id"]
+            isOneToOne: false
+            referencedRelation: "document_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_verification_tokens: {
+        Row: {
+          created_at: string
+          document_id: string
+          email: string
+          expires_at: string
+          id: string
+          invalidated_at: string | null
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          document_id: string
+          email: string
+          expires_at: string
+          id?: string
+          invalidated_at?: string | null
+          token?: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          document_id?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invalidated_at?: string | null
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_verification_tokens_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      get_or_create_wallet: {
+      add_document_signers: {
         Args: {
-          p_wallet_address: string
-          p_chain: string
+          p_document_id: string
+          p_signers: Json
         }
-        Returns: string
+        Returns: {
+          created_at: string
+          document_id: string
+          id: string
+          order_index: number
+          participant_id: string
+          rejection_reason: string | null
+          signed_at: string | null
+          status: Database["public"]["Enums"]["document_signer_status"]
+          updated_at: string
+          version_id: string | null
+        }[]
+      }
+      add_document_version: {
+        Args: {
+          p_document_id: string
+          p_content_hash: string
+          p_file_hash: string
+          p_metadata_hash: string
+          p_user_id: string
+          p_transaction_signature: string
+        }
+        Returns: {
+          version_id: string
+          version_number: number
+        }[]
+      }
+      create_draft_document: {
+        Args: {
+          p_name: string
+          p_content_hash: string
+          p_file_hash: string
+          p_metadata_hash: string
+        }
+        Returns: {
+          document_id: string
+          version_id: string
+          out_version_number: number
+        }[]
+      }
+      dry_run_finalize_document_upload: {
+        Args: {
+          p_document_id: string
+          p_user_id: string
+          p_content_hash: string
+          p_file_hash: string
+          p_metadata_hash: string
+          p_transaction_signature: string
+          p_fields: Json
+          p_participants: Json
+          p_expires_at?: string
+          p_password?: string
+        }
+        Returns: boolean
+      }
+      dry_run_sign_document: {
+        Args: {
+          p_document_id: string
+          p_participant_id: string
+          p_user_id: string
+          p_content_hash: string
+          p_file_hash: string
+          p_metadata_hash: string
+          p_transaction_signature: string
+        }
+        Returns: boolean
+      }
+      finalize_document_upload: {
+        Args: {
+          p_document_id: string
+          p_user_id: string
+          p_content_hash: string
+          p_file_hash: string
+          p_metadata_hash: string
+          p_transaction_signature: string
+          p_fields: Json
+          p_participants: Json
+          p_expires_at?: string
+          p_password?: string
+        }
+        Returns: boolean
+      }
+      get_document_details_for_signing: {
+        Args: {
+          p_document_id: string
+          p_signer_email: string
+        }
+        Returns: {
+          id: string
+          name: string
+          current_version_id: string
+          current_version_number: number
+          participant_id: string
+          password: string
+          status: Database["public"]["Enums"]["document_status"]
+          completed_at: string
+          expires_at: string
+          rejected_at: string
+          is_last: boolean
+          creator_user_id: string
+        }[]
+      }
+      get_document_signing_data: {
+        Args: {
+          p_document_id: string
+          p_signer_email: string
+        }
+        Returns: {
+          signer: Json
+          fields: Json
+        }[]
+      }
+      get_document_with_version: {
+        Args: {
+          p_document_id: string
+          p_version: number
+        }
+        Returns: {
+          name: string
+          password: string
+          status: Database["public"]["Enums"]["document_status"]
+          created_at: string
+          completed_at: string
+          contenthash: string
+          filehash: string
+          metadatahash: string
+          tx_signature: string
+          encryption_key: string
+        }[]
+      }
+      get_documents_to_list: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          name: string
+          has_password: boolean
+          status: Database["public"]["Enums"]["document_status"]
+          tx_signature: string
+          expires_at: string
+          created_at: string
+          updated_at: string
+          version_number: number
+        }[]
+      }
+      get_next_document_version_number: {
+        Args: {
+          doc_id: string
+        }
+        Returns: number
+      }
+      reject_document: {
+        Args: {
+          p_signer_id: string
+          p_rejection_reason?: string
+        }
+        Returns: {
+          document_id: string
+          document_status: Database["public"]["Enums"]["document_status"]
+        }[]
+      }
+      sign_document: {
+        Args: {
+          p_document_id: string
+          p_participant_id: string
+          p_content_hash: string
+          p_file_hash: string
+          p_metadata_hash: string
+          p_transaction_signature: string
+        }
+        Returns: {
+          version_id: string
+          version_number: number
+          document_status: Database["public"]["Enums"]["document_status"]
+          creator_email: string
+        }[]
       }
     }
     Enums: {
-      [_ in never]: never
+      document_field_type: "text" | "date" | "initials" | "signature"
+      document_signer_status: "pending" | "signed" | "rejected"
+      document_status:
+        | "draft"
+        | "awaiting_signatures"
+        | "partially_signed"
+        | "completed"
+        | "rejected"
+        | "expired"
+      participant_mode: "transparent" | "anonymous"
+      participant_role: "reviewer" | "witness" | "notary" | "participant"
     }
     CompositeTypes: {
       [_ in never]: never

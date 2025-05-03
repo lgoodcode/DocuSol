@@ -4,10 +4,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { useRouter } from "next-nprogress-bar";
 import { motion, AnimatePresence } from "framer-motion";
+import { captureException } from "@sentry/nextjs";
 import { Menu, X, Sun, Moon, User } from "lucide-react";
 
 import { PAGE_ROUTES } from "@/config/routes";
+import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
@@ -24,11 +27,8 @@ const useIsFirstRender = () => {
   return isFirst.current;
 };
 
-export function MobileMenu({
-  setAccountDialogOpen,
-}: {
-  setAccountDialogOpen: (open: boolean) => void;
-}) {
+export function MobileMenu() {
+  const router = useRouter();
   const pathname = usePathname();
   const isFirstRender = useIsFirstRender();
   const headerRef = useRef<HTMLDivElement>(null);
@@ -36,7 +36,17 @@ export function MobileMenu({
   const themeButtonRef = useRef<HTMLButtonElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
-  const { theme, setTheme } = useTheme();
+  const { theme = "dark", setTheme } = useTheme();
+
+  const handleLogout = async () => {
+    const supabase = createClient();
+    const { error: logoutError } = await supabase.auth.signOut();
+    if (logoutError) {
+      console.error(logoutError);
+      captureException(logoutError);
+    }
+    router.push("/login");
+  };
 
   const handleSheetOpenChange = (newOpen: boolean) => {
     if (window) {
@@ -190,33 +200,36 @@ export function MobileMenu({
               </div> */}
               <ScrollArea className="flex-1">
                 <div className="space-y-2 p-4">
-                  {Object.values(PAGE_ROUTES).map((route, i) => (
-                    <motion.div
-                      key={route.path}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.2 + i * 0.05 }}
-                    >
-                      <Link
-                        href={route.path}
-                        onClick={() => setOpen(false)}
-                        className={cn(
-                          "flex items-center gap-4 rounded-none px-4 py-3 text-sm font-medium transition-colors hover:bg-accent",
-                          pathname === route.path
-                            ? "bg-accent text-accent-foreground"
-                            : "text-muted-foreground",
-                        )}
-                      >
-                        <route.Icon className="h-6 w-6" />
-                        <div className="flex flex-col gap-1">
-                          <span>{route.name}</span>
-                          <span className="text-xs font-normal">
-                            {route.description}
-                          </span>
-                        </div>
-                      </Link>
-                    </motion.div>
-                  ))}
+                  {Object.values(PAGE_ROUTES).map(
+                    (route, i) =>
+                      !route.noNav && (
+                        <motion.div
+                          key={route.path}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.2 + i * 0.05 }}
+                        >
+                          <Link
+                            href={route.path}
+                            onClick={() => setOpen(false)}
+                            className={cn(
+                              "flex items-center gap-4 rounded-none px-4 py-3 text-sm font-medium transition-colors hover:bg-accent",
+                              pathname === route.path
+                                ? "bg-accent text-accent-foreground"
+                                : "text-muted-foreground",
+                            )}
+                          >
+                            <route.Icon className="h-6 w-6" />
+                            <div className="flex flex-col gap-1">
+                              <span>{route.name}</span>
+                              <span className="text-xs font-normal">
+                                {route.description}
+                              </span>
+                            </div>
+                          </Link>
+                        </motion.div>
+                      ),
+                  )}
                 </div>
               </ScrollArea>
               <div className="mt-auto border-t border-border p-4">
@@ -228,7 +241,6 @@ export function MobileMenu({
                   <button
                     onClick={() => {
                       setOpen(false);
-                      setAccountDialogOpen(true);
                     }}
                     className="flex w-full items-center gap-4 rounded-none px-4 py-3 text-sm font-medium transition-colors hover:bg-accent"
                   >
@@ -237,6 +249,20 @@ export function MobileMenu({
                       <span>Account</span>
                       <span className="text-xs font-normal text-muted-foreground">
                         Manage your account
+                      </span>
+                    </div>
+                  </button>
+                </motion.div>
+                <motion.div>
+                  <button
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-4 rounded-none px-4 py-3 text-sm font-medium transition-colors hover:bg-accent"
+                  >
+                    <User className="h-6 w-6" />
+                    <div className="flex w-full flex-col gap-1 text-left">
+                      <span>Logout</span>
+                      <span className="text-xs font-normal text-muted-foreground">
+                        Logout from your account
                       </span>
                     </div>
                   </button>

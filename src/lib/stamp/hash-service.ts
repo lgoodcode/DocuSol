@@ -28,12 +28,12 @@ export class PDFHash {
     const pdfDoc = await PDFDocument.load(buffer);
 
     const contentHash = await this.getContentHash(pdfDoc);
-    const fullHash = await this.getFullHash(buffer);
+    const fileHash = await this.getFileHash(buffer);
     const metadataHash = await this.getMetadataHash(buffer);
 
     return {
       contentHash,
-      fullHash,
+      fileHash,
       metadataHash,
     } satisfies DocumentContentHash;
   }
@@ -82,7 +82,7 @@ export class PDFHash {
     return crypto.createHash("sha256").update(contentBuffer).digest("base64");
   }
 
-  static async getFullHash(buffer: Buffer): Promise<string> {
+  static async getFileHash(buffer: Buffer): Promise<string> {
     return crypto.createHash("sha256").update(buffer).digest("base64");
   }
 

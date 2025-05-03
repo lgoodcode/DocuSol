@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 
 import { renameDocument as renameDocumentDb } from "./db";
+import type { ViewDocument } from "./types";
 
 interface RenameDocDialogProps {
   doc: ViewDocument | null;

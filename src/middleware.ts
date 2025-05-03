@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { captureException, setUser } from "@sentry/nextjs";
 
+import { IS_PROD } from "@/constants";
+import { createMiddlewareResponse } from "@/lib/supabase/middleware";
 import { handleRateLimit, rateLimit } from "@/lib/auth/ratelimiter";
 import { PROTECTED_PATHS, PAGE_PATHS } from "@/config/routes";
-import { getSession, clearSession } from "@/lib/auth/session";
 
 const isApiRoute = (request: NextRequest): boolean => {
   return request.nextUrl.pathname.startsWith("/api/");
@@ -20,60 +21,41 @@ export async function middleware(request: NextRequest) {
     });
   }
 
-  // Rate limit
-  try {
-    const rateLimitHeaders = await rateLimit(request);
-    if (rateLimitHeaders) {
-      return handleRateLimit(request, rateLimitHeaders);
-    }
-  } catch (error) {
-    console.error("Middleware rate limit error:", error);
-    captureException(error, {
-      tags: { context: "middleware-rate-limit" },
-      extra: { url: request.url },
-    });
-
-    const response = NextResponse.rewrite(new URL("/error", request.url), {
-      status: 500,
-    });
-    response.headers.set("x-error-rewrite", "true");
-    return response;
-  }
-
-  /**
-   * Session handling
-   */
-  let session: AccessTokenPayload | null = null;
-  try {
-    session = await getSession(request);
-    if (!session) {
-      await clearSession();
-    }
-  } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message !== "No access token or refresh token found"
-    ) {
-      console.error("Middleware session verification error:", error);
+  // Rate limit - only in production
+  if (IS_PROD) {
+    try {
+      const rateLimitHeaders = await rateLimit(request);
+      if (rateLimitHeaders) {
+        return handleRateLimit(request, rateLimitHeaders);
+      }
+    } catch (error) {
+      console.error("Middleware rate limit error:", error);
       captureException(error, {
-        tags: { context: "middleware-session" },
+        tags: { context: "middleware-rate-limit" },
         extra: { url: request.url },
       });
+
+      const response = NextResponse.rewrite(new URL("/error", request.url), {
+        status: 500,
+      });
+      response.headers.set("x-error-rewrite", "true");
+      return response;
     }
   }
 
   // Protected routes
-  if (!session && PROTECTED_PATHS.includes(request.nextUrl.pathname)) {
+  const { response, user } = await createMiddlewareResponse(request);
+  if (!user && PROTECTED_PATHS.includes(request.nextUrl.pathname)) {
     if (isApiRoute(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  if (session) {
+  if (user) {
     setUser({
-      id: session.id,
-      publicKey: session.publicKey,
+      id: user.id,
+      email: user.email,
     });
 
     // If visiting the login page, redirect to the home page
@@ -82,7 +64,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  return response;
 }
 
 export const config = {

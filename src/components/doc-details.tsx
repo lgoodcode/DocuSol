@@ -1,14 +1,6 @@
 "use client";
 
-import {
-  FileText,
-  Calendar,
-  Hash,
-  Key,
-  File,
-  PenTool,
-  Clock,
-} from "lucide-react";
+import { FileText, Calendar, Hash, PenTool, Clock } from "lucide-react";
 
 import { Card, CardContent, CardTitle, CardHeader } from "@/components/ui/card";
 import { CopyButton } from "@/components/ui/copy-button";
@@ -30,22 +22,16 @@ const formatValue = (value: any) => {
   return value.toString();
 };
 
-const DocumentFieldItem = ({
-  field,
-  mimeType,
-}: {
-  field: DocumentField;
-  mimeType?: string;
-}) => (
+const DocumentFieldItem = ({ field }: { field: DocumentField }) => (
   <div className="flex flex-col gap-2">
     <div className="flex flex-row items-center">
       {field.icon}
       <h2 className="ml-2 mr-1">{field.label}</h2>
     </div>
     <div className="flex flex-col">
-      {field.binary && field.value !== "Not available" && mimeType ? (
+      {field.binary && field.value !== "Not available" ? (
         <div className="flex flex-col items-center justify-center gap-2">
-          <BlobPreview hexValue={field.value} mimeType={mimeType} />
+          <BlobPreview hexValue={field.value} />
         </div>
       ) : field?.canCopy ? (
         <div className="flex items-center gap-2 rounded-md bg-muted-foreground/10 p-2 dark:bg-muted/50">
@@ -85,13 +71,13 @@ export function DocumentDetails({
     {
       icon: <PenTool className="h-4 w-4" />,
       label: "Signed Status",
-      value: document.is_signed ? "Signed" : "Not signed",
+      value: document.status === "completed" ? "Signed" : "Not signed",
     },
     {
       icon: <Calendar className="h-4 w-4" />,
       label: "Signed At",
-      value: document.signed_at
-        ? new Date(document.signed_at).toLocaleString()
+      value: document.completed_at
+        ? new Date(document.completed_at).toLocaleString()
         : "Not signed",
     },
     {
@@ -113,59 +99,49 @@ export function DocumentDetails({
       label: "Password",
       value: document.password ? "Set" : "Not set",
     },
-    {
-      icon: <File className="h-4 w-4" />,
-      label: "Original Filename",
-      value: formatValue(document.original_filename),
-    },
-    {
-      icon: <FileText className="h-4 w-4" />,
-      label: "MIME Type",
-      value: formatValue(document.mime_type),
-    },
-    {
-      icon: <Hash className="h-4 w-4" />,
-      label: "Unsigned Hash",
-      value: formatValue(document.unsigned_hash),
-      canCopy: true,
-    },
-    {
-      icon: <Hash className="h-4 w-4" />,
-      label: "Signed Hash",
-      value: formatValue(document.signed_hash),
-      canCopy: true,
-    },
-    {
-      icon: <Key className="h-4 w-4" />,
-      label: "Unsigned Transaction",
-      value: formatValue(document.unsigned_transaction_signature),
-      canCopy: true,
-    },
-    {
-      icon: <Key className="h-4 w-4" />,
-      label: "Signed Transaction",
-      value: formatValue(document.signed_transaction_signature),
-      canCopy: true,
-    },
+    // {
+    //   icon: <Hash className="h-4 w-4" />,
+    //   label: "Unsigned Hash",
+    //   value: formatValue(document.unsigned_hash),
+    //   canCopy: true,
+    // },
+    // {
+    //   icon: <Hash className="h-4 w-4" />,
+    //   label: "Signed Hash",
+    //   value: formatValue(document.signed_hash),
+    //   canCopy: true,
+    // },
+    // {
+    //   icon: <Key className="h-4 w-4" />,
+    //   label: "Unsigned Transaction",
+    //   value: formatValue(document.unsigned_transaction_signature),
+    //   canCopy: true,
+    // },
+    // {
+    //   icon: <Key className="h-4 w-4" />,
+    //   label: "Signed Transaction",
+    //   value: formatValue(document.signed_transaction_signature),
+    //   canCopy: true,
+    // },
 
-    {
-      icon: <File className="h-4 w-4" />,
-      label: "Original Document",
-      value: formatValue(document.original_document),
-      binary: true,
-    },
-    {
-      icon: <File className="h-4 w-4" />,
-      label: "Unsigned Document",
-      value: formatValue(document.unsigned_document),
-      binary: true,
-    },
-    {
-      icon: <File className="h-4 w-4" />,
-      label: "Signed Document",
-      value: formatValue(document.signed_document),
-      binary: true,
-    },
+    // {
+    //   icon: <File className="h-4 w-4" />,
+    //   label: "Original Document",
+    //   value: formatValue(document.original_document),
+    //   binary: true,
+    // },
+    // {
+    //   icon: <File className="h-4 w-4" />,
+    //   label: "Unsigned Document",
+    //   value: formatValue(document.unsigned_document),
+    //   binary: true,
+    // },
+    // {
+    //   icon: <File className="h-4 w-4" />,
+    //   label: "Signed Document",
+    //   value: formatValue(document.signed_document),
+    //   binary: true,
+    // },
   ];
 
   return (
@@ -182,20 +158,12 @@ export function DocumentDetails({
             fields
               .filter((field) => field.value !== "Not available")
               .map((field, index) => (
-                <DocumentFieldItem
-                  key={index}
-                  field={field}
-                  mimeType={document.mime_type}
-                />
+                <DocumentFieldItem key={index} field={field} />
               ))}
 
           {!partial &&
             fields.map((field, index) => (
-              <DocumentFieldItem
-                key={index}
-                field={field}
-                mimeType={document.mime_type}
-              />
+              <DocumentFieldItem key={index} field={field} />
             ))}
         </div>
       </CardContent>

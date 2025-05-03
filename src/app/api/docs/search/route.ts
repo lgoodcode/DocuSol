@@ -126,8 +126,7 @@ function validateDocumentAccess(
  */
 export async function POST(request: Request) {
   try {
-    // Stupid NextJS API bug - there is no json() method on the request object
-    const body = request.body ? await request.json() : {};
+    const body = await request.json();
     const { value, password } = RequestSchema.parse(body);
 
     const hash = await resolveHash(value);

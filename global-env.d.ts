@@ -1,4 +1,10 @@
-import type { Document } from "@/lib/supabase/types";
+import type {
+  Document,
+  DocumentVersion,
+  DocumentSigner,
+  DocumentStatus,
+  DocumentSignerStatus,
+} from "@/lib/supabase/types";
 import type { JWTPayload } from "jose";
 
 export declare global {
@@ -18,8 +24,11 @@ export declare global {
       UPSTASH_REDIS_REST_URL: string;
       UPSTASH_REDIS_REST_TOKEN: string;
 
-      ACCESS_TOKEN_SECRET: string;
-      REFRESH_TOKEN_SECRET: string;
+      RESEND_API_KEY: string;
+
+      STAMP_OBFUSCATION_KEY: string;
+
+      PRIVATE_KEY: string;
     }
   }
 
@@ -85,31 +94,14 @@ export declare global {
     signedHash: string;
   }
 
-  interface ViewDocument {
+  interface VerifyDocumentData {
     id: string;
     name: string;
-    password: string | null;
-    status: "signed" | "pending";
-    mimeType: string;
-    unsignedTxSignature: string;
-    signedTxSignature: string | null;
-    unsignedHash: string;
-    signedHash: string | null;
-    is_signed: boolean;
-    unsignedDocumentHex: string;
-    signedDocumentHex: string | null;
+    hasPassword: boolean;
     createdAt: string;
-    updatedAt: string;
-  }
-
-  interface VerifyDocument {
-    id: string;
-    name: string;
-    password: boolean;
-    mime_type: string;
-    signed_hash: string;
-    created_at: string;
-    signed_at: string;
+    completedAt: string;
+    txSignature: string;
+    hash: string;
   }
 
   /**

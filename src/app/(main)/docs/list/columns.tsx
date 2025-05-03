@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useCallback } from "react";
-import type { ColumnDef } from "@tanstack/react-table";
 import { captureException } from "@sentry/nextjs";
 import { QueryClient, useQueryClient } from "@tanstack/react-query";
 import {
@@ -9,14 +8,12 @@ import {
   Download,
   Eye,
   Trash,
-  Lock,
-  Globe,
   Compass,
   Copy,
-  Link,
-  Share,
   Pencil,
 } from "lucide-react";
+import type { ColumnDef } from "@tanstack/react-table";
+import type { VariantProps } from "class-variance-authority";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,28 +21,53 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+import type { SignatureStatus } from "@/lib/types/stamp";
+
+import type { ViewDocument } from "./types";
 
 import {
   viewDocument,
   viewTransaction,
   copyTxSignature,
-  copyDocumentSignUrl,
-  copyViewUrl,
+  // copyDocumentSignUrl,
+  // copyViewUrl,
   downloadDocument,
 } from "./list-docs-actions";
 
-type ActionType =
-  | "view"
-  | "viewTransaction"
-  | "copyTxSignature"
-  | "copyDocumentSignUrl"
-  | "copyViewUrl"
-  | "download";
+type BadgeVariant = VariantProps<typeof Badge>["variant"];
+
+type ActionType = "view" | "viewTransaction" | "copyTxSignature" | "download";
+// | "copyDocumentSignUrl"
+// | "copyViewUrl"
+
+const statusMap: Record<SignatureStatus, string> = {
+  draft: "Draft",
+  awaiting_signatures: "Awaiting Signatures",
+  partially_signed: "Partially Signed",
+  completed: "Completed",
+  rejected: "Rejected",
+  expired: "Expired",
+};
+
+const getBadgeVariant = (status: SignatureStatus): BadgeVariant => {
+  switch (status) {
+    case "completed":
+      return "success";
+    case "awaiting_signatures":
+    case "partially_signed":
+      return "warning"; // Added warning for awaiting/partially signed
+    case "expired":
+    case "rejected":
+      return "destructive";
+    case "draft":
+    default:
+      return "secondary";
+  }
+};
 
 const actionMap: Record<
   ActionType,
@@ -54,8 +76,8 @@ const actionMap: Record<
   view: viewDocument,
   viewTransaction,
   copyTxSignature,
-  copyDocumentSignUrl,
-  copyViewUrl,
+  // copyDocumentSignUrl,
+  // copyViewUrl,
   download: downloadDocument,
 } as const;
 
@@ -80,11 +102,7 @@ export function useColumns({
       try {
         const result = await actionMap[actionType](doc, queryClient);
 
-        if (
-          actionType === "copyTxSignature" ||
-          actionType === "copyDocumentSignUrl" ||
-          actionType === "copyViewUrl"
-        ) {
+        if (actionType === "copyTxSignature") {
           toast({
             title: "Copied to Clipboard",
             description: (
@@ -112,8 +130,8 @@ export function useColumns({
     handleViewDocument: createActionHandler("view"),
     handleViewTransaction: createActionHandler("viewTransaction"),
     handleCopyTxSignature: createActionHandler("copyTxSignature"),
-    handleCopyDocumentSignUrl: createActionHandler("copyDocumentSignUrl"),
-    handleCopyViewUrl: createActionHandler("copyViewUrl"),
+    // handleCopyDocumentSignUrl: createActionHandler("copyDocumentSignUrl"),
+    // handleCopyViewUrl: createActionHandler("copyViewUrl"),
     handleDownloadDocument: createActionHandler("download"),
   };
 
@@ -128,13 +146,6 @@ export function useColumns({
           return (
             <div className="flex min-w-[200px] items-center gap-2">
               <span className="truncate font-medium">{doc.name}</span>
-              <div className="flex flex-shrink-0 gap-1">
-                {doc.password ? (
-                  <Lock className="h-4 w-4 text-muted-foreground" />
-                ) : (
-                  <Globe className="h-4 w-4 text-muted-foreground" />
-                )}
-              </div>
             </div>
           );
         },
@@ -146,50 +157,41 @@ export function useColumns({
         cell: ({ row }) => {
           const status = row.getValue("status") as string;
           return (
-            <Badge
-              variant={
-                status === "signed"
-                  ? "success"
-                  : status === "expired"
-                    ? "destructive"
-                    : "secondary"
-              }
-            >
-              {status}
+            <Badge variant={getBadgeVariant(status as SignatureStatus)}>
+              {statusMap[status as SignatureStatus]}
             </Badge>
           );
         },
       },
-      // {
-      //   accessorKey: "expiresAt",
-      //   header: "Expires",
-      //   cell: ({ row }) => {
-      //     const date = row.getValue("expiresAt") as string;
-      //     return date ? new Date(date).toLocaleDateString() : "Never";
-      //   },
-      // },
       {
-        accessorKey: "mimeType",
-        header: "Type",
-        size: 100,
+        accessorKey: "password",
+        header: "Password",
         cell: ({ row }) => {
-          return row.getValue("mimeType") as string;
+          return row.getValue("password") ? "Yes" : "No";
         },
       },
       {
-        accessorKey: "createdAt",
+        accessorKey: "expires",
+        header: "Expires",
+        cell: ({ row }) => {
+          const date = row.getValue("expires") as string;
+          return date ? new Date(date).toLocaleDateString() : "Never";
+        },
+      },
+      {
+        accessorKey: "created",
         header: "Created",
         size: 180,
         cell: ({ row }) => {
-          return new Date(row.getValue("createdAt")).toLocaleString();
+          return new Date(row.getValue("created")).toLocaleString();
         },
       },
       {
-        accessorKey: "updatedAt",
+        accessorKey: "updated",
         header: "Updated",
         size: 180,
         cell: ({ row }) => {
-          return new Date(row.getValue("updatedAt")).toLocaleString();
+          return new Date(row.getValue("updated")).toLocaleString();
         },
       },
       {
@@ -197,7 +199,6 @@ export function useColumns({
         enableHiding: false,
         size: 50,
         cell: ({ row }) => {
-          // const document = row.original;
           return (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -207,14 +208,13 @@ export function useColumns({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
                 <DropdownMenuItem
                   onClick={() =>
                     wrappedActions.handleViewDocument(row.original)
                   }
                 >
                   <Eye className="mr-1 h-4 w-4" />
-                  View
+                  View Document
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() =>
@@ -232,7 +232,7 @@ export function useColumns({
                   <Copy className="mr-1 h-4 w-4" />
                   Copy Tx Signature
                 </DropdownMenuItem>
-                {!row.original.is_signed && (
+                {/* {!row.original.is_signed && (
                   <DropdownMenuItem
                     onClick={() =>
                       wrappedActions.handleCopyDocumentSignUrl(row.original)
@@ -241,13 +241,13 @@ export function useColumns({
                     <Share className="mr-1 h-4 w-4" />
                     Share Sign Link
                   </DropdownMenuItem>
-                )}
-                <DropdownMenuItem
+                )} */}
+                {/* <DropdownMenuItem
                   onClick={() => wrappedActions.handleCopyViewUrl(row.original)}
                 >
                   <Link className="mr-1 h-4 w-4" />
                   Copy View Link
-                </DropdownMenuItem>
+                </DropdownMenuItem> */}
 
                 <DropdownMenuItem
                   onClick={() => renameDoc.setDocToRename(row.original)}

@@ -9,14 +9,13 @@ import {
 } from "@/config/site";
 import { ProgressBarProvider } from "@/components/providers/progress-bar-provider";
 import { WalletProvider } from "@/components/providers/wallet-provider";
-import { ToastProvider } from "@/components/ui/toast";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 
-import "./globals.css";
+import "./styles/globals.css";
 
 const satoshiFont = localFont({
-  src: "./font/Satoshi-Variable.ttf",
+  src: "./styles/Satoshi-Variable.ttf",
   variable: "--font-satoshi",
   display: "swap",
 });
@@ -47,10 +46,14 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <WalletProvider>
-            <ToastProvider swipeDirection="right">
-              <Toaster />
-              {children}
-            </ToastProvider>
+            {children}
+            <Toaster
+              richColors
+              closeButton
+              toastOptions={{
+                className: "!backdrop-blur-sm",
+              }}
+            />
           </WalletProvider>
         </NextThemesProvider>
       </body>

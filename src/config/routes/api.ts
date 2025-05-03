@@ -23,6 +23,17 @@ export const API_ROUTES: Record<string, ApiRoute> = {
     description: "Create a new document",
     protected: true,
   },
+  "docs.upload": {
+    name: "Docs - Upload",
+    path: "/api/docs/upload",
+    description: `
+      Send the document hash and metadata to create a DocumentStamp and store
+      the hash in the Solana blockchain within a memo program. Once that is completed
+      we can generate the DocumentMetadata with the transaction signature and then
+      store the completed draft document in the database.
+    `,
+    protected: true,
+  },
   "docs.search": {
     name: "Docs - Search",
     path: "/api/docs/search",
@@ -33,7 +44,7 @@ export const API_ROUTES: Record<string, ApiRoute> = {
     name: "Docs - Sign",
     path: "/api/docs/sign",
     description: "Sign a document",
-    protected: true,
+    protected: false,
   },
   "docs.verify": {
     name: "Docs - Verify",
@@ -50,6 +61,7 @@ export const API_PATHS = {
     SESSION: API_ROUTES["auth.session"].path,
   },
   DOCS: {
+    UPLOAD: API_ROUTES["docs.upload"].path,
     CREATE: API_ROUTES["docs.create"].path,
     SEARCH: API_ROUTES["docs.search"].path,
     SIGN: API_ROUTES["docs.sign"].path,
