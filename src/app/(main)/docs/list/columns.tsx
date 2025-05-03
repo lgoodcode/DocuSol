@@ -199,7 +199,6 @@ export function useColumns({
         enableHiding: false,
         size: 50,
         cell: ({ row }) => {
-          const document = row.original;
           return (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

@@ -106,7 +106,11 @@ export function EditingStep({
         <Button type="button" variant="outline" onClick={handleBack}>
           Back
         </Button>
-        <Button type="button" onClick={handleNext}>
+        <Button
+          type="button"
+          onClick={handleNext}
+          disabled={fields.length === 0}
+        >
           Next
         </Button>
       </div>
