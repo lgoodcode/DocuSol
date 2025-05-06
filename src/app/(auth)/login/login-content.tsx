@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next-nprogress-bar";
+import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -63,7 +63,6 @@ export function LoginContent() {
       email: data.email,
       password: data.password,
     });
-
     if (loginError) {
       console.error(loginError);
       captureException(loginError);
