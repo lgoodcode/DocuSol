@@ -16,9 +16,9 @@ import { Button } from "../ui/button";
 
 const LogoutButton = () => {
   const router = useRouter();
+  const supabase = createClient();
 
   const handleLogout = async () => {
-    const supabase = createClient();
     const { error: logoutError } = await supabase.auth.signOut();
     if (logoutError) {
       console.error(logoutError);
