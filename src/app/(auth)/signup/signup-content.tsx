@@ -103,7 +103,7 @@ export function SignupContent() {
           <DockerContainer />
         </motion.div>
 
-        <div className="relative -top-10 z-30 flex min-h-dvh flex-col items-center justify-center gap-12">
+        <div className="relative -top-10 z-30 flex min-h-dvh max-w-screen-md flex-col items-center justify-center gap-12 px-4 md:px-0">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -116,7 +116,7 @@ export function SignupContent() {
                 width={1694}
                 height={432}
                 priority
-                className="max-w-md px-6"
+                className="max-w-md px-16 sm:px-8"
               />
             </Link>
           </motion.div>
