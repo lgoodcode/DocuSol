@@ -16,11 +16,10 @@ export default function MainLayout({
           <div className="fixed inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-black/5 to-transparent dark:from-primary/[0.03]" />
         </div>
 
-        <BetaNoticeDialog />
-        <WalletNoticeDialog />
-
         <Nav />
-        <main className="relative z-10 flex-1 px-6 md:mt-0">{children}</main>
+        <main className="relative z-10 mt-16 flex-1 px-6 md:mt-0">
+          {children}
+        </main>
       </div>
     </QueryProvider>
   );
