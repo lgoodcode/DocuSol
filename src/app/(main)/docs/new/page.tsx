@@ -7,5 +7,9 @@ export const metadata: Metadata = {
 };
 
 export default function NewDocumentPage() {
-  return <NewDocContent />;
+  return (
+    <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 md:px-8">
+      <NewDocContent />
+    </div>
+  );
 }

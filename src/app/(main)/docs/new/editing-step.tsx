@@ -71,8 +71,8 @@ export function EditingStep({
 
   return (
     <div className="container mx-auto max-w-7xl space-y-4">
-      <div className="flex h-[calc(100vh-240px)] overflow-hidden rounded-lg border bg-background shadow-md">
-        <div className="relative flex-1 overflow-hidden rounded-l-lg">
+      <div className="flex min-h-[calc(100vh-240px)] flex-col overflow-hidden rounded-lg border bg-background shadow-md md:flex-row">
+        <div className="relative flex-1 overflow-auto rounded-t-lg md:rounded-l-lg md:rounded-tr-none">
           <DocumentCanvas
             documentDataUrl={documentDataUrl}
             numPages={numPages}
@@ -92,7 +92,7 @@ export function EditingStep({
           />
         </div>
 
-        <div className="w-96 border-l">
+        <div className="w-full overflow-auto rounded-b-lg border-t md:w-96 md:rounded-r-lg md:rounded-bl-none md:border-l md:border-t-0">
           {viewType === "editor" ? (
             <FieldsPalette />
           ) : (
