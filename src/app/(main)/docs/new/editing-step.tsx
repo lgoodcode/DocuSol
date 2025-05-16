@@ -1,7 +1,7 @@
 "use client";
 
 import { useShallow } from "zustand/react/shallow";
-
+import { toast } from "sonner";
 import { useDocumentStore } from "@/lib/pdf-editor/stores/useDocumentStore";
 import { DocumentCanvas } from "@/components/pdf-editor/DocumentCanvas";
 import { FieldsList } from "@/components/pdf-editor/FieldsList";
@@ -56,7 +56,20 @@ export function EditingStep({
     setSelectedFieldId("");
   };
 
+  // Check if each signer has a field assigned to them. If not, show a toast.
   const handleNext = () => {
+    const signersWithoutFields = signers.filter(
+      (signer) => !fields.some((field) => field.assignedTo === signer.id),
+    );
+    if (signersWithoutFields.length > 0) {
+      const signerNames = signersWithoutFields
+        .map((signer) => signer.name)
+        .join(", ");
+      toast.error("Missing fields", {
+        description: `Please assign a field to the following signers: ${signerNames}`,
+      });
+      return;
+    }
     setSelectedFieldId("");
     onStepComplete();
   };
