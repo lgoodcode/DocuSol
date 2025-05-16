@@ -15,7 +15,7 @@ const requiredEnvList = [
 
   "RESEND_API_KEY",
 
-  "STAMP_OBFUSCATION_KEY",
+  "NEXT_PUBLIC_STAMP_OBFUSCATION_KEY",
 
   "PRIVATE_KEY",
 ];
