@@ -71,7 +71,6 @@ export function VerifyContent() {
         });
         setFile(null);
       } catch (err) {
-        debugger;
         const error = err as Error;
         if (error.message === verificationErrors.TRANSACTION_NOT_FOUND) {
           setError(
