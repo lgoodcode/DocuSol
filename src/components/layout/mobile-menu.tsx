@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { useRouter } from "next-nprogress-bar";
 import { motion, AnimatePresence } from "framer-motion";
 import { captureException } from "@sentry/nextjs";
-import { Menu, X, Sun, Moon, User, LogOut } from "lucide-react";
+import { Menu, X, Sun, Moon, LogOut } from "lucide-react";
 
 import { PAGE_ROUTES } from "@/config/routes";
 import { createClient } from "@/lib/supabase/client";

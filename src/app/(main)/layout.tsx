@@ -1,7 +1,5 @@
 import { Nav } from "@/components/layout/nav";
 import { QueryProvider } from "@/components/providers/query-provider";
-import { BetaNoticeDialog } from "@/components/beta-notice-dialog";
-import { WalletNoticeDialog } from "@/components/wallet-notice-dialog";
 
 export default function MainLayout({
   children,
