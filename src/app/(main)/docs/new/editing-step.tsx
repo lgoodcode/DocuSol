@@ -56,17 +56,21 @@ export function EditingStep({
     setSelectedFieldId("");
   };
 
-  // Check if each signer has a field assigned to them. If not, show a toast.
+  // Check if each signer has at least one required field assigned to them
   const handleNext = () => {
-    const signersWithoutFields = signers.filter(
-      (signer) => !fields.some((field) => field.assignedTo === signer.id),
-    );
-    if (signersWithoutFields.length > 0) {
-      const signerNames = signersWithoutFields
+    const signersWithoutRequiredFields = signers.filter((signer) => {
+      const signerFields = fields.filter(
+        (field) => field.assignedTo === signer.id,
+      );
+      return !signerFields.some((field) => field.required);
+    });
+
+    if (signersWithoutRequiredFields.length > 0) {
+      const signerNames = signersWithoutRequiredFields
         .map((signer) => signer.name)
         .join(", ");
-      toast.error("Missing fields", {
-        description: `Please assign a field to the following signers: ${signerNames}`,
+      toast.error("Missing required fields", {
+        description: `Please assign at least one required field to the following signers: ${signerNames}`,
       });
       return;
     }
