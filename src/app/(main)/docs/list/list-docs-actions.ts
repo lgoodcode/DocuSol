@@ -71,7 +71,7 @@ export const downloadDocument = async (doc: ViewDocument): Promise<void> => {
   const supabase = createClient();
   const user = await getUser(supabase);
   const storageService = new StorageService(supabase);
-  const version = doc.versionNumber > 2 ? doc.versionNumber - 1 : 0;
+  const version = doc.versionNumber > 1 ? doc.versionNumber : 0;
   const blob = await storageService.getDocument(user.id, doc.name, version);
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");

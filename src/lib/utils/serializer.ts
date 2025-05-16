@@ -3,7 +3,6 @@
 import { pack, unpack } from "msgpackr";
 import { Buffer } from "buffer"; // Ensure Buffer is available
 
-import { getRequiredEnvVar } from "@/lib/utils";
 import {
   SignatureState,
   type DocumentStamp,
@@ -343,7 +342,8 @@ export class ObfuscatedStampSerializer {
    * Initializes the serializer, retrieving the obfuscation key from environment variables.
    */
   constructor() {
-    this.obfuscationKey = getRequiredEnvVar("STAMP_OBFUSCATION_KEY");
+    this.obfuscationKey = process.env
+      .NEXT_PUBLIC_STAMP_OBFUSCATION_KEY as string;
     this.keySerializer = new DocumentStampSerializer();
   }
 
@@ -363,7 +363,7 @@ export class ObfuscatedStampSerializer {
    * Serializes, packs, obfuscates, and encodes a DocumentStamp.
    *
    * @param stamp - The original DocumentStamp object.
-   * @returns The obfuscated stamp as a binary string.
+   * @returns The obfuscated stamp as a base64 string.
    */
   serialize(stamp: DocumentStamp): string {
     try {
@@ -373,7 +373,7 @@ export class ObfuscatedStampSerializer {
       const packedData = pack(shortKeyData);
       // 3. Obfuscate with XOR
       const obfuscatedData = this.xorOperation(packedData);
-      return obfuscatedData.toString("binary");
+      return obfuscatedData.toString("base64");
     } catch (error) {
       console.error("Error during ObfuscatedStampSerializer serialize:", error);
       throw new Error("Failed to serialize and obfuscate stamp.");
@@ -383,13 +383,13 @@ export class ObfuscatedStampSerializer {
   /**
    * Decodes, de-obfuscates, unpacks, and deserializes a stamp string.
    *
-   * @param binaryStamp - The binary string representing the obfuscated stamp.
+   * @param base64Stamp - The base64 string representing the obfuscated stamp.
    * @returns The deserialized DocumentStamp object.
    */
-  deserialize(binaryStamp: string): DocumentStamp {
+  deserialize(base64Stamp: string): DocumentStamp {
     try {
       // 1. Decode Binary String to Buffer
-      const obfuscatedData = Buffer.from(binaryStamp, "binary");
+      const obfuscatedData = Buffer.from(base64Stamp, "base64");
       // 2. De-obfuscate with XOR
       const packedData = this.xorOperation(obfuscatedData);
       // 3. Unpack Msgpack
