@@ -88,12 +88,7 @@ export function NewDocContent() {
             <Stepper
               hideButtons
               currentStep={currentStepIndex}
-              steps={[
-                "Upload Document",
-                "Assign Signers",
-                "Edit Document",
-                "Review and Send",
-              ]}
+              steps={["Upload", "Assign", "Edit", "Review", "Send"]}
             />
           )}
         </motion.div>

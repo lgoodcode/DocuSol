@@ -1,7 +1,7 @@
 "use client";
 
 import { useShallow } from "zustand/react/shallow";
-
+import { toast } from "sonner";
 import { useDocumentStore } from "@/lib/pdf-editor/stores/useDocumentStore";
 import { DocumentCanvas } from "@/components/pdf-editor/DocumentCanvas";
 import { FieldsList } from "@/components/pdf-editor/FieldsList";
@@ -56,7 +56,24 @@ export function EditingStep({
     setSelectedFieldId("");
   };
 
+  // Check if each signer has at least one required field assigned to them
   const handleNext = () => {
+    const signersWithoutRequiredFields = signers.filter((signer) => {
+      const signerFields = fields.filter(
+        (field) => field.assignedTo === signer.id,
+      );
+      return !signerFields.some((field) => field.required);
+    });
+
+    if (signersWithoutRequiredFields.length > 0) {
+      const signerNames = signersWithoutRequiredFields
+        .map((signer) => signer.name)
+        .join(", ");
+      toast.error("Missing required fields", {
+        description: `Please assign at least one required field to the following signers: ${signerNames}`,
+      });
+      return;
+    }
     setSelectedFieldId("");
     onStepComplete();
   };
@@ -71,8 +88,8 @@ export function EditingStep({
 
   return (
     <div className="container mx-auto max-w-7xl space-y-4">
-      <div className="flex h-[calc(100vh-240px)] overflow-hidden rounded-lg border bg-background shadow-md">
-        <div className="relative flex-1 overflow-hidden rounded-l-lg">
+      <div className="flex min-h-[calc(100vh-240px)] flex-col overflow-hidden rounded-lg border bg-background shadow-md md:flex-row">
+        <div className="relative flex-1 overflow-auto rounded-t-lg md:rounded-l-lg md:rounded-tr-none">
           <DocumentCanvas
             documentDataUrl={documentDataUrl}
             numPages={numPages}
@@ -92,7 +109,7 @@ export function EditingStep({
           />
         </div>
 
-        <div className="w-96 border-l">
+        <div className="w-full overflow-auto rounded-b-lg border-t md:w-96 md:rounded-r-lg md:rounded-bl-none md:border-l md:border-t-0">
           {viewType === "editor" ? (
             <FieldsPalette />
           ) : (

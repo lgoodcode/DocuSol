@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { useRouter } from "next-nprogress-bar";
 import { motion, AnimatePresence } from "framer-motion";
 import { captureException } from "@sentry/nextjs";
-import { Menu, X, Sun, Moon, User } from "lucide-react";
+import { Menu, X, Sun, Moon, LogOut } from "lucide-react";
 
 import { PAGE_ROUTES } from "@/config/routes";
 import { createClient } from "@/lib/supabase/client";
@@ -233,7 +233,7 @@ export function MobileMenu() {
                 </div>
               </ScrollArea>
               <div className="mt-auto border-t border-border p-4">
-                <motion.div
+                {/* <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
@@ -252,13 +252,13 @@ export function MobileMenu() {
                       </span>
                     </div>
                   </button>
-                </motion.div>
+                </motion.div> */}
                 <motion.div>
                   <button
                     onClick={handleLogout}
                     className="flex w-full items-center gap-4 rounded-none px-4 py-3 text-sm font-medium transition-colors hover:bg-accent"
                   >
-                    <User className="h-6 w-6" />
+                    <LogOut className="h-6 w-6" />
                     <div className="flex w-full flex-col gap-1 text-left">
                       <span>Logout</span>
                       <span className="text-xs font-normal text-muted-foreground">
