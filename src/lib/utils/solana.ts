@@ -10,13 +10,16 @@ import {
 } from "@solana/web3.js";
 
 import { PLATFORM_FEE } from "@/constants";
-import { getEnvVar } from "@/lib/utils";
 
-const RPC_URL = getEnvVar("NEXT_PUBLIC_HELIUS_API_URL") as string;
-const PRIVATE_KEY = getEnvVar("PRIVATE_KEY") as string;
+const RPC_URL = process.env.NEXT_PUBLIC_HELIUS_API_URL as string;
+const PRIVATE_KEY = process.env.PRIVATE_KEY as string;
 const MEMO_PROGRAM_ID = new PublicKey(
   "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
 );
+
+export function createConnection() {
+  return new Connection(RPC_URL, "confirmed");
+}
 
 export function isWalletAddress(address: string) {
   return /^[A-HJ-NP-Za-km-z1-9]{32,44}$/.test(address);

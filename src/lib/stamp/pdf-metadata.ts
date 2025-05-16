@@ -21,6 +21,8 @@ export class PDFMetadata {
       documentId: raw.documentId,
       version: parseInt(raw.version),
       password: raw.password,
+      createdAt: parseInt(raw.createdAt),
+      creator: raw.creator,
     } satisfies DocumentMetadata;
   }
 

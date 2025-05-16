@@ -68,6 +68,7 @@ export function LoginContent() {
       captureException(loginError);
       setError(loginError.message);
     } else {
+      router.refresh();
       router.push("/docs/new");
     }
   };
@@ -87,7 +88,7 @@ export function LoginContent() {
           <DockerContainer />
         </motion.div>
 
-        <div className="relative -top-10 z-30 flex min-h-dvh max-w-screen-md flex-col items-center justify-center gap-12 px-4 md:px-0">
+        <div className="relative -top-10 z-30 mx-auto flex min-h-dvh max-w-screen-md flex-col items-center justify-center gap-12 px-4 md:px-0">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}

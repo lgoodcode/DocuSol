@@ -1,10 +1,4 @@
-import type {
-  Document,
-  DocumentVersion,
-  DocumentSigner,
-  DocumentStatus,
-  DocumentSignerStatus,
-} from "@/lib/supabase/types";
+import type { Document } from "@/lib/supabase/types";
 import type { JWTPayload } from "jose";
 
 export declare global {
@@ -26,7 +20,7 @@ export declare global {
 
       RESEND_API_KEY: string;
 
-      STAMP_OBFUSCATION_KEY: string;
+      NEXT_PUBLIC_STAMP_OBFUSCATION_KEY: string;
 
       PRIVATE_KEY: string;
     }
