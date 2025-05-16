@@ -5,7 +5,7 @@ import {
   // CopyPlus,
   // Send,
   // TrendingUp,
-  // ShieldCheck,
+  ShieldCheck,
   Plus,
   // Compass,
 } from "lucide-react";
@@ -48,13 +48,13 @@ export const PAGE_ROUTES: Record<string, PageRoute> = {
   //   description: "Search for documents.",
   //   protected: true,
   // },
-  // "docs.verify": {
-  //   name: "Verify",
-  //   path: "/docs/verify",
-  //   Icon: ShieldCheck,
-  //   description: "Verify documents.",
-  //   protected: true,
-  // },
+  "docs.verify": {
+    name: "Verify",
+    path: "/docs/verify",
+    Icon: ShieldCheck,
+    description: "Verify documents.",
+    protected: true,
+  },
   // writer: {
   //   name: "Writer",
   //   path: "/writer",
@@ -90,7 +90,7 @@ export const PAGE_PATHS = {
     NEW: PAGE_ROUTES["docs.new"].path,
     LIST: PAGE_ROUTES["docs.list"].path,
     // EXPLORE: PAGE_ROUTES["docs.explore"].path,
-    // VERIFY: PAGE_ROUTES["docs.verify"].path,
+    VERIFY: PAGE_ROUTES["docs.verify"].path,
   },
   SIGN: PAGE_ROUTES["sign"].path,
   // DASHBOARD: PAGE_ROUTES["dashboard"].path,
